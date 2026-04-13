@@ -1,0 +1,5 @@
+{
+  "name": "@nakama/shared",
+  "private": true,
+  "type": "module"
+}

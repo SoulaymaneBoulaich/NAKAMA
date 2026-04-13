@@ -1,0 +1,776 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  username        String           @unique
+  email           String           @unique
+  passwordHash    String
+  avatar          String?
+  banner          String?
+  bio             String?
+  
+  // Identity & Contact
+  fullName        String?
+  phoneNumber     String?
+  location        String?
+  
+  // Preferences & Appearance
+  language        String           @default("English")
+  timezone        String           @default("UTC")
+  theme           String           @default("Monochrome")
+  typography      String           @default("Sans-Serif")
+  accentColor     String           @default("Red")
+  layoutDensity   LayoutDensity    @default(COMFORTABLE)
+  
+  // Privacy & Status
+  isPrivate       Boolean          @default(false)
+  isPremium       Boolean          @default(false)
+  searchIndexable Boolean          @default(true)
+  showOnlineStatus Boolean         @default(true)
+  showActivityStatus Boolean       @default(true)
+  deactivatedAt   DateTime?        // For Soft Delete
+  
+  resetToken      String?          @unique
+  resetTokenExpiry DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  privacySettings PrivacySettings?
+  notificationSettings NotificationSettings?
+  animeEntries    AnimeEntry[]
+  ratings         Rating[]
+  posts           Post[]
+  likes           Like[]
+  comments        Comment[]
+  memberships     CommunityMember[]
+  pollVotes       PollVote[]
+  followers       Follow[]         @relation("UserFollowers")
+  following       Follow[]         @relation("UserFollowing")
+  notifications   Notification[]
+  triggeredNotifications Notification[] @relation("NotificationActor")
+  topTenEntries   TopTenEntry[]
+  activities      Activity[]
+  playlists       Playlist[]
+  collaborating   PlaylistCollaborator[]
+  followedPlaylists PlaylistFollow[]
+  playlistComments PlaylistComment[]
+  createdEntries  PlaylistEntry[]
+  stories         Story[]
+  collaboratingStories StoryCollaborator[]
+  storyRatings    StoryRating[]
+  chapterComments ChapterComment[]
+  followedStories StoryFollow[]
+  writtenChapters Chapter[] @relation("ChapterAuthor")
+  aniShots        AniShot[]
+  aniShotViews    AniShotView[]
+
+  // AniJudge Relations
+  arenasHosted    Arena[]           @relation("ArenaHost")
+  judgeArenas     Arena[]           @relation("ArenaJudge")
+  arenasParticipated ArenaParticipant[]
+  debateArguments DebateArgument[]
+  hallOfFameVotes HallOfFameVote[]
+
+  // Messaging Relations
+  conversations   ConversationParticipant[]
+  messagesSent    Message[]
+
+  // Recommendation & Watch Party Relations
+  genreAffinities   GenreAffinity[]
+  studioAffinities  StudioAffinity[]
+  interactions      UserAnimeInteraction[]
+  recommendations   AnimeRecommendation[]
+  watchPartiesHosted WatchParty[]      @relation("WatchPartyHost")
+  watchPartyMemberships WatchPartyMember[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model PrivacySettings {
+  id               String     @id @default(uuid())
+  userId           String     @unique
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileVisibility Visibility @default(PUBLIC)
+  showStats        Boolean    @default(false)
+  showTopTen       Boolean    @default(false)
+  showFingerprint  Boolean    @default(false)
+  showActivity     Boolean    @default(false)
+  showCommunities  Boolean    @default(false)
+  showPlaylists    Boolean    @default(false)
+}
+
+model NotificationSettings {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketingEmails  Boolean @default(true)
+  systemAlerts     Boolean @default(true)
+  pushNotifications Boolean @default(true)
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum LayoutDensity {
+  COMPACT
+  COMFORTABLE
+}
+
+enum AnimeStatus {
+  WATCHING
+  COMPLETED
+  ON_HOLD
+  DROPPED
+  PLAN_TO_WATCH
+}
+
+model AnimeEntry {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId         String      // Jikan ID
+  status          AnimeStatus @default(PLAN_TO_WATCH)
+  episodeProgress Int         @default(0)
+  rewatchCount    Int         @default(0)
+  startDate       DateTime?
+  endDate         DateTime?
+  privateNotes    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+    @@unique([userId, animeId])
+
+  @@index([userId])
+}
+
+model Rating {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId         String
+  animation       Int      @default(0)
+  characters      Int      @default(0)
+  buildUp         Int      @default(0)
+  story           Int      @default(0)
+  feeling         Int      @default(0)
+  ending          Int      @default(0)
+  calculatedScore Float    @default(0)
+  review          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+    @@unique([userId, animeId])
+
+}
+
+model Post {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String?
+  community   Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  content     String
+  imageUrl    String?
+  animeId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  likes       Like[]
+  comments    Comment[]
+  poll        Poll?
+  videoUrl    String?
+  videoTitle  String?
+
+  @@index([userId])
+  @@index([communityId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+}
+
+model Community {
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  slug               String   @unique
+  description        String?
+  bannerUrl          String?
+  avatarUrl          String?
+  category           String?
+  memberCount        Int      @default(0)
+  isValidated        Boolean  @default(false)
+  validationDeadline DateTime?
+  createdAt          DateTime @default(now())
+  
+  members            CommunityMember[]
+  rules              CommunityRule[]
+  posts              Post[]
+
+  @@index([slug])
+}
+
+enum CommunityRole {
+  MEMBER
+  ADMIN
+}
+
+model CommunityMember {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  role        CommunityRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  @@unique([userId, communityId])
+}
+
+model CommunityRule {
+  id          String    @id @default(uuid())
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  ruleText    String
+  order       Int       @default(0)
+}
+
+model Poll {
+  id        String       @id @default(uuid())
+  postId    String       @unique
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  question  String
+  expiresAt DateTime?
+  options   PollOption[]
+}
+
+model PollOption {
+  id         String     @id @default(uuid())
+  pollId     String
+  poll       Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionText String
+  voteCount  Int        @default(0)
+  votes      PollVote[]
+}
+
+model PollVote {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollOptionId String
+  pollOption   PollOption @relation(fields: [pollOptionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pollOptionId])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   // Recipient
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actorId     String?  // Who triggered it
+  actor       User?    @relation("NotificationActor", fields: [actorId], references: [id])
+  type        String
+  message     String
+  isRead      Boolean  @default(false)
+  referenceId String?  // Optional ID to Link back to the resource (post, user, etc.)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TopTenEntry {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId    String
+  animeTitle String
+  animeCover String?
+  rank       Int      // 1-10
+  createdAt  DateTime @default(now())
+
+    @@unique([userId, animeId])
+  @@unique([userId, rank])
+}
+
+enum ActivityType {
+  ANIME_ADD
+  ANIME_UPDATE
+  ANIME_RATE
+  FOLLOW
+  POST_CREATE
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        ActivityType
+  entityId    String?  // ID of the anime, post, or user followed
+  entityTitle String?  // Title of the anime or post, or username followed
+  entityImage String?  // Cover of the anime or avatar of the user
+  metadata    Json?    // For extra data like 'status' or 'score'
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum PlaylistVisibility {
+  PRIVATE
+  SHARED
+  PUBLIC
+}
+
+model Playlist {
+  id          String             @id @default(cuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  coverUrl    String?
+  visibility  PlaylistVisibility @default(PRIVATE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  entries       PlaylistEntry[]
+  collaborators PlaylistCollaborator[]
+  follows       PlaylistFollow[]
+  comments      PlaylistComment[]
+}
+
+model PlaylistEntry {
+  id          String   @id @default(cuid())
+  playlistId  String
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  animeId     String
+  animeTitle  String
+  animeCover  String
+  userId      String
+  addedBy     User     @relation(fields: [userId], references: [id])
+  note        String?
+  order       Int
+  createdAt   DateTime @default(now())
+
+  @@unique([playlistId, animeId])
+}
+
+model PlaylistCollaborator {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt   DateTime @default(now())
+
+  @@unique([playlistId, userId])
+}
+
+model PlaylistFollow {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([playlistId, userId])
+}
+
+model PlaylistComment {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    String   // Max length validation would be done at the application level
+  createdAt  DateTime @default(now())
+}
+
+enum StoryStatus {
+  ONGOING
+  COMPLETED
+  HIATUS
+}
+
+model Story {
+  id           String             @id @default(cuid())
+  ownerId      String
+  owner        User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  coverUrl     String?
+  tags         String[]
+  status       StoryStatus        @default(ONGOING)
+  isPublished  Boolean            @default(false)
+  totalChapters Int               @default(0)
+  totalWords    Int               @default(0)
+  totalViews    Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  collaborators StoryCollaborator[]
+  chapters      Chapter[]
+  ratings       StoryRating[]
+  follows       StoryFollow[]
+
+  @@index([ownerId])
+}
+
+model StoryCollaborator {
+  id           String   @id @default(cuid())
+  storyId      String
+  story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditLabel  String?
+  joinedAt     DateTime @default(now())
+
+  @@unique([storyId, userId])
+}
+
+model Chapter {
+  id            String   @id @default(cuid())
+  storyId       String
+  story         Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User     @relation("ChapterAuthor", fields: [authorId], references: [id])
+  title         String
+  content       String   // Long text
+  chapterNumber Int
+  wordCount     Int
+  isPublished   Boolean  @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  comments      ChapterComment[]
+
+  @@unique([storyId, chapterNumber])
+}
+
+model StoryRating {
+  id        String   @id @default(cuid())
+  storyId   String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int      // 1-10
+  review    String?
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+}
+
+model ChapterComment {
+  id        String   @id @default(cuid())
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String   // Max 500 chars (application level validation)
+  createdAt DateTime @default(now())
+}
+
+model StoryFollow {
+  id        String   @id @default(cuid())
+  storyId   String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+}
+enum AniShotType {
+  THOUGHT
+  WATCHING
+  COMPLETED
+  DROPPED
+  HYPE
+}
+
+model AniShot {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String?     // max 200 chars (application level)
+  mediaUrl    String?
+  animeId     String?
+  animeTitle  String?
+  animeCover  String?
+  type        AniShotType @default(THOUGHT)
+  expiresAt   DateTime
+  viewCount   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  
+  views       AniShotView[]
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AniShotView {
+  id         String   @id @default(cuid())
+  aniShotId  String
+  aniShot    AniShot  @relation(fields: [aniShotId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt   DateTime @default(now())
+
+  @@unique([aniShotId, userId])
+}
+
+// --- AniJudge Arena Models ---
+
+enum ArenaStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
+}
+
+enum WinnerTeam {
+  TEAM_A
+  TEAM_B
+  DRAW
+}
+
+enum ArenaTeam {
+  TEAM_A
+  TEAM_B
+  JUDGE
+}
+
+model Arena {
+  id              String           @id @default(cuid())
+  code            String           @unique // 6 character uppercase code
+  hostId          String
+  host            User             @relation("ArenaHost", fields: [hostId], references: [id])
+  topic           String
+  status          ArenaStatus      @default(WAITING)
+  roundCount      Int              @default(3)
+  currentRound    Int              @default(0)
+  timerSeconds    Int              @default(120)
+  judgeId         String?          // userId of judge
+  judge           User?            @relation("ArenaJudge", fields: [judgeId], references: [id])
+  winnerTeam      WinnerTeam?
+  verdictText     String?
+  isArchived      Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  participants    ArenaParticipant[]
+  rounds          DebateRound[]
+  fameVotes       HallOfFameVote[]
+}
+
+model ArenaParticipant {
+  id          String    @id @default(cuid())
+  arenaId     String
+  arena       Arena     @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  team        ArenaTeam
+  joinedAt    DateTime  @default(now())
+
+  @@unique([arenaId, userId])
+}
+
+model DebateRound {
+  id             String           @id @default(cuid())
+  arenaId        String
+  arena          Arena            @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  roundNumber    Int
+  judgeQuestion  String?
+  createdAt      DateTime         @default(now())
+  arguments      DebateArgument[]
+}
+
+model DebateArgument {
+  id          String    @id @default(cuid())
+  roundId     String
+  round       DebateRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  team        WinnerTeam // TEAM_A or TEAM_B (reusing WinnerTeam enum logic)
+  content     String    // max 1000 chars
+  submittedAt DateTime  @default(now())
+}
+
+model HallOfFameVote {
+  id        String   @id @default(cuid())
+  arenaId   String
+  arena     Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([arenaId, userId])
+}
+
+// --- Direct Messaging Models ---
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String       // max 1000 chars
+  isDeleted      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+// --- Recommendation Engine Models ---
+
+model GenreAffinity {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  genreId   Int
+  genreName String
+  score     Float    @default(0) // Higher = more interest
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, genreId])
+}
+
+model StudioAffinity {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId   Int
+  studioName String
+  score      Float    @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, studioId])
+}
+
+enum InteractionType {
+  CLICK
+  VIEW_DETAILS
+  RATE
+  ADD_TO_LIST
+}
+
+model UserAnimeInteraction {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  type      InteractionType
+  weight    Float           @default(1.0)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, animeId])
+}
+
+model AnimeRecommendation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId   String
+  score     Float    // Match percentage or internal rank
+  reason    String?  // e.g., "Because you liked Action & Studio Trigger"
+  createdAt DateTime @default(now())
+
+  @@unique([userId, animeId])
+}
+
+// --- Live Watch Party Models ---
+
+enum ProjectorStatus {
+  PLAYING
+  PAUSED
+  BUFFERING
+}
+
+model WatchParty {
+  id          String           @id @default(cuid())
+  code        String           @unique // 6 character room code
+  hostId      String
+  host        User             @relation("WatchPartyHost", fields: [hostId], references: [id])
+  title       String
+  animeId     String
+  animeTitle  String
+  episode     Int              @default(1)
+  status      ProjectorStatus  @default(PAUSED)
+  currentTime Float            @default(0)
+  isPrivate   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  members     WatchPartyMember[]
+}
+
+model WatchPartyMember {
+  id           String     @id @default(cuid())
+  partyId      String
+  party        WatchParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastOnlineAt DateTime   @default(now())
+
+  @@unique([partyId, userId])
+}
