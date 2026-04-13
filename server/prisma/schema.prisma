@@ -86,12 +86,12 @@ model User {
   messagesSent    Message[]
 
   // Recommendation & Watch Party Relations
-  genreAffinities   GenreAffinity[]
-  studioAffinities  StudioAffinity[]
+  tagAffinities     UserTagAffinity[]
   interactions      UserAnimeInteraction[]
-  recommendations   AnimeRecommendation[]
+  recommendationCache RecommendationCache?
   watchPartiesHosted WatchParty[]      @relation("WatchPartyHost")
-  watchPartyMemberships WatchPartyMember[]
+  watchPartyMemberships WatchPartyParticipant[]
+  watchPartyMessages WatchPartyMessage[]
 
   @@index([username])
   @@index([email])
@@ -683,94 +683,108 @@ model Message {
 
 // --- Recommendation Engine Models ---
 
-model GenreAffinity {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  genreId   Int
-  genreName String
-  score     Float    @default(0) // Higher = more interest
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, genreId])
-}
-
-model StudioAffinity {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studioId   Int
-  studioName String
-  score      Float    @default(0)
-  updatedAt  DateTime @updatedAt
-
-  @@unique([userId, studioId])
-}
-
 enum InteractionType {
-  CLICK
-  VIEW_DETAILS
-  RATE
-  ADD_TO_LIST
+  VIEWED_PAGE
+  ADDED_TO_LIST
+  RATED
+  COMPLETED
+  DROPPED
+  SEARCHED
 }
 
 model UserAnimeInteraction {
-  id        String          @id @default(cuid())
-  userId    String
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  animeId   String
-  type      InteractionType
-  weight    Float           @default(1.0)
-  createdAt DateTime        @default(now())
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  animeId         String
+  interactionType InteractionType
+  weight          Float
+  createdAt       DateTime        @default(now())
 
-  @@index([userId, animeId])
+  @@index([userId])
+  @@index([animeId])
 }
 
-model AnimeRecommendation {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  animeId   String
-  score     Float    // Match percentage or internal rank
-  reason    String?  // e.g., "Because you liked Action & Studio Trigger"
-  createdAt DateTime @default(now())
+model AnimeTag {
+  id      String @id @default(cuid())
+  animeId String
+  tag     String // genre, theme, studio, etc.
 
-  @@unique([userId, animeId])
+  @@unique([animeId, tag])
+}
+
+model UserTagAffinity {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag           String
+  affinityScore Float    @default(0)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, tag])
+}
+
+model RecommendationCache {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recommendations Json     // Array of animeIds with scores
+  generatedAt     DateTime @default(now())
 }
 
 // --- Live Watch Party Models ---
 
-enum ProjectorStatus {
-  PLAYING
+enum WatchPartyStatus {
+  WAITING
+  WATCHING
   PAUSED
-  BUFFERING
+  ENDED
+}
+
+enum WatchPartyMessageType {
+  CHAT
+  REACTION
+  SYSTEM
 }
 
 model WatchParty {
-  id          String           @id @default(cuid())
-  code        String           @unique // 6 character room code
-  hostId      String
-  host        User             @relation("WatchPartyHost", fields: [hostId], references: [id])
-  title       String
-  animeId     String
-  animeTitle  String
-  episode     Int              @default(1)
-  status      ProjectorStatus  @default(PAUSED)
-  currentTime Float            @default(0)
-  isPrivate   Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  members     WatchPartyMember[]
+  id               String               @id @default(cuid())
+  code             String               @unique // 6 character room code
+  hostId           String
+  host             User                 @relation("WatchPartyHost", fields: [hostId], references: [id], onDelete: Cascade)
+  animeId          String
+  animeTitle       String
+  animeCover       String
+  episodeNumber    Int?
+  status           WatchPartyStatus     @default(WAITING)
+  isPrivate        Boolean              @default(false)
+  currentTimestamp Float                @default(0)
+  maxParticipants  Int                  @default(10)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  participants     WatchPartyParticipant[]
+  messages         WatchPartyMessage[]
 }
 
-model WatchPartyMember {
-  id           String     @id @default(cuid())
-  partyId      String
-  party        WatchParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lastOnlineAt DateTime   @default(now())
+model WatchPartyParticipant {
+  id      String     @id @default(cuid())
+  partyId String
+  party   WatchParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime   @default(now())
+  isReady  Boolean    @default(false)
 
   @@unique([partyId, userId])
+}
+
+model WatchPartyMessage {
+  id          String               @id @default(cuid())
+  partyId     String
+  party       WatchParty           @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String               // max 300 chars
+  messageType WatchPartyMessageType @default(CHAT)
+  createdAt   DateTime             @default(now())
 }

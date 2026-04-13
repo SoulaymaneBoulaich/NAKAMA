@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import * as recs from '../services/recommendationService.js';
+import * as recs from '../services/recommendationEngine.js';
 // Removed local prisma = new PrismaClient()
 const calculateWeightedScore = (data) => {
     const weights = {
@@ -55,7 +55,7 @@ export const upsertRating = async (req, res) => {
             create: { userId, animeId: String(animeId), ...ratingData, calculatedScore, review }
         });
         // Record interaction for Recommendation Engine
-        recs.recordInteraction(userId, String(animeId), 'RATE').catch(err => console.error('Rating interaction record error:', err));
+        recs.recordInteraction(userId, String(animeId), 'RATED').catch(err => console.error('Rating interaction record error:', err));
         res.status(200).json(rating);
     }
     catch (error) {

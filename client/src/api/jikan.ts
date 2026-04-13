@@ -26,6 +26,16 @@ export const getRecommendations = async () => {
   return data;
 };
 
+export const getPersonalizedRecommendations = async (limit = 20) => {
+  const { data } = await api.get('/api/recommendations/personalized', { params: { limit } });
+  return data;
+};
+
+export const getSimilarAnime = async (animeId: string, limit = 10) => {
+  const { data } = await api.get(`/api/recommendations/similar/${animeId}`, { params: { limit } });
+  return data;
+};
+
 export const searchAnime = async (query: string, limit = 10) => {
 
   const { data } = await api.get('/anime/search', { params: { q: query, limit } });

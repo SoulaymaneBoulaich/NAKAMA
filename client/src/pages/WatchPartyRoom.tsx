@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Pause, Users, MessageSquare, Send, 
-  Settings, Volume2, Maximize, Share2, ChevronRight
+  Settings, Volume2, Maximize, ChevronRight
 } from 'lucide-react';
 import socket from '../api/socket';
 import api from '../api/axios';
@@ -16,16 +16,17 @@ const WatchPartyRoom: React.FC = () => {
     const navigate = useNavigate();
     
     // Room State
-    const [party, setParty] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]);
+    const [participants, setParticipants] = useState<any[]>([]);
     const [chat, setChat] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [party, setParty] = useState<any>(null);
     const [message, setMessage] = useState('');
+    const [isReady, setIsReady] = useState(false);
     
     // Player State
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration] = useState(100);
+    const [status, setStatus] = useState<any>('WAITING');
+    const [currentTimestamp, setCurrentTimestamp] = useState(0);
+    const [duration] = useState(1440); // 24 mins in seconds
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -37,28 +38,38 @@ const WatchPartyRoom: React.FC = () => {
             try {
                 const { data } = await api.get(`/api/watchparty/${code}`);
                 setParty(data);
+                if (data.messages) setChat(data.messages);
                 
                 // Socket connection
                 socket.connect();
                 socket.emit('wp:join', { code, userId: user.id });
 
-                socket.on('wp:member-joined', ({ members, partyState }) => {
-                    setMembers(members);
-                    setIsPlaying(partyState.status === 'PLAYING');
-                    setCurrentTime(partyState.currentTime);
+                socket.on('wp:state-update', ({ participants, status, currentTimestamp }) => {
+                    if (participants) setParticipants(participants);
+                    setStatus(status);
+                    setCurrentTimestamp(currentTimestamp);
                 });
 
-                socket.on('wp:state-update', ({ status, currentTime }) => {
-                    setIsPlaying(status === 'PLAYING');
-                    setCurrentTime(currentTime);
+                socket.on('wp:participants-update', (updatedParticipants) => {
+                    setParticipants(updatedParticipants);
                 });
 
                 socket.on('wp:chat-message', (payload) => {
                     setChat(prev => [...prev, payload]);
                 });
 
+                socket.on('wp:reaction-broadcast', ({ userId, reaction }) => {
+                    // Logic to show floating reaction or something
+                    console.log(`Reaction from ${userId}: ${reaction}`);
+                });
+
                 socket.on('wp:member-left', ({ userId }) => {
-                    setMembers(prev => prev.filter(m => m.userId !== userId));
+                    setParticipants(prev => prev.filter(p => p.userId !== userId));
+                });
+
+                socket.on('wp:error', ({ message }) => {
+                    alert(message);
+                    navigate('/watchparties');
                 });
 
                 setLoading(false);
@@ -83,21 +94,31 @@ const WatchPartyRoom: React.FC = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chat]);
 
+    const handleToggleReady = () => {
+        const nextReady = !isReady;
+        setIsReady(nextReady);
+        socket.emit('wp:ready', { code, userId: user?.id, isReady: nextReady });
+    };
+
     const handleTogglePlay = () => {
-        const nextState = !isPlaying;
-        setIsPlaying(nextState);
+        const nextStatus = status === 'WATCHING' ? 'PAUSED' : 'WATCHING';
+        setStatus(nextStatus);
         socket.emit('wp:sync', { 
             code, 
-            status: nextState ? 'PLAYING' : 'PAUSED', 
-            currentTime,
-            episode: party?.episode || 1
+            status: nextStatus, 
+            currentTimestamp,
+            episodeNumber: party?.episodeNumber
         });
+    };
+
+    const handleSendReaction = (reaction: string) => {
+        socket.emit('wp:reaction', { code, userId: user?.id, reaction });
     };
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim()) return;
-        socket.emit('wp:chat', { code, message, user: { username: user?.username, avatar: user?.avatar } });
+        socket.emit('wp:chat', { code, userId: user?.id, content: message });
         setMessage('');
     };
 
@@ -116,42 +137,73 @@ const WatchPartyRoom: React.FC = () => {
                             <ChevronRight className="rotate-180" />
                          </button>
                          <div>
-                            <span className="text-[10px] font-black italic uppercase tracking-[0.4em] text-[var(--accent-primary)]">Sync Phase {party?.episode}</span>
+                            <span className="text-[10px] font-black italic uppercase tracking-[0.4em] text-[var(--accent-primary)]">Sync Phase {party?.episodeNumber}</span>
                             <h1 className="text-2xl font-black uppercase tracking-tight italic">{party?.animeTitle}</h1>
                          </div>
                     </div>
                     
                     <div className="flex items-center gap-4">
+                         <button 
+                            onClick={handleToggleReady}
+                            className={`px-4 py-2 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${isReady ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-white/5 border-white/10 text-white/40'}`}
+                         >
+                            {isReady ? 'READY FOR SIGNAL' : 'PREPARING'}
+                         </button>
                          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full">
                              <Users size={14} className="text-[var(--accent-primary)]" />
-                             <span className="text-xs font-black tracking-widest uppercase">{members.length} PRESENCE</span>
+                             <span className="text-xs font-black tracking-widest uppercase">{participants.length} PRESENCE</span>
                          </div>
-                         <button className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                            <Share2 size={18} />
-                         </button>
                     </div>
                 </div>
 
-                {/* The Canvas (Placeholder for Video) */}
+                {/* The Canvas (Metadata Sync Panel) */}
                 <div className="flex-1 bg-[#050505] flex items-center justify-center relative">
                     <img 
-                      src="https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=2000&auto=format&fit=crop" 
+                      src={party?.animeCover || "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=2000&auto=format&fit=crop"} 
                       className="w-full h-full object-cover opacity-20 grayscale"
                       alt=""
                     />
                     <motion.div 
-                      animate={{ scale: isPlaying ? [1, 1.1, 1] : 1 }}
+                      animate={{ scale: status === 'WATCHING' ? [1, 1.05, 1] : 1 }}
                       transition={{ repeat: Infinity, duration: 4 }}
-                      className="absolute flex flex-col items-center gap-6"
+                      className="absolute flex flex-col items-center gap-8 text-center px-10"
                     >
-                         <div className="w-32 h-32 rounded-full bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 flex items-center justify-center">
-                            <Play size={40} className="text-[var(--accent-primary)] animate-pulse" />
+                         <div className="relative">
+                             <img 
+                                src={party?.animeCover} 
+                                className={`w-64 h-96 object-cover rounded-3xl shadow-2xl border transition-all duration-700 ${status === 'WATCHING' ? 'border-[var(--accent-primary)] scale-105 shadow-[var(--accent-primary)]/20' : 'border-white/10 grayscale'}`} 
+                                alt="" 
+                             />
+                             {status === 'WATCHING' && (
+                               <div className="absolute top-4 right-4 bg-[var(--accent-primary)] text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce">
+                                   Streaming
+                               </div>
+                             )}
                          </div>
-                         <div className="text-center space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20">Awaiting Signal</p>
-                            <h2 className="text-xl font-medium tracking-widest uppercase opacity-40 italic">Nakama Projector Active</h2>
+                         <div className="space-y-4">
+                            <div className="flex items-center justify-center gap-3">
+                                <div className={`w-2 h-2 rounded-full ${status === 'WATCHING' ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`} />
+                                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40">{status}</p>
+                            </div>
+                            <h2 className="text-4xl font-black tracking-tighter uppercase italic">{party?.animeTitle}</h2>
+                            <p className="text-white/20 text-xs font-bold font-mono tracking-widest">
+                                SYNC TARGET: {Math.floor(currentTimestamp / 60)}:{(currentTimestamp % 60).toString().padStart(2, '0')} / 24:00
+                            </p>
                          </div>
                     </motion.div>
+
+                    {/* Quick Reactions Overlay */}
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2 flex flex-col gap-4">
+                        {['🔥', '❤️', '😂', '😮', '😢'].map(emoji => (
+                            <button 
+                                key={emoji}
+                                onClick={() => handleSendReaction(emoji)}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-xl hover:scale-125 transition-all"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Control Bar Overlay */}
@@ -162,7 +214,7 @@ const WatchPartyRoom: React.FC = () => {
                         <div className="relative h-1 w-full bg-white/10 rounded-full cursor-pointer overflow-hidden group/bar">
                             <div 
                               className="absolute inset-y-0 left-0 bg-[var(--accent-primary)] transition-all duration-300"
-                              style={{ width: `${(currentTime / duration) * 100}%` }}
+                              style={{ width: `${(currentTimestamp / duration) * 100}%` }}
                             />
                             <div className="absolute inset-y-0 left-0 w-full hover:bg-white/5 transition-opacity" />
                         </div>
@@ -173,7 +225,7 @@ const WatchPartyRoom: React.FC = () => {
                                   onClick={handleTogglePlay}
                                   className="w-14 h-14 flex items-center justify-center rounded-full bg-white text-black hover:scale-110 active:scale-95 transition-all"
                                 >
-                                    {isPlaying ? <Pause fill="black" /> : <Play fill="black" />}
+                                    {status === 'WATCHING' ? <Pause fill="black" /> : <Play fill="black" />}
                                 </button>
 
                                 <div className="flex items-center gap-4">
@@ -184,7 +236,7 @@ const WatchPartyRoom: React.FC = () => {
                                 </div>
 
                                 <div className="text-xs font-black tracking-widest text-white/40">
-                                    {Math.floor(currentTime / 60)}:{(currentTime % 60).toString().padStart(2, '0')} / 24:00
+                                    {Math.floor(currentTimestamp / 60)}:{(currentTimestamp % 60).toString().padStart(2, '0')} / 24:00
                                 </div>
                             </div>
 
@@ -214,20 +266,22 @@ const WatchPartyRoom: React.FC = () => {
                     >
                         {/* Participants Section */}
                         <div className="p-8 border-b border-white/5 space-y-6">
-                            <div className="flex items-center justify-between">
+                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] italic text-white/40">The Collective</h3>
                                 <div className="flex -space-x-2">
-                                     {members.slice(0, 5).map((m) => (
-                                         <img 
-                                           key={m.id} 
-                                           src={m.user.avatar || '/default-avatar.png'} 
-                                           className="w-6 h-6 rounded-full border-2 border-[#0A0A0A] object-cover"
-                                           alt="" 
-                                         />
+                                     {participants.slice(0, 5).map((p) => (
+                                         <div key={p.id} className="relative">
+                                             <img 
+                                               src={p.user.avatar || '/default-avatar.png'} 
+                                               className={`w-8 h-8 rounded-full border-2 border-[#0A0A0A] object-cover ${p.isReady ? 'ring-2 ring-green-500' : ''}`}
+                                               alt="" 
+                                             />
+                                             {p.isReady && <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-black" />}
+                                         </div>
                                      ))}
-                                     {members.length > 5 && (
-                                         <div className="w-6 h-6 rounded-full bg-white/5 border-2 border-[#0A0A0A] flex items-center justify-center text-[8px] font-black">
-                                             +{members.length - 5}
+                                     {participants.length > 5 && (
+                                         <div className="w-8 h-8 rounded-full bg-white/5 border-2 border-[#0A0A0A] flex items-center justify-center text-[8px] font-black">
+                                             +{participants.length - 5}
                                          </div>
                                      )}
                                 </div>
@@ -236,16 +290,20 @@ const WatchPartyRoom: React.FC = () => {
 
                         {/* Chat Messages */}
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
-                            {chat.map((msg) => (
-                                <div key={msg.id} className="group animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            {chat.map((msg, i) => (
+                                <div key={msg.id || i} className="group animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <div className="flex items-start gap-4">
                                         <img src={msg.user.avatar || '/default-avatar.png'} className="w-8 h-8 rounded-full border border-white/10 mt-1" alt="" />
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-[10px] font-black tracking-widest uppercase text-white/40 italic">{msg.user.username}</span>
-                                                <span className="text-[8px] font-bold text-white/10 uppercase">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-[8px] font-bold text-white/10 uppercase">
+                                                    {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
                                             </div>
-                                            <p className="text-sm font-medium leading-relaxed text-white/80">{msg.message}</p>
+                                            <p className={`text-sm font-medium leading-relaxed ${msg.messageType === 'SYSTEM' ? 'text-[var(--accent-primary)] italic' : 'text-white/80'}`}>
+                                                {msg.content}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

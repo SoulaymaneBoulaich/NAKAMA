@@ -16,10 +16,12 @@ const WatchPartyHub: React.FC = () => {
     
     // Create Form State
     const [newParty, setNewParty] = useState({
-        title: '',
         animeId: '',
         animeTitle: '',
-        isPrivate: false
+        animeCover: '',
+        episodeNumber: '',
+        isPrivate: false,
+        maxParticipants: 10
     });
 
     useEffect(() => {
@@ -127,7 +129,7 @@ const WatchPartyHub: React.FC = () => {
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-full">
                                                 <Users size={12} className="text-[var(--accent-primary)]" />
-                                                <span className="text-[10px] font-black">{party._count.members}</span>
+                                                <span className="text-[10px] font-black">{party._count.participants}/{party.maxParticipants}</span>
                                             </div>
                                             {party.isPrivate && (
                                               <div className="w-8 h-8 flex items-center justify-center bg-black/60 backdrop-blur-xl border border-white/10 rounded-full">
@@ -138,7 +140,11 @@ const WatchPartyHub: React.FC = () => {
 
                                         <div className="space-y-3">
                                             <span className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest italic">{party.animeTitle}</span>
-                                            <h3 className="text-xl font-black uppercase leading-tight group-hover:text-[var(--accent-primary)] transition-colors">{party.title}</h3>
+                                            <h3 className="text-xl font-black uppercase leading-tight group-hover:text-[var(--accent-primary)] transition-colors">{party.animeTitle} Room</h3>
+                                            
+                                            {party.episodeNumber && (
+                                              <span className="block text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Episode {party.episodeNumber}</span>
+                                            )}
                                             
                                             <div className="flex items-center gap-3 pt-4 border-t border-white/5">
                                                 <img src={party.host.avatar || '/default-avatar.png'} className="w-6 h-6 rounded-full border border-white/10" alt="" />
@@ -173,16 +179,28 @@ const WatchPartyHub: React.FC = () => {
                          >
                              <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-8">Invoke <span className="text-[var(--accent-primary)]">Room</span></h2>
                              <form onSubmit={handleCreateParty} className="space-y-8">
-                                 <div className="space-y-2">
-                                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 ml-2">Party Title</label>
-                                     <input 
-                                        required
-                                        type="text"
-                                        placeholder="EPIC WATCH PARTY..."
-                                        value={newParty.title}
-                                        onChange={(e) => setNewParty({...newParty, title: e.target.value})}
-                                        className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm font-bold focus:outline-none focus:border-[var(--accent-primary)] transition-all"
-                                     />
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <div className="space-y-2">
+                                         <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 ml-2">Anime ID (MAL)</label>
+                                         <input 
+                                            required
+                                            type="text"
+                                            placeholder="52991"
+                                            value={newParty.animeId}
+                                            onChange={(e) => setNewParty({...newParty, animeId: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm font-bold focus:outline-none focus:border-[var(--accent-primary)] transition-all"
+                                         />
+                                     </div>
+                                     <div className="space-y-2">
+                                         <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 ml-2">Episode (Opt)</label>
+                                         <input 
+                                            type="number"
+                                            placeholder="1"
+                                            value={newParty.episodeNumber}
+                                            onChange={(e) => setNewParty({...newParty, episodeNumber: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm font-bold focus:outline-none focus:border-[var(--accent-primary)] transition-all"
+                                         />
+                                     </div>
                                  </div>
 
                                  <div className="space-y-2">
@@ -190,23 +208,47 @@ const WatchPartyHub: React.FC = () => {
                                      <input 
                                         required
                                         type="text"
-                                        placeholder="MANUAL ANIME NAME..."
+                                        placeholder="ANIME TITLE..."
                                         value={newParty.animeTitle}
-                                        onChange={(e) => setNewParty({...newParty, animeTitle: e.target.value, animeId: 'manual'})}
+                                        onChange={(e) => setNewParty({...newParty, animeTitle: e.target.value})}
                                         className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm font-bold focus:outline-none focus:border-[var(--accent-primary)] transition-all"
                                      />
-                                     <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mt-2 ml-2">Search integration coming soon. For now, name it.</p>
                                  </div>
 
-                                 <div className="flex items-center gap-4">
+                                 <div className="space-y-2">
+                                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 ml-2">Cover URL</label>
                                      <input 
-                                        type="checkbox"
-                                        id="private"
-                                        checked={newParty.isPrivate}
-                                        onChange={(e) => setNewParty({...newParty, isPrivate: e.target.checked})}
-                                        className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--accent-primary)] focus:ring-0"
+                                        required
+                                        type="text"
+                                        placeholder="https://..."
+                                        value={newParty.animeCover}
+                                        onChange={(e) => setNewParty({...newParty, animeCover: e.target.value})}
+                                        className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm font-bold focus:outline-none focus:border-[var(--accent-primary)] transition-all"
                                      />
-                                     <label htmlFor="private" className="text-xs font-black uppercase tracking-widest cursor-pointer select-none">Private Manifestation (Invite Only)</label>
+                                 </div>
+
+                                 <div className="flex items-center justify-between gap-6">
+                                     <div className="flex items-center gap-4">
+                                         <input 
+                                            type="checkbox"
+                                            id="private"
+                                            checked={newParty.isPrivate}
+                                            onChange={(e) => setNewParty({...newParty, isPrivate: e.target.checked})}
+                                            className="w-5 h-5 rounded border-white/10 bg-white/5 text-[var(--accent-primary)] focus:ring-0"
+                                         />
+                                         <label htmlFor="private" className="text-xs font-black uppercase tracking-widest cursor-pointer select-none">Private</label>
+                                     </div>
+
+                                     <div className="flex items-center gap-3">
+                                         <label className="text-[10px] font-black uppercase tracking-widest text-white/20">Limit</label>
+                                         <select 
+                                            value={newParty.maxParticipants}
+                                            onChange={(e) => setNewParty({...newParty, maxParticipants: Number(e.target.value)})}
+                                            className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none"
+                                         >
+                                             {[2, 5, 10, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
+                                         </select>
+                                     </div>
                                  </div>
 
                                  <div className="pt-4 flex gap-4">

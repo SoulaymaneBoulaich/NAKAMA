@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
-import * as recs from '../services/recommendationService.js';
+import * as recs from '../services/recommendationEngine.js';
 
 // Removed local prisma = new PrismaClient()
 
@@ -68,7 +68,7 @@ export const upsertRating = async (req: AuthenticatedRequest, res: Response) => 
     });
 
     // Record interaction for Recommendation Engine
-    recs.recordInteraction(userId, String(animeId), 'RATE').catch(err => 
+    recs.recordInteraction(userId, String(animeId), 'RATED').catch(err => 
       console.error('Rating interaction record error:', err)
     );
 
