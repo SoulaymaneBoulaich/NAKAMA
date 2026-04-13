@@ -1,0 +1,229 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - React 19
+  - Vite
+  - React Router
+  - TanStack React Query
+  - Tailwind CSS
+  - Socket.IO Client
+routes:
+  - path: /
+    file: src/App.tsx
+    auth_required: false
+    description: Landing page
+  - path: /signup
+    file: src/pages/Signup.tsx
+    auth_required: false
+    description: User signup page
+  - path: /login
+    file: src/pages/Login.tsx
+    auth_required: false
+    description: User login page
+  - path: /reset-password
+    file: src/pages/ResetPassword.tsx
+    auth_required: false
+    description: Password reset page
+  - path: /home
+    file: src/pages/Home.tsx
+    auth_required: false
+    description: Main home dashboard
+  - path: /explore
+    file: src/pages/Explore.tsx
+    auth_required: false
+    description: Explore anime content
+  - path: /feed
+    file: src/pages/Feed.tsx
+    auth_required: true
+    description: Social feed for authenticated users
+  - path: /profile/:username
+    file: src/pages/ProfilePage.tsx
+    auth_required: true
+    description: User profile view
+  - path: /communities
+    file: src/pages/CommunitiesBrowse.tsx
+    auth_required: true
+    description: Community discovery page
+  - path: /communities/:slug
+    file: src/pages/CommunityDetail.tsx
+    auth_required: true
+    description: Community details and posts
+  - path: /mylist
+    file: src/pages/MyList.tsx
+    auth_required: true
+    description: Personal anime list
+  - path: /settings
+    file: src/pages/SettingsPage.tsx
+    auth_required: true
+    description: Account settings page
+  - path: /playlists
+    file: src/pages/playlists/MyPlaylists.tsx
+    auth_required: true
+    description: User playlists listing
+  - path: /playlists/:id
+    file: src/pages/playlists/PlaylistDetail.tsx
+    auth_required: true
+    description: Playlist detail page
+  - path: /chronicles
+    file: src/pages/chronicles/ChroniclesExplore.tsx
+    auth_required: true
+    description: Browse user chronicles
+  - path: /chronicles/write
+    file: src/pages/chronicles/MyChronicles.tsx
+    auth_required: true
+    description: Chronicle management page
+  - path: /chronicles/:id
+    file: src/pages/chronicles/ChronicleDetail.tsx
+    auth_required: true
+    description: Chronicle detail page
+  - path: /chronicles/:id/manage
+    file: src/pages/chronicles/ChronicleManage.tsx
+    auth_required: true
+    description: Chronicle edit/manage page
+  - path: /chronicles/:id/chapters/:chapterId
+    file: src/pages/chronicles/ChapterReader.tsx
+    auth_required: true
+    description: Chronicle chapter reader
+  - path: /chronicles/:id/chapters/:chapterId/edit
+    file: src/pages/chronicles/ChapterEditor.tsx
+    auth_required: true
+    description: Chronicle chapter editor
+  - path: /anijudge
+    file: src/pages/anijudge/AniJudgeHome.tsx
+    auth_required: true
+    description: AniJudge game home
+  - path: /anijudge/arena/:code
+    file: src/pages/anijudge/ArenaPage.tsx
+    auth_required: true
+    description: AniJudge arena match page
+  - path: /messages
+    file: src/pages/messages/MessagesPage.tsx
+    auth_required: true
+    description: Messaging inbox
+  - path: /messages/:id
+    file: src/pages/messages/MessagesPage.tsx
+    auth_required: true
+    description: Messaging thread view
+  - path: /watchparty
+    file: src/pages/WatchPartyHub.tsx
+    auth_required: true
+    description: Watch party lobby
+  - path: /watchparty/:code
+    file: src/pages/WatchPartyRoom.tsx
+    auth_required: true
+    description: Live watch party room
+  - path: /search
+    file: src/pages/SearchResults.tsx
+    auth_required: true
+    description: Search results page
+  - path: /news/article
+    file: src/pages/NewsArticlePage.tsx
+    auth_required: false
+    description: News article page
+  - path: /anime/:id
+    file: src/pages/AnimeDetail.tsx
+    auth_required: false
+    description: Anime detail page
+features:
+  - name: Authentication
+    description: Users can sign up, log in, and reset passwords with protected-route gating.
+    files:
+      - src/pages/Login.tsx
+      - src/pages/Signup.tsx
+      - src/pages/ResetPassword.tsx
+      - src/context/AuthContext.tsx
+      - src/components/ProtectedRoute.tsx
+    entry_route: /login
+    user_interactions:
+      - Fill email and password fields
+      - Submit login or signup form
+      - Navigate to protected pages after authentication
+      - Request password reset from reset page
+    api_calls:
+      - method: POST
+        endpoint: /auth/login
+      - method: POST
+        endpoint: /auth/register
+      - method: POST
+        endpoint: /auth/reset-password
+    auth_required: false
+  - name: Social Feed and Posting
+    description: Authenticated users can browse feed, create posts, and interact with content.
+    files:
+      - src/pages/Feed.tsx
+      - src/components/social/Feed.tsx
+      - src/components/social/CreatePost.tsx
+      - src/components/social/PostCard.tsx
+    entry_route: /feed
+    user_interactions:
+      - Open feed and scroll posts
+      - Create a new post from post composer
+      - Like or comment on existing posts
+      - Filter tabs in feed views
+    api_calls:
+      - method: GET
+        endpoint: /posts
+      - method: POST
+        endpoint: /posts
+      - method: POST
+        endpoint: /posts/:id/like
+    auth_required: true
+  - name: Explore and Anime Discovery
+    description: Users can discover anime content and open anime detail pages.
+    files:
+      - src/pages/Explore.tsx
+      - src/components/explore/ExploreHero.tsx
+      - src/pages/AnimeDetail.tsx
+      - src/api/jikan.ts
+    entry_route: /explore
+    user_interactions:
+      - Browse curated anime sections
+      - Open anime detail pages from cards
+      - Search/filter discoverable content
+    api_calls:
+      - method: GET
+        endpoint: https://api.jikan.moe/*
+    auth_required: false
+  - name: Communities
+    description: Authenticated users can browse communities and view community-specific content.
+    files:
+      - src/pages/CommunitiesBrowse.tsx
+      - src/pages/CommunityDetail.tsx
+      - src/components/communities/CreateCommunityModal.tsx
+    entry_route: /communities
+    user_interactions:
+      - Browse available communities
+      - Open a community detail page
+      - Create a new community from modal flow
+    api_calls:
+      - method: GET
+        endpoint: /communities
+      - method: POST
+        endpoint: /communities
+    auth_required: true
+  - name: Realtime Messaging and Watch Party
+    description: Users can chat and join shared watch-party rooms with realtime updates.
+    files:
+      - src/pages/messages/MessagesPage.tsx
+      - src/pages/WatchPartyHub.tsx
+      - src/pages/WatchPartyRoom.tsx
+      - src/api/socket.ts
+      - src/hooks/useSocket.ts
+    entry_route: /messages
+    user_interactions:
+      - Open conversations and send messages
+      - Create or join a watch party room
+      - Receive realtime updates over websocket connections
+    api_calls:
+      - method: GET
+        endpoint: /messages
+      - method: POST
+        endpoint: /messages
+      - method: WS
+        endpoint: /socket.io
+    auth_required: true
+known_limitations:
+  - issue: Local development server is currently used for test automation.
+    location: client runtime (Vite dev server)
+    impact: TestSprite automatically limits test count for stability in development mode.

@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5174",
+  "executionArgs": {
+    "projectName": "client",
+    "projectPath": "C:\\Users\\pc\\Documents\\NAKAMA\\client",
+    "testIds": [],
+    "additionalInstruction": "Use the currently running production preview server for execution. Prefer stable public-route checks when auth credentials are unavailable.",
+    "serverMode": "production",
+    "envs": {
+      "API_KEY": "sk-user-Jxz8IIFjATTqtayi8ZJlbjsS7-3vxWVnxZwG8hMrYBCzaC_CyafxnJVJ1imnouxQTxGJsY0tGE1QPtdgpF8ozj2vexDgADGtlS7I5zdz9AjNajIWgVYZ8a6ZAonoUR-FkLA"
+    }
+  },
+  "serverPort": 64067,
+  "proxy": "http://97099e8b-4d02-47e6-9107-252948aa07ab:yqMcXZ6MimJgdkizSObekk1YkCsRJeB2@tun.testsprite.com:8080"
+}
