@@ -7,7 +7,7 @@ const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 
 export const createParty = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { title, animeId, animeTitle, isPrivate } = req.body;
+    const { animeId, animeTitle, animeCover, isPrivate, maxParticipants, episodeNumber } = req.body;
     const hostId = req.userId!;
 
     const code = nanoid();
@@ -16,10 +16,22 @@ export const createParty = async (req: AuthenticatedRequest, res: Response) => {
       data: {
         code,
         hostId,
-        title,
         animeId: String(animeId),
         animeTitle,
-        isPrivate: isPrivate || false
+        animeCover,
+        isPrivate: isPrivate || false,
+        maxParticipants: Number(maxParticipants) || 10,
+        episodeNumber: episodeNumber ? Number(episodeNumber) : null,
+        status: 'WAITING'
+      }
+    });
+
+    // Automatically join host as a participant
+    await prisma.watchPartyParticipant.create({
+      data: {
+        partyId: party.id,
+        userId: hostId,
+        isReady: true
       }
     });
 
@@ -36,7 +48,7 @@ export const getActiveParties = async (req: AuthenticatedRequest, res: Response)
       where: { isPrivate: false },
       include: {
         host: { select: { username: true, avatar: true } },
-        _count: { select: { members: true } }
+        _count: { select: { participants: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -55,7 +67,18 @@ export const getPartyByCode = async (req: AuthenticatedRequest, res: Response) =
 
       include: {
         host: { select: { username: true, avatar: true, id: true } },
-        members: { include: { user: { select: { username: true, avatar: true } } } }
+        participants: { 
+          include: { 
+            user: { select: { username: true, avatar: true, id: true } } 
+          } 
+        },
+        messages: {
+          include: {
+            user: { select: { username: true, avatar: true } }
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 50
+        }
       }
     });
 
@@ -85,9 +108,9 @@ export const updatePartyState = async (req: AuthenticatedRequest, res: Response)
     const updated = await prisma.watchParty.update({
       where: { code: String(code) },
       data: { 
-        status: status as any, // Cast to match Prisma enum if needed
-        currentTime: Number(currentTime), 
-        episode: Number(episode) 
+        status: status as any,
+        currentTimestamp: Number(currentTime), 
+        episodeNumber: episode ? Number(episode) : undefined
       }
     });
 

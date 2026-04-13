@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
+import * as recs from '../services/recommendationEngine.js';
 
 // Removed local prisma = new PrismaClient()
 
@@ -34,6 +35,15 @@ export const createEntry = async (req: AuthenticatedRequest, res: Response) => {
       create: { userId, animeId: String(animeId), status: status as any, episodeProgress }
     });
 
+    // Record interaction
+    if (status === 'COMPLETED') {
+      recs.recordInteraction(userId, String(animeId), 'COMPLETED').catch(console.error);
+    } else if (status === 'DROPPED') {
+      recs.recordInteraction(userId, String(animeId), 'DROPPED').catch(console.error);
+    } else {
+      recs.recordInteraction(userId, String(animeId), 'ADDED_TO_LIST').catch(console.error);
+    }
+
     res.status(201).json(entry);
   } catch (error) {
     res.status(500).json({ message: 'Error creating entry' });
@@ -63,6 +73,13 @@ export const updateEntry = async (req: AuthenticatedRequest, res: Response) => {
       where: { id: String(id) },
       data: updateData
     });
+
+    // Record interaction if status changed
+    if (status === 'COMPLETED') {
+      recs.recordInteraction(userId, updatedEntry.animeId, 'COMPLETED').catch(console.error);
+    } else if (status === 'DROPPED') {
+      recs.recordInteraction(userId, updatedEntry.animeId, 'DROPPED').catch(console.error);
+    }
 
     res.status(200).json(updatedEntry);
   } catch (error) {

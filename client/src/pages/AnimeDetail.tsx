@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { X, Plus, Edit3, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ export const AnimeDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [userEntry, setUserEntry] = useState<any>(null);
+  const [similarAnime, setSimilarAnime] = useState<any[]>([]);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -32,6 +33,15 @@ export const AnimeDetailPage: React.FC = () => {
         setUserEntry(entry);
       } catch (e) {
         console.warn('Could not fetch user list status');
+      }
+
+      // Fetch similar anime
+      try {
+        const { getSimilarAnime } = await import('../api/jikan');
+        const similar = await getSimilarAnime(String(id), 6);
+        setSimilarAnime(similar);
+      } catch (e) {
+        console.warn('Could not fetch similar anime');
       }
     } catch (err: any) {
       console.error('Error fetching anime details:', err);
@@ -191,6 +201,26 @@ export const AnimeDetailPage: React.FC = () => {
                   <Plus size={18} /> Add to My List
                 </button>
               )}
+
+              <button 
+                onClick={async () => {
+                  try {
+                    const { data: wp } = await api.post('/api/watchparty', {
+                        animeId: String(id),
+                        animeTitle: data.title,
+                        animeCover: data.images.jpg.large_image_url,
+                        isPrivate: false,
+                        maxParticipants: 10
+                    });
+                    navigate(`/watchparty/${wp.code}`);
+                  } catch (e) {
+                    alert('Failed to invoke watch party');
+                  }
+                }}
+                className="flex items-center gap-3 px-8 py-4 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/20 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
+              >
+                Invoke Party
+              </button>
             </div>
           </motion.div>
 
@@ -222,6 +252,43 @@ export const AnimeDetailPage: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Similar Signals Section */}
+      {similarAnime.length > 0 && (
+        <div className="relative z-20 pb-40">
+           <div className="container mx-auto px-12">
+              <div className="flex flex-col gap-2 mb-12">
+                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--accent-primary)] italic">Neural Correlation</span>
+                 <h2 className="text-4xl font-black uppercase italic tracking-tighter">Similar <span className="text-white/20">Signals</span></h2>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                 {similarAnime.map((anime: any) => (
+                    <Link 
+                      key={anime.mal_id} 
+                      to={`/anime/${anime.mal_id}`}
+                      className="group block space-y-4"
+                    >
+                       <div className="aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-white/5 relative">
+                          <img 
+                            src={anime.images.jpg.large_image_url} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" 
+                            alt={anime.title} 
+                          />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40 truncate group-hover:text-white transition-colors">{anime.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <div className="w-1 h-1 rounded-full bg-[var(--accent-primary)]" />
+                             <span className="text-[8px] font-bold text-white/20 uppercase">{anime.type}</span>
+                          </div>
+                       </div>
+                    </Link>
+                 ))}
+              </div>
+           </div>
+        </div>
+      )}
 
 
       {/* Floating Interaction (Add to List / Info) */}

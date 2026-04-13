@@ -21,8 +21,9 @@ import anishotsRoutes from './routes/anishots.js';
 import uploadRoutes from './routes/upload.js';
 import anijudgeRoutes from './routes/anijudge.js';
 import messageRoutes from './routes/messages.js';
+import recommendationsRoutes from './routes/recommendations.js';
 import watchPartyRoutes from './routes/watchPartyRoutes.js';
-import * as recs from './services/recommendationService.js';
+import * as recs from './services/recommendationEngine.js';
 import { prisma } from './lib/prisma.js';
 import { authenticateToken } from './middleware/auth.js';
 import cron from 'node-cron';
@@ -75,16 +76,32 @@ cron.schedule('0 * * * *', async () => {
 });
 
 // Recommendation Refresh Job (runs at 3 AM daily)
+// Batch process up to 50 users to stay within Jikan limits
 cron.schedule('0 3 * * *', async () => {
   try {
-    console.log('[Job] Refreshing all user recommendations...');
-    const users = await prisma.user.findMany({ select: { id: true } });
-    for (const user of users) {
+    console.log('[Job] Starting batch recommendation refresh...');
+    // Only refresh users who haven't had a refresh in 24h, max 50
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const usersToRefresh = await prisma.user.findMany({
+      where: {
+        OR: [
+          { recommendationCache: { is: null } },
+          { recommendationCache: { generatedAt: { lt: yesterday } } }
+        ]
+      },
+      take: 50,
+      select: { id: true }
+    });
+
+    for (const user of usersToRefresh) {
+      console.log(`[Job] Refreshing recs for user ${user.id}...`);
       await recs.generateRecommendations(user.id).catch(err => 
         console.error(`Error generating recs for ${user.id}:`, err)
       );
+      // Wait between users to avoid API pressure
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    console.log('[Job] Recommendation refresh complete.');
+    console.log(`[Job] Batch recommendation refresh complete (${usersToRefresh.length} users).`);
   } catch (error) {
     console.error('[Job] Error in recommendation job:', error);
   }
@@ -123,6 +140,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/anijudge', authenticateToken, anijudgeRoutes);
 app.use('/api/messages', authenticateToken, messageRoutes);
 app.use('/api/watchparty', authenticateToken, watchPartyRoutes);
+app.use('/api/recommendations', authenticateToken, recommendationsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

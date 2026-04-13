@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type SettingsTab = 'identity' | 'contact' | 'appearance' | 'security' | 'privacy' | 'data';
+type SettingsTab = 'identity' | 'contact' | 'appearance' | 'recommendations' | 'security' | 'privacy' | 'data';
 
 const SettingsPage: React.FC = () => {
   const { user, refreshSession } = useAuth();
@@ -21,6 +21,7 @@ const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recData, setRecData] = useState<any>(null);
 
   // Form States
   const [profileForm, setProfileForm] = useState({
@@ -80,6 +81,35 @@ const SettingsPage: React.FC = () => {
     };
     if (user) fetchFullSettings();
   }, [user]);
+
+  const fetchRecSettings = async () => {
+    try {
+      await api.get('/api/recommendations/personalized?limit=5'); // Just to check if it works
+      const affinityRes = await api.get('/api/recommendations/affinities');
+      setRecData(affinityRes.data);
+    } catch (err) {
+      console.error("Failed to fetch rec settings", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'recommendations' && user) {
+      fetchRecSettings();
+    }
+  }, [activeTab, user]);
+
+  const handleRegenerateCache = async () => {
+    setLoading(true);
+    try {
+      await api.post('/api/recommendations/regenerate');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError("Cache regeneration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +191,7 @@ const SettingsPage: React.FC = () => {
     { id: 'identity', label: 'Identity', icon: UserIcon },
     { id: 'contact', label: 'Contact', icon: Mail },
     { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'recommendations', label: 'Recommendations', icon: CheckCircle }, // Changed icon to checkcircle for now or find better
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'privacy', label: 'Privacy', icon: Shield },
     { id: 'data', label: 'Account & Data', icon: Download },
@@ -498,6 +529,73 @@ const SettingsPage: React.FC = () => {
                   </div>
                 </motion.div>
               )}
+
+              {activeTab === 'recommendations' && (
+                <motion.div
+                  key="recommendations"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-8 lg:p-12 space-y-12"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-black text-white italic uppercase">Neural Alignment</h2>
+                      <p className="text-[var(--text-secondary)] text-sm uppercase font-bold tracking-widest">Personalization frequency</p>
+                    </div>
+                  </div>
+
+                  {/* Cache Status */}
+                  <div className="p-8 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-3xl relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-6">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.5)]" />
+                     </div>
+                     <div className="space-y-6">
+                        <div>
+                          <h3 className="text-xl font-black text-white italic uppercase mb-1">Recommendation Engine</h3>
+                          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Status: Active & Synchronized</p>
+                        </div>
+                        <p className="text-sm text-white/60 leading-relaxed max-w-xl">
+                          The NAKAMA recommendation engine analyzes your interactions, ratings, and search behavior to calculate your unique tag affinities. This data is used to synthesize a personalized "Neural Resonance" feed in your Explore tab.
+                        </p>
+                        <button 
+                          onClick={handleRegenerateCache}
+                          disabled={loading}
+                          className="px-8 py-4 bg-white text-black rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[var(--accent-primary)] hover:text-white transition-all disabled:opacity-50"
+                        >
+                          {loading ? 'Re-aligning...' : 'Regenerate Neural Cache'}
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Tag Affinities */}
+                  <div className="space-y-6">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--accent-primary)]">Your Affinity Matrix</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {recData && recData.length > 0 ? recData.map((affinity: any) => (
+                        <div key={affinity.tag} className="p-4 bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)] rounded-2xl space-y-3">
+                           <div className="flex justify-between items-center">
+                              <span className="text-xs font-black uppercase text-white tracking-widest italic">{affinity.tag}</span>
+                              <span className="text-[10px] font-bold text-[var(--accent-primary)]">{(affinity.affinityScore * 10).toFixed(1)}%</span>
+                           </div>
+                           <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(affinity.affinityScore / 10) * 100}%` }}
+                                className="h-full bg-[var(--accent-primary)]"
+                              />
+                           </div>
+                        </div>
+                      )) : (
+                        <div className="col-span-full py-20 text-center border border-dashed border-white/5 rounded-3xl">
+                           <p className="text-xs font-bold text-white/20 uppercase tracking-[0.2em]">Insufficent data to calculate resonance.</p>
+                           <p className="text-[9px] text-white/10 uppercase font-black mt-2">Start interacting with anime to build your matrix.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
 
               {activeTab === 'security' && (
                 <motion.div

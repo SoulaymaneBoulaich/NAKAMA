@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import * as recs from '../services/recommendationEngine.js';
 // Removed local prisma = new PrismaClient()
 export const getEntries = async (req, res) => {
     try {
@@ -26,6 +27,16 @@ export const createEntry = async (req, res) => {
             update: { status: status, episodeProgress },
             create: { userId, animeId: String(animeId), status: status, episodeProgress }
         });
+        // Record interaction
+        if (status === 'COMPLETED') {
+            recs.recordInteraction(userId, String(animeId), 'COMPLETED').catch(console.error);
+        }
+        else if (status === 'DROPPED') {
+            recs.recordInteraction(userId, String(animeId), 'DROPPED').catch(console.error);
+        }
+        else {
+            recs.recordInteraction(userId, String(animeId), 'ADDED_TO_LIST').catch(console.error);
+        }
         res.status(201).json(entry);
     }
     catch (error) {
@@ -58,6 +69,13 @@ export const updateEntry = async (req, res) => {
             where: { id: String(id) },
             data: updateData
         });
+        // Record interaction if status changed
+        if (status === 'COMPLETED') {
+            recs.recordInteraction(userId, updatedEntry.animeId, 'COMPLETED').catch(console.error);
+        }
+        else if (status === 'DROPPED') {
+            recs.recordInteraction(userId, updatedEntry.animeId, 'DROPPED').catch(console.error);
+        }
         res.status(200).json(updatedEntry);
     }
     catch (error) {

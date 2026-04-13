@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getTopAnime, getSeasonalAnime, getGenres, getRecommendations } from '../api/jikan';
+import { getTopAnime, getSeasonalAnime, getGenres, getPersonalizedRecommendations } from '../api/jikan';
 import { ExploreHero } from '../components/explore/ExploreHero';
 import { StudioMatrix } from '../components/explore/StudioMatrix';
 import { GenreLattice } from '../components/explore/GenreLattice';
@@ -49,10 +49,16 @@ const Explore: React.FC = () => {
         setUpcomingAnime(deduplicateAnime(upcoming));
         setGenres(genreList.slice(0, 24)); 
         
-        // Fetch recommendations if user is logged in
+        // Fetch personalized recommendations if user is logged in
         if (user) {
-          const recs = await getRecommendations().catch(() => []);
-          setRecommendedAnime(deduplicateAnime(recs));
+          try {
+            const prioritized = await getPersonalizedRecommendations(20);
+            if (prioritized && prioritized.length > 0) {
+              setRecommendedAnime(prioritized);
+            }
+          } catch (e) {
+            console.warn('Personalized recommendations failed, falling back...');
+          }
         }
 
         // Greedy fetch for filtering - we take top 50 popular to ensure "instant" feel
@@ -112,8 +118,8 @@ const Explore: React.FC = () => {
         {/* 2. Personalized "For You" Section (Only if user has data) */}
         {user && recommendedAnime.length > 0 && (
           <HorizonTrack 
-            title="Sourced For You" 
-            subtitle="Calculated from your archives"
+            title="NEURAL RESONANCE" 
+            subtitle="Calculated from your interaction behavior"
             anime={recommendedAnime} 
             type="recommended"
           />

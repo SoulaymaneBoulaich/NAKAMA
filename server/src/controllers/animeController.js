@@ -1,12 +1,21 @@
 import { prisma } from '../lib/prisma.js';
 import * as jikan from '../services/jikanService.js';
-import * as recs from '../services/recommendationService.js';
+import * as recs from '../services/recommendationEngine.js';
 export const searchAnime = async (req, res) => {
     try {
         const { q } = req.query;
         if (!q)
             return res.status(400).json({ message: 'Query is required' });
         const results = await jikan.searchAnime(String(q));
+        // Record interaction (Async/Non-blocking)
+        const userId = req.userId;
+        if (userId && results && results.length > 0) {
+            const firstResult = results[0];
+            if (firstResult && firstResult.mal_id) {
+                const animeId = String(firstResult.mal_id);
+                recs.recordInteraction(userId, animeId, 'SEARCHED').catch(err => console.error('Interaction record error:', err));
+            }
+        }
         // Simple filter to return only necessary fields for search results
         const filteredResults = results.map(anime => ({
             mal_id: anime.mal_id,
@@ -32,7 +41,7 @@ export const getAnimeDetails = async (req, res) => {
         // Record interaction (Async/Non-blocking)
         const userId = req.userId; // Potentially available if authenticated
         if (userId) {
-            recs.recordInteraction(userId, String(id), 'VIEW_DETAILS').catch(err => console.error('Interaction record error:', err));
+            recs.recordInteraction(userId, String(id), 'VIEWED_PAGE').catch(err => console.error('Interaction record error:', err));
         }
         // Fetch platform stats
         const ratings = await prisma.rating.findMany({
@@ -124,33 +133,8 @@ export const getRecommendations = async (req, res) => {
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ message: 'User not authenticated' });
-        // 1. Check if we have enough interactions to generate recommendations
-        // For now, we'll just try to generate them or fetch existing ones
-        let recommendations = await prisma.animeRecommendation.findMany({
-            where: { userId },
-            orderBy: { score: 'desc' },
-            take: 20
-        });
-        if (recommendations.length < 5) {
-            // Generate new ones if we have few
-            await recs.generateRecommendations(userId);
-            recommendations = await prisma.animeRecommendation.findMany({
-                where: { userId },
-                orderBy: { score: 'desc' },
-                take: 20
-            });
-        }
-        // 2. Fetch full anime data from Jikan proxy for each recommendation
-        const fullData = await Promise.all(recommendations.map(async (rec) => {
-            try {
-                const anime = await jikan.getAnimeById(rec.animeId);
-                return { ...anime, recommendationReason: rec.reason };
-            }
-            catch (err) {
-                return null;
-            }
-        }));
-        res.status(200).json(fullData.filter(a => a !== null));
+        const recommendations = await recs.getRecommendations(userId);
+        res.status(200).json(recommendations);
     }
     catch (error) {
         console.error('Recommendations API error:', error);
