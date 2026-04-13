@@ -1,0 +1,1697 @@
+[
+  {
+    "id": "TC001",
+    "title": "Protected routes redirect to login when logged out",
+    "description": "A logged-out visitor is redirected to the login page when attempting to access protected areas.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /feed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the login page"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Log in and reach the feed",
+    "description": "An existing user can sign in and is taken to the social feed after successful login.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the feed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Sign up and reach home dashboard",
+    "description": "A new visitor can create an account from signup and is taken to the home dashboard afterward.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Fill a new unique email into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid password into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the home dashboard"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Feed loads and supports infinite scrolling",
+    "description": "A logged-in member can open the feed and load additional posts by scrolling.",
+    "category": "Social Feed and Posting",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the end of the feed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify additional posts load in the feed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Create a new post and see it in the feed",
+    "description": "A logged-in member can create a post and sees the new post appear in the feed.",
+    "category": "Social Feed and Posting",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique post message into the post composer"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new post"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new post appears in the feed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Add an anime to my list from search results",
+    "description": "Verifies an authenticated member can search for an anime, add it to their personal list, and then see it present on My List.",
+    "category": "My List (Personal Anime List)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open search"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Naruto\" into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Add the first anime in results to the personal list"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open my list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the added anime appears in the personal list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Explore page shows curated sections",
+    "description": "A visitor can browse the explore page and sees curated anime sections populated.",
+    "category": "Explore and Anime Discovery",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /explore"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify curated anime sections are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Browse communities list",
+    "description": "Verifies an authenticated member can open Communities and see a list of available communities with summary information displayed.",
+    "category": "Communities",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open communities browsing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a list of communities is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Explore search navigates to results page",
+    "description": "A visitor can submit a search from explore and is taken to the search results page with results displayed.",
+    "category": "Explore and Anime Discovery",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /explore"
+      },
+      {
+        "type": "action",
+        "description": "Fill an anime query into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify search results are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Like a post from the feed",
+    "description": "A logged-in member can like a post and the like state is reflected on that post.",
+    "category": "Social Feed and Posting",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the like control on the first post"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the post shows it is liked"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Create a community from browse page",
+    "description": "Verifies an authenticated member can create a new community from the create modal and see it appear in the communities list.",
+    "category": "Communities",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open communities browsing"
+      },
+      {
+        "type": "action",
+        "description": "Open the create community modal"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Automation Community\" into the community name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a short description into the community description field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create community form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new community appears in the communities list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Open an anime detail page from explore",
+    "description": "A visitor can open an anime from explore and sees an anime detail view.",
+    "category": "Explore and Anime Discovery",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /explore"
+      },
+      {
+        "type": "action",
+        "description": "Click an anime card from a curated section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an anime detail view is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Update status for an item in my list",
+    "description": "Verifies a member can change the tracking status of an anime in their list and see the list reflect the updated state.",
+    "category": "My List (Personal Anime List)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open search"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Bleach\" into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Add the first anime in results to the personal list"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open my list"
+      },
+      {
+        "type": "action",
+        "description": "Open the newly added list item"
+      },
+      {
+        "type": "action",
+        "description": "Select a different status for the item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the list shows the item with the updated status"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Comment on a post and see the comment",
+    "description": "A logged-in member can add a comment to a post and sees the comment appear under the post.",
+    "category": "Social Feed and Posting",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the comment composer for the first post"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique comment into the comment field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the comment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new comment appears under the post"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Search requires authentication",
+    "description": "A logged-out visitor who navigates directly to search is redirected to login.",
+    "category": "Explore and Anime Discovery",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /search"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the login page"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Open a community detail page",
+    "description": "Verifies an authenticated member can open a community from the browse list and view the community detail page content.",
+    "category": "Communities",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open communities browsing"
+      },
+      {
+        "type": "action",
+        "description": "Click a community in the list to open its detail page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify community details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify community posts or community content area is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Switch feed filter tabs",
+    "description": "A logged-in member can switch between feed filter tabs and the feed content updates accordingly.",
+    "category": "Social Feed and Posting",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click a different feed filter tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the feed updates to show the selected filter view"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC018",
+    "title": "Remove an item from my list",
+    "description": "Verifies a member can remove an anime from their personal list and the item no longer appears in the list after removal.",
+    "category": "My List (Personal Anime List)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open search"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"One Piece\" into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Add the first anime in results to the personal list"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open my list"
+      },
+      {
+        "type": "action",
+        "description": "Open the newly added list item"
+      },
+      {
+        "type": "action",
+        "description": "Remove the item from the personal list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the removed item no longer appears in the personal list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC019",
+    "title": "Signup requires valid inputs",
+    "description": "A visitor cannot submit the signup form with missing required fields and sees validation feedback.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Fill a new unique email into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill an empty value into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a form validation error is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC020",
+    "title": "Send a message in an existing conversation",
+    "description": "Verifies an authenticated member can open a conversation thread from the messages list, send a message, and see it appear in the thread.",
+    "category": "Realtime Messaging and Watch Party",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open messages"
+      },
+      {
+        "type": "action",
+        "description": "Click a conversation preview to open the conversation thread"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Hello from UI automation\" into the message composer field"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sent message appears in the conversation thread"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Update and save account settings",
+    "description": "Verifies a member can update profile information or preferences in settings and sees a confirmation that changes were saved.",
+    "category": "Settings and Account Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Update a profile information field with a new valid value"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC022",
+    "title": "My list persists after page reload",
+    "description": "Verifies an anime added to the personal list remains present after reloading the My List page.",
+    "category": "My List (Personal Anime List)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open search"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Fullmetal Alchemist\" into the search field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search"
+      },
+      {
+        "type": "action",
+        "description": "Add the first anime in results to the personal list"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open my list"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the previously added anime still appears in the personal list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC023",
+    "title": "Create or join a watch party room from the lobby",
+    "description": "Verifies an authenticated member can create or join a watch party room from the lobby and reach a room view with participant information shown.",
+    "category": "Realtime Messaging and Watch Party",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open watch party"
+      },
+      {
+        "type": "action",
+        "description": "Create a new watch party room from the lobby"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the watch party room view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a participant list is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC024",
+    "title": "Start a new AniJudge match and reach the match experience",
+    "description": "A member can start a new AniJudge match from the AniJudge home and reach the match experience where rounds can be played.",
+    "category": "AniJudge (Game Mode)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to AniJudge"
+      },
+      {
+        "type": "action",
+        "description": "Start a new match"
+      },
+      {
+        "type": "action",
+        "description": "Proceed into the match lobby"
+      },
+      {
+        "type": "action",
+        "description": "Continue to begin the match"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the match rounds interface is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Persist settings changes after page reload",
+    "description": "Verifies that after saving settings, reloading the page keeps the updated values visible in the settings form.",
+    "category": "Settings and Account Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Update a profile information field with a distinctive new value"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the save operation to complete"
+      },
+      {
+        "type": "action",
+        "description": "Reload the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated value is still present in the settings form"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "Add items to a playlist and see them in the playlist detail",
+    "description": "A member can add at least one item to a playlist and then see the item listed in the playlist detail view.",
+    "category": "Playlists",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to playlists"
+      },
+      {
+        "type": "action",
+        "description": "Create a new playlist"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique name into the playlist name field"
+      },
+      {
+        "type": "action",
+        "description": "Save the playlist"
+      },
+      {
+        "type": "action",
+        "description": "Open the newly created playlist from the listing"
+      },
+      {
+        "type": "action",
+        "description": "Add an item to the playlist using the in-playlist add/search selection control"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the playlist contains at least one item"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "Request password reset confirmation",
+    "description": "A visitor can request a password reset and sees a confirmation that the request was submitted.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /reset-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid email into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the password reset request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a password reset request confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC028",
+    "title": "Create a new playlist and see it in the listing",
+    "description": "A member can create a new playlist and then see the new playlist in the playlists listing.",
+    "category": "Playlists",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to playlists"
+      },
+      {
+        "type": "action",
+        "description": "Create a new playlist"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique name into the playlist name field"
+      },
+      {
+        "type": "action",
+        "description": "Save the playlist"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new playlist appears in the playlists listing"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC029",
+    "title": "Validate required fields when creating a community",
+    "description": "Verifies the create community modal prevents submission when required details are missing and shows a validation error.",
+    "category": "Communities",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open communities browsing"
+      },
+      {
+        "type": "action",
+        "description": "Open the create community modal"
+      },
+      {
+        "type": "action",
+        "description": "Submit the create community form without filling required fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC030",
+    "title": "Prevent saving settings with required fields missing",
+    "description": "Verifies settings cannot be saved when a required field is cleared and a validation error is shown.",
+    "category": "Settings and Account Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Clear a required profile field so it is empty"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC031",
+    "title": "Edit playlist metadata and see updates reflected in listing",
+    "description": "A member can open an existing playlist, update its metadata, save, and then see the updated playlist reflected in the playlists listing.",
+    "category": "Playlists",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to playlists"
+      },
+      {
+        "type": "action",
+        "description": "Create a new playlist"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique name into the playlist name field"
+      },
+      {
+        "type": "action",
+        "description": "Save the playlist"
+      },
+      {
+        "type": "action",
+        "description": "Open the newly created playlist from the listing"
+      },
+      {
+        "type": "action",
+        "description": "Edit the playlist metadata fields with new values"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to playlists"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the playlist shows the updated metadata in the listing"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC032",
+    "title": "Rejoin a started AniJudge match from the same session",
+    "description": "A member can start a match and then return to it from the same session without losing access to the active match experience.",
+    "category": "AniJudge (Game Mode)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to AniJudge"
+      },
+      {
+        "type": "action",
+        "description": "Start a new match"
+      },
+      {
+        "type": "action",
+        "description": "Proceed into the match lobby"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to AniJudge home"
+      },
+      {
+        "type": "action",
+        "description": "Open the currently active match from AniJudge home if available"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is returned to the match experience"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC033",
+    "title": "Do not save settings with invalid formatted input",
+    "description": "Verifies settings reject an invalid formatted value (such as an email-like field) and display a validation error without saving.",
+    "category": "Settings and Account Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Fill an email-like or username-like settings field with an invalid value"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC034",
+    "title": "Edit an existing chronicle draft and see updates in list",
+    "description": "A member can open an existing chronicle draft, edit it, save changes, and then see the updated draft in the chronicles list.",
+    "category": "Chronicles (Long-form Content)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to manage chronicles"
+      },
+      {
+        "type": "action",
+        "description": "Start a new chronicle draft"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique title into the chronicle title field"
+      },
+      {
+        "type": "action",
+        "description": "Save the draft"
+      },
+      {
+        "type": "action",
+        "description": "Open the newly created draft from the list"
+      },
+      {
+        "type": "action",
+        "description": "Edit the chronicle content by appending additional text"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to browse chronicles"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the draft reflects the saved update in the list view"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC035",
+    "title": "Watch party lobby shows available actions and rooms area",
+    "description": "Verifies the watch party lobby loads for an authenticated member and shows the primary controls for creating or joining rooms.",
+    "category": "Realtime Messaging and Watch Party",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open watch party"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify controls to create or join a watch party room are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the lobby area for rooms or lobby updates is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC036",
+    "title": "Change a preference selection and save",
+    "description": "Verifies a member can change a preference selection in settings and successfully save the updated preference.",
+    "category": "Settings and Account Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Select a different preference option from a preference control"
+      },
+      {
+        "type": "action",
+        "description": "Save changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC037",
+    "title": "Create and list a new chronicle draft",
+    "description": "A member can create a new chronicle draft, save it, and then see it listed in the chronicles browse view.",
+    "category": "Chronicles (Long-form Content)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to manage chronicles"
+      },
+      {
+        "type": "action",
+        "description": "Start a new chronicle draft"
+      },
+      {
+        "type": "action",
+        "description": "Fill a unique title into the chronicle title field"
+      },
+      {
+        "type": "action",
+        "description": "Fill some content into the chronicle body field"
+      },
+      {
+        "type": "action",
+        "description": "Save the draft"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to browse chronicles"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new draft appears in the chronicles list"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC038",
+    "title": "Search with no query shows validation or no results state",
+    "description": "Verifies submitting the search form with an empty query does not break the page and shows an appropriate validation or empty results state.",
+    "category": "My List (Personal Anime List)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open search"
+      },
+      {
+        "type": "action",
+        "description": "Submit the search without entering a query"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a search validation error or an empty results state is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC039",
+    "title": "Validate empty message is not sent",
+    "description": "Verifies the messaging composer prevents sending an empty message and does not add a new message to the thread.",
+    "category": "Realtime Messaging and Watch Party",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open messages"
+      },
+      {
+        "type": "action",
+        "description": "Click a conversation preview to open the conversation thread"
+      },
+      {
+        "type": "action",
+        "description": "Send the message without entering any text"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a message validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC040",
+    "title": "News article page loads for visitors",
+    "description": "A visitor can open the news article page and sees article content displayed.",
+    "category": "Explore and Anime Discovery",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /news/article"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify news article content is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC041",
+    "title": "Cancel community creation without creating anything",
+    "description": "Verifies a member can close the create community modal without creating a community and return to the browse list unchanged.",
+    "category": "Communities",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open communities browsing"
+      },
+      {
+        "type": "action",
+        "description": "Open the create community modal"
+      },
+      {
+        "type": "action",
+        "description": "Close the create community modal"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the communities browse list is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC042",
+    "title": "Prevent creating a playlist with missing required information",
+    "description": "A member cannot create a playlist when required fields are empty and sees a validation error.",
+    "category": "Playlists",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to playlists"
+      },
+      {
+        "type": "action",
+        "description": "Create a new playlist"
+      },
+      {
+        "type": "action",
+        "description": "Clear the playlist name field if it has any value"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to save the playlist"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible for the missing required information"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC043",
+    "title": "Prevent saving a chronicle draft with missing required fields",
+    "description": "A member cannot save a chronicle draft when required fields are empty and sees a validation error.",
+    "category": "Chronicles (Long-form Content)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to manage chronicles"
+      },
+      {
+        "type": "action",
+        "description": "Start a new chronicle draft"
+      },
+      {
+        "type": "action",
+        "description": "Clear the chronicle title field if it has any value"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to save the draft"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible for the missing required information"
+      }
+    ],
+    "priority": "Low"
+  }
+]
