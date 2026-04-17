@@ -15,7 +15,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: Soulaymane%402005
+          POSTGRES_PASSWORD: Soulaymane@2005
           POSTGRES_DB: NAKAMA_TEST
         ports:
           - 5432:5432
