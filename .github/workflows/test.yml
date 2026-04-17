@@ -47,12 +47,15 @@ jobs:
         working-directory: server
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/nakama_test
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test-access-secret-hardening-123' }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test-refresh-secret-hardening-123' }}
 
       - name: Run Integration Tests
         run: npm run test:integration -- run
         working-directory: server
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/nakama_test
-          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
-          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test-access-secret-hardening-123' }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test-refresh-secret-hardening-123' }}
           NODE_ENV: test
+          PORT: 5000
