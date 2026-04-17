@@ -16,8 +16,10 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Clear tables before each test (Ordered by dependency)
+  // Ordered primarily for performance, but session_replication_role ensures safety
   const tables = [
+    'dailyAnswer',
+    'dailyQuestion',
     'quizAnswer', 
     'quizAttempt', 
     'questionStats', 
@@ -29,8 +31,16 @@ beforeEach(async () => {
     'user'
   ];
 
-  for (const table of tables) {
-    await (prisma as any)[table].deleteMany();
+  // Temporarily disable foreign key checks for the session
+  await prisma.$executeRaw`SET session_replication_role = 'replica';`;
+
+  try {
+    for (const table of tables) {
+      await (prisma as any)[table].deleteMany();
+    }
+  } finally {
+    // Re-enable foreign key checks
+    await prisma.$executeRaw`SET session_replication_role = 'origin';`;
   }
 });
 
