@@ -2,9 +2,9 @@ name: NAKAMA Backend CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, design_1 ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, design_1 ]
 
 jobs:
   test:
@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         run: npm ci
