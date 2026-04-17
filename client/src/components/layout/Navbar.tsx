@@ -15,7 +15,9 @@ import {
   Newspaper,
   Layout,
   Sword,
-  MessageSquare
+  MessageSquare,
+  Tv,
+  Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '../social/SearchBar';
@@ -39,7 +41,9 @@ export const Navbar: React.FC = () => {
     { label: 'Feed', path: '/feed', icon: Layout },
     { label: 'Communities', path: '/communities', icon: Users },
     { label: 'Chronicles', path: '/chronicles', icon: PenTool },
+    { label: 'Watch Parties', path: '/watchparty', icon: Tv },
     { label: 'AniJudge', path: '/anijudge', icon: Sword },
+    { label: 'AniQuiz', path: '/aniquiz', icon: Brain },
     { label: 'News', path: '/home', icon: Newspaper },
   ];
 

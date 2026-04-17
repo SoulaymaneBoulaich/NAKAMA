@@ -22,6 +22,11 @@ export interface User {
     showOnlineStatus: boolean;
     showActivityStatus: boolean;
     deactivatedAt?: string | Date | null;
+    isUltraNakama: boolean;
+    ultraNakamaExpiresAt?: string | Date | null;
+    isNakamaLeader: boolean;
+    nakamaLeaderSince?: string | Date | null;
+    gauntletFrameUrl?: string | null;
     joinDate?: string | Date | null;
     createdAt: string | Date;
     updatedAt: string | Date;

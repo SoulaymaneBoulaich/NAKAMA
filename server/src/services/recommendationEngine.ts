@@ -35,7 +35,7 @@ export const recordInteraction = async (userId: string, animeId: string, interac
     // 2. Update Tag Affinities
     await updateTagAffinity(userId, animeId, weight);
   } catch (error) {
-    console.error(`[RecEngine] Error recording interaction: ${error}`);
+    logger.error(`[RecEngine] Error recording interaction`, { error, userId, animeId, interactionType });
   }
 };
 
@@ -84,15 +84,18 @@ const updateTagAffinity = async (userId: string, animeId: string, weight: number
     const maxScore = Math.max(...affinities.map(a => a.affinityScore));
     if (maxScore > 10.0) {
       const ratio = 10.0 / maxScore;
-      for (const affinity of affinities) {
-        await prisma.userTagAffinity.update({
-          where: { id: affinity.id },
-          data: { affinityScore: affinity.affinityScore * ratio }
-        });
-      }
+      // Optimize N+1: Use updateMany for normalization if applicable, or transaction
+      await prisma.$transaction(
+        affinities.map(affinity => 
+          prisma.userTagAffinity.update({
+            where: { id: affinity.id },
+            data: { affinityScore: affinity.affinityScore * ratio }
+          })
+        )
+      );
     }
   } catch (error) {
-    console.error(`[RecEngine] Error updating tag affinity: ${error}`);
+    logger.error(`[RecEngine] Error updating tag affinity`, { error, userId, animeId });
   }
 };
 
@@ -155,7 +158,7 @@ export const generateRecommendations = async (userId: string) => {
         // Respect Jikan rate limit (approx 1 request per sec)
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (err) {
-        console.error(`[RecEngine] Error fetching candidates for tag ${affinity.tag}:`, err);
+        logger.error(`[RecEngine] Error fetching candidates for tag`, { tag: affinity.tag, error: err });
       }
     }
 
@@ -172,7 +175,7 @@ export const generateRecommendations = async (userId: string) => {
 
     return finalRecs;
   } catch (error) {
-    console.error(`[RecEngine] Error generating recommendations: ${error}`);
+    logger.error(`[RecEngine] Error generating recommendations`, { error, userId });
     return [];
   }
 };

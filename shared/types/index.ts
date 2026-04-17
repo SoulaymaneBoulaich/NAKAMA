@@ -31,6 +31,13 @@ export interface User {
   showActivityStatus: boolean;
   deactivatedAt?: string | Date | null;
   
+  // AniQuiz Status
+  isUltraNakama: boolean;
+  ultraNakamaExpiresAt?: string | Date | null;
+  isNakamaLeader: boolean;
+  nakamaLeaderSince?: string | Date | null;
+  gauntletFrameUrl?: string | null;
+  
   joinDate?: string | Date | null;
   createdAt: string | Date;
   updatedAt: string | Date;

@@ -1,12 +1,12 @@
 import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
-import { WatchPartyStatus, WatchPartyMessageType } from '@prisma/client';
+import { WatchPartyStatus } from '@prisma/client';
 
 export const setupWatchPartySocket = (io: Server, socket: Socket) => {
   let currentRoomCode: string | null = null;
   let currentUserId: string | null = null;
 
-  socket.on('wp:join', async ({ code, userId }: { code: string; userId: string }) => {
+  socket.on('join-party', async ({ code, userId }: { code: string; userId: string }) => {
     try {
       const party = await prisma.watchParty.findUnique({
         where: { code },
@@ -14,69 +14,71 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
       });
 
       if (!party) {
-        socket.emit('wp:error', { message: 'Room not found' });
+        socket.emit('party-error', { message: 'ROOM SIGNAL NOT FOUND' });
         return;
       }
 
-      // Check max participants
       const participantCount = await prisma.watchPartyParticipant.count({
         where: { partyId: party.id }
       });
 
       if (participantCount >= party.maxParticipants) {
-        // Check if user is already a participant (re-joining)
         const existing = await prisma.watchPartyParticipant.findUnique({
           where: { partyId_userId: { partyId: party.id, userId } }
         });
         if (!existing) {
-          socket.emit('wp:error', { message: 'Room is full' });
+          socket.emit('party-error', { message: 'ROOM IS AT MAXIMUM CAPACITY' });
           return;
         }
       }
 
       currentRoomCode = code;
       currentUserId = userId;
-      socket.join(`wp_${code}`);
+      const roomName = `party:${code}`;
+      socket.join(roomName);
 
-      // Upsert status
+      // Join/Update record
       await prisma.watchPartyParticipant.upsert({
         where: { partyId_userId: { partyId: party.id, userId } },
-        create: { partyId: party.id, userId, isReady: false },
+        create: { partyId: party.id, userId, isReady: userId === party.hostId },
         update: { joinedAt: new Date() }
       });
 
-      // Get all participants
+      // Update room state
       const participants = await prisma.watchPartyParticipant.findMany({
         where: { partyId: party.id },
         include: { user: { select: { id: true, username: true, avatar: true } } }
       });
 
-      // Send current state
-      io.to(`wp_${code}`).emit('wp:state-update', {
-        participants,
+      io.to(roomName).emit('participants-list', participants);
+      
+      socket.emit('party-state', {
         status: party.status,
         currentTimestamp: party.currentTimestamp,
-        episodeNumber: party.episodeNumber
+        episodeNumber: party.episodeNumber,
+        animeTitle: party.animeTitle,
+        animeCover: party.animeCover
       });
 
-      // Broadcast system message
+      // System notification
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { username: true } });
       const systemMsg = await prisma.watchPartyMessage.create({
         data: {
           partyId: party.id,
           userId,
-          content: 'joined the party',
+          content: `${user?.username || 'ANONYMOUS'} HAS MANIFESTED`,
           messageType: 'SYSTEM'
         },
         include: { user: { select: { username: true, avatar: true } } }
       });
-      io.to(`wp_${code}`).emit('wp:chat-message', systemMsg);
+      io.to(roomName).emit('new-message', systemMsg);
 
     } catch (error) {
-      console.error('[WP] Join error:', error);
+      console.error('[WP] JOIN ERROR:', error);
     }
   });
 
-  socket.on('wp:ready', async ({ code, userId, isReady }: { code: string; userId: string; isReady: boolean }) => {
+  socket.on('ready-up', async ({ code, userId, isReady }: { code: string; userId: string; isReady: boolean }) => {
     try {
       const party = await prisma.watchParty.findUnique({ where: { code } });
       if (!party) return;
@@ -86,18 +88,17 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
         data: { isReady }
       });
 
-      // Broadcast updated participants list
       const participants = await prisma.watchPartyParticipant.findMany({
         where: { partyId: party.id },
         include: { user: { select: { id: true, username: true, avatar: true } } }
       });
-      io.to(`wp_${code}`).emit('wp:participants-update', participants);
+      io.to(`party:${code}`).emit('participants-list', participants);
     } catch (error) {
-      console.error('[WP] Ready status error:', error);
+      console.error('[WP] READY ERROR:', error);
     }
   });
 
-  socket.on('wp:sync', async ({ code, status, currentTimestamp, episodeNumber }: { 
+  socket.on('sync-playback', async ({ code, status, currentTimestamp, episodeNumber }: { 
     code: string; 
     status: WatchPartyStatus; 
     currentTimestamp: number;
@@ -105,24 +106,26 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
   }) => {
     try {
       const party = await prisma.watchParty.findUnique({ where: { code } });
-      if (!party) return;
-
-      // In a real app, verify hostId here
-      // if (party.hostId !== currentUserId) return;
+      if (!party || party.hostId !== currentUserId) return;
 
       await prisma.watchParty.update({
         where: { id: party.id },
         data: { status, currentTimestamp, episodeNumber }
       });
 
-      // Broadcast to all
-      io.to(`wp_${code}`).emit('wp:state-update', { status, currentTimestamp, episodeNumber });
+      io.to(`party:${code}`).emit('party-state', { 
+        status, 
+        currentTimestamp, 
+        episodeNumber,
+        animeTitle: party.animeTitle,
+        animeCover: party.animeCover
+      });
     } catch (error) {
-      console.error('[WP] Sync error:', error);
+      console.error('[WP] SYNC ERROR:', error);
     }
   });
 
-  socket.on('wp:chat', async ({ code, userId, content }: { code: string; userId: string; content: string }) => {
+  socket.on('broadcast-message', async ({ code, userId, content }: { code: string; userId: string; content: string }) => {
     try {
       const party = await prisma.watchParty.findUnique({ where: { code } });
       if (!party) return;
@@ -137,25 +140,17 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
         include: { user: { select: { username: true, avatar: true } } }
       });
 
-      io.to(`wp_${code}`).emit('wp:chat-message', message);
+      io.to(`party:${code}`).emit('new-message', message);
     } catch (error) {
-      console.error('[WP] Chat error:', error);
+      console.error('[WP] CHAT ERROR:', error);
     }
   });
 
-  socket.on('wp:reaction', async ({ code, userId, reaction }: { code: string; userId: string; reaction: string }) => {
-    try {
-      const party = await prisma.watchParty.findUnique({ where: { code } });
-      if (!party) return;
-
-      // Reactions are transient, don't necessarily need DB storage unless history is required
-      io.to(`wp_${code}`).emit('wp:reaction-broadcast', { userId, reaction });
-    } catch (error) {
-      console.error('[WP] Reaction error:', error);
-    }
+  socket.on('floating-reaction', async ({ code, userId, reaction }: { code: string; userId: string; reaction: string }) => {
+    io.to(`party:${code}`).emit('reaction-event', { userId, reaction });
   });
 
-  socket.on('wp:leave', async ({ code, userId }: { code: string, userId: string }) => {
+  socket.on('leave-party', async ({ code, userId }: { code: string, userId: string }) => {
     handleLeave(code, userId);
   });
 
@@ -173,11 +168,9 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
           where: { partyId_userId: { partyId: party.id, userId } }
         }).catch(() => {});
 
-        io.to(`wp_${code}`).emit('wp:member-left', { userId });
+        io.to(`party:${code}`).emit('member-quit', { userId });
       }
-      socket.leave(`wp_${code}`);
-    } catch (error) {
-      // Silence expected errors on disconnect
-    }
+      socket.leave(`party:${code}`);
+    } catch (error) {}
   }
 };

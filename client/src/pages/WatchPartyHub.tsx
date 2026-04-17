@@ -101,57 +101,99 @@ const WatchPartyHub: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Active Rooms Grid */}
+                 {/* Active Rooms Grid */}
                 <div className="space-y-12">
                      <div className="flex items-center gap-6">
-                        <h2 className="text-xl font-black italic uppercase tracking-tight">Active Rooms</h2>
-                        <div className="h-px flex-1 bg-white/5" />
-                        <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{parties.length} ONLINE</span>
+                        <div className="flex flex-col">
+                            <h2 className="text-2xl font-black italic uppercase tracking-tighter">Active <span className="text-red-600">Projections</span></h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">The collective is currently manifesting</p>
+                        </div>
+                        <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                        <div className="flex items-center gap-3 bg-red-600/10 border border-red-600/20 px-4 py-2 rounded-full">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+                            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">{parties.length} CHANNELS</span>
+                        </div>
                      </div>
-
+ 
                      {parties.length === 0 ? (
-                        <div className="h-[400px] flex flex-col items-center justify-center space-y-6 border border-dashed border-white/5 rounded-3xl">
-                             <Users size={48} className="text-white/10" />
-                             <p className="text-white/20 text-xs font-bold uppercase tracking-widest">No active public rooms. Be the first to invoke.</p>
+                        <div className="h-[400px] flex flex-col items-center justify-center space-y-8 bg-white/[0.02] border border-dashed border-white/5 rounded-[3rem] group">
+                             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-red-600/50 transition-all duration-700">
+                                 <Users size={32} className="text-white/10 group-hover:text-red-600 transition-colors" />
+                             </div>
+                             <div className="text-center space-y-2">
+                                <p className="text-white text-sm font-black uppercase tracking-widest">No Active Frequencies</p>
+                                <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.3em]">Be the catalyst of the first projection.</p>
+                             </div>
+                             <button 
+                                onClick={() => setShowCreateModal(true)}
+                                className="px-8 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-600 hover:text-white transition-all shadow-2xl"
+                             >
+                                Start Manifesting
+                             </button>
                         </div>
                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                             {parties.map((party) => (
                                 <motion.div 
                                     key={party.id}
-                                    whileHover={{ y: -8 }}
+                                    whileHover={{ y: -12, scale: 1.02 }}
                                     onClick={() => navigate(`/watchparty/${party.code}`)}
-                                    className="group relative h-[320px] bg-[#0A0A0A] rounded-3xl border border-white/5 overflow-hidden cursor-pointer"
+                                    className="group relative h-[420px] bg-[#0A0A0A] rounded-[2.5rem] border border-white/5 overflow-hidden cursor-pointer shadow-2xl transition-all duration-500 hover:border-red-600/50 hover:shadow-red-600/10"
                                 >
-                                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
+                                    <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black via-black/80 to-transparent z-10 opacity-60 group-hover:opacity-100 transition-opacity" />
                                     
+                                    <img 
+                                        src={party.animeCover} 
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0"
+                                        alt="" 
+                                    />
+
                                     <div className="p-8 h-full flex flex-col justify-between relative z-20">
                                         <div className="flex justify-between items-start">
-                                            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-full">
-                                                <Users size={12} className="text-[var(--accent-primary)]" />
-                                                <span className="text-[10px] font-black">{party._count.participants}/{party.maxParticipants}</span>
+                                            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                                                <span className="text-[10px] font-black tracking-widest uppercase">{party._count.participants}/{party.maxParticipants}</span>
                                             </div>
-                                            {party.isPrivate && (
-                                              <div className="w-8 h-8 flex items-center justify-center bg-black/60 backdrop-blur-xl border border-white/10 rounded-full">
-                                                  <Lock size={12} className="text-white/40" />
+                                            {party.isPrivate ? (
+                                              <div className="w-10 h-10 flex items-center justify-center bg-black/60 backdrop-blur-xl border border-white/10 rounded-full">
+                                                  <Lock size={14} className="text-red-500" />
+                                              </div>
+                                            ) : (
+                                                <div className="w-10 h-10 flex items-center justify-center bg-red-600 backdrop-blur-xl border border-white/20 rounded-full shadow-lg shadow-red-600/20">
+                                                  <Users size={14} className="text-white" />
                                               </div>
                                             )}
                                         </div>
-
-                                        <div className="space-y-3">
-                                            <span className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest italic">{party.animeTitle}</span>
-                                            <h3 className="text-xl font-black uppercase leading-tight group-hover:text-[var(--accent-primary)] transition-colors">{party.animeTitle} Room</h3>
+ 
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-black text-red-600 uppercase tracking-[0.3em] italic">{party.code}</span>
+                                                <h3 className="text-2xl font-black uppercase tracking-tighter leading-[0.9] group-hover:text-red-600 transition-colors">{party.animeTitle}</h3>
+                                            </div>
                                             
-                                            {party.episodeNumber && (
-                                              <span className="block text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Episode {party.episodeNumber}</span>
-                                            )}
+                                            <div className="flex items-center gap-4">
+                                                {party.episodeNumber && (
+                                                    <span className="px-3 py-1 bg-white/10 rounded-md text-[9px] font-black text-white/60 uppercase tracking-widest">Ep {party.episodeNumber}</span>
+                                                )}
+                                                <span className={`text-[9px] font-black uppercase tracking-widest p-1 px-2 rounded-md ${party.status === 'WATCHING' ? 'bg-red-600/20 text-red-500' : 'bg-white/5 text-white/30'}`}>
+                                                    {party.status}
+                                                </span>
+                                            </div>
                                             
-                                            <div className="flex items-center gap-3 pt-4 border-t border-white/5">
-                                                <img src={party.host.avatar || '/default-avatar.png'} className="w-6 h-6 rounded-full border border-white/10" alt="" />
-                                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">BY {party.host.username}</span>
+                                            <div className="flex items-center gap-3 pt-6 border-t border-white/10">
+                                                <div className="w-8 h-8 rounded-full border border-red-600/30 overflow-hidden bg-black flex items-center justify-center p-0.5 shadow-lg shadow-red-600/10">
+                                                    <img src={party.host.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">Conductor</span>
+                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{party.host.username}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    {/* Participation Intent Indicator */}
+                                    <div className="absolute inset-0 bg-red-600 opacity-0 group-active:opacity-10 transition-opacity" />
                                 </motion.div>
                             ))}
                         </div>

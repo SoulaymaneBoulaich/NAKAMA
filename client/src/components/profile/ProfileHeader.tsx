@@ -51,8 +51,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats })
           {/* Left: Avatar + Name */}
           <div className="flex flex-col md:flex-row md:items-end gap-5 flex-1">
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-tertiary)] overflow-hidden shadow-2xl shadow-black/50 ring-2 ring-[var(--border-color)]/20">
+            <div className="relative flex-shrink-0 group/avatar">
+              <div className={`relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-tertiary)] overflow-hidden shadow-2xl transition-all duration-700 ${profile.isNakamaLeader ? 'ring-4 ring-yellow-500/50 ring-offset-4 ring-offset-[var(--bg-secondary)] shadow-yellow-500/20' : 'shadow-black/50 ring-2 ring-[var(--border-color)]/20'}`}>
                 {profile.avatar ? (
                   <img src={profile.avatar} alt={profile.username} className="w-full h-full object-cover" />
                 ) : (
@@ -62,22 +62,56 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats })
                     </span>
                   </div>
                 )}
+                
+                {/* Golden Ornate Frame Overlay for Nakama Leader */}
+                {profile.isNakamaLeader && (
+                  <div className="absolute inset-0 pointer-events-none border-[6px] border-double border-yellow-600/30 rounded-full animate-pulse" />
+                )}
               </div>
-              {profile.isPremium && (
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-[var(--accent-primary)] rounded-full border-3 border-[var(--bg-secondary)] flex items-center justify-center shadow-lg shadow-[var(--accent-primary)]/30">
-                  <span className="text-[10px] font-black text-white">N</span>
-                </div>
-              )}
+
+              {/* Status Badges Overlay */}
+              <div className="absolute -bottom-1 -right-1 flex gap-1">
+                  {profile.isNakamaLeader && (
+                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full border-2 border-[var(--bg-secondary)] flex items-center justify-center shadow-lg shadow-yellow-500/50" title="Nakama Leader">
+                        <span className="text-[10px] font-black text-black">Ω</span>
+                    </div>
+                  )}
+                  {profile.isUltraNakama && (
+                    <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-full border-2 border-[var(--bg-secondary)] flex items-center justify-center shadow-lg shadow-red-500/50" title="Ultra Nakama">
+                        <span className="text-[10px] font-black text-white">U</span>
+                    </div>
+                  )}
+                  {profile.isPremium && !profile.isNakamaLeader && !profile.isUltraNakama && (
+                    <div className="w-8 h-8 bg-[var(--accent-primary)] rounded-full border-3 border-[var(--bg-secondary)] flex items-center justify-center shadow-lg shadow-[var(--accent-primary)]/30">
+                      <span className="text-[10px] font-black text-white">N</span>
+                    </div>
+                  )}
+              </div>
             </div>
 
             {/* Name + Bio */}
             <div className="mb-2 flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] tracking-tight">
-                  {profile.username}
-                </h1>
+                <div className="relative">
+                  <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] tracking-tight">
+                    {profile.username}
+                  </h1>
+                </div>
+                
+                {profile.isNakamaLeader && (
+                  <span className="px-2.5 py-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-500 text-[9px] font-black uppercase tracking-[0.2em] rounded-lg shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                    Ω NAKAMA LEADER
+                  </span>
+                )}
+
+                {profile.isUltraNakama && !profile.isNakamaLeader && (
+                  <span className="px-2.5 py-1 bg-gradient-to-r from-red-500/20 to-red-600/20 border border-red-500/30 text-[var(--accent-primary)] text-[9px] font-black uppercase tracking-[0.2em] rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.1)]">
+                    ULTRA NAKAMA
+                  </span>
+                )}
+
                 {profile.isPremium && (
-                  <span className="px-2.5 py-1 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/25 text-[var(--accent-primary)] text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/25 text-[var(--accent-primary)] text-[9px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-1">
                     <span>✦</span> PRO
                   </span>
                 )}

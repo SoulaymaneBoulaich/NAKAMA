@@ -9,8 +9,8 @@ import {
   clearRefreshTokenCookie,
   verifyRefreshToken,
 } from '../utils/tokens.js';
+import { logger } from '../utils/logger.js';
 
-// Removed local prisma = new PrismaClient()
 
 const filterUser = (user: any) => {
   const { passwordHash, resetToken, resetTokenExpiry, ...filteredUser } = user;
@@ -19,19 +19,8 @@ const filterUser = (user: any) => {
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { username, email, password, confirmPassword } = req.body;
+    const { username, email, password } = req.body;
 
-    if (!username || !email || !password || !confirmPassword) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
-    }
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
@@ -59,7 +48,7 @@ export const signup = async (req: Request, res: Response) => {
 
     res.status(201).json({ user: filterUser(user), accessToken });
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error('Signup error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -68,9 +57,6 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { emailOrUsername, password } = req.body;
 
-    if (!emailOrUsername || !password) {
-      return res.status(400).json({ message: 'Email/Username and password are required' });
-    }
 
     const user = await prisma.user.findFirst({
       where: { OR: [{ email: emailOrUsername }, { username: emailOrUsername }] },
@@ -94,7 +80,7 @@ export const login = async (req: Request, res: Response) => {
 
     res.status(200).json({ user: filterUser(user), accessToken });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -128,7 +114,7 @@ export const refresh = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
+
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -146,7 +132,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     // I should add them or use a separate table.
     // I'll add them to User model temporarily in next step or use separate model. 
     // User requested "stores hashed version in DB".
-    
+
     // I'll update the schema in an ephemeral step if needed, but let's assume User has them for now
     // and I'll add them to the User model in a moment.
 
@@ -158,26 +144,24 @@ export const forgotPassword = async (req: Request, res: Response) => {
       }
     });
 
-    console.log(`PASSWORD RESET LINK: http://localhost:5173/reset-password/${resetToken}`);
+    // Reset link is sent via email in production. Redacting log for security.
+    // Reset link is sent via email in production. Redacting log for security.
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug(`PASSWORD RESET LINK: http://localhost:5173/reset-password/${resetToken}`);
+    }
 
     res.status(200).json({ message: 'If an account exists with that email, a password reset link has been sent' });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    logger.error('Forgot password error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, newPassword, confirmPassword } = req.body;
+    const { token } = req.params;
+    const { password: newPassword } = req.body;
 
-    if (!token || !newPassword || !confirmPassword) {
-      return res.status(400).json({ message: 'Token and new password are required' });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
 
     const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -205,7 +189,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error('Reset password error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
