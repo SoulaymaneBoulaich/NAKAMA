@@ -7,7 +7,7 @@ temp_remote_inspect/
 .DS_Store
 .vscode/
 .idea/
-package-lock.json
+# package-lock.json should be tracked for reproducible builds
 client/node_modules/
 server/node_modules/
 shared/node_modules/
