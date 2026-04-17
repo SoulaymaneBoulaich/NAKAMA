@@ -1,15 +1,12 @@
 import jwt from 'jsonwebtoken';
 import type { Response } from 'express';
 
-const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || 'your_access_token_secret_min_32_chars';
-const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'your_refresh_token_secret_min_32_chars';
-
 export const generateAccessToken = (userId: string): string => {
-  return jwt.sign({ userId }, ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+  return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, { expiresIn: '15m' });
 };
 
 export const generateRefreshToken = (userId: string): string => {
-  return jwt.sign({ userId }, REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' });
 };
 
 export const setRefreshTokenCookie = (res: Response, token: string): void => {
@@ -31,7 +28,7 @@ export const clearRefreshTokenCookie = (res: Response): void => {
 
 export const verifyAccessToken = (token: string): { userId: string } | null => {
   try {
-    return jwt.verify(token, ACCESS_TOKEN_SECRET) as { userId: string };
+    return jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as { userId: string };
   } catch (error) {
     return null;
   }
@@ -39,7 +36,7 @@ export const verifyAccessToken = (token: string): { userId: string } | null => {
 
 export const verifyRefreshToken = (token: string): { userId: string } | null => {
   try {
-    return jwt.verify(token, REFRESH_TOKEN_SECRET) as { userId: string };
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { userId: string };
   } catch (error) {
     return null;
   }

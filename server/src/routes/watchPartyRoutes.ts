@@ -10,8 +10,8 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = Router();
 
 router.post('/', authenticateToken, createParty);
-router.get('/active', authenticateToken, getActiveParties);
-router.get('/:code', authenticateToken, getPartyByCode);
+router.get('/active', getActiveParties);
+router.get('/:code', getPartyByCode);
 router.patch('/:code/state', authenticateToken, updatePartyState);
 
 export default router;

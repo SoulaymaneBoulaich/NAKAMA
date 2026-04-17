@@ -26,6 +26,14 @@ import { ArenaPage } from './pages/anijudge/ArenaPage';
 import { MessagesPage } from './pages/messages/MessagesPage';
 import WatchPartyHub from './pages/WatchPartyHub';
 import WatchPartyRoom from './pages/WatchPartyRoom';
+import AniQuizHub from './pages/aniquiz/AniQuizHub';
+import AniQuizSession from './pages/aniquiz/AniQuizSession';
+import ContributePage from './pages/aniquiz/ContributePage';
+import ReviewSubmissionsPage from './pages/aniquiz/ReviewSubmissionsPage';
+import HallOfShamePage from './pages/aniquiz/HallOfShamePage';
+import QuizRoomsPage from './pages/aniquiz/QuizRoomsPage';
+import CommunityTournamentsPage from './pages/aniquiz/CommunityTournaments';
+import BattleArenaPage from './pages/aniquiz/BattleArena';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { AppearanceProvider } from './context/AppearanceContext';
@@ -85,6 +93,16 @@ function App() {
               {/* Watch Party Routes */}
               <Route path="/watchparty" element={<><Navbar /><WatchPartyHub /></>} />
               <Route path="/watchparty/:code" element={<WatchPartyRoom />} />
+
+              {/* AniQuiz Routes */}
+              <Route path="/aniquiz" element={<><Navbar /><AniQuizHub /></>} />
+              <Route path="/aniquiz/play/:id" element={<AniQuizSession />} />
+              <Route path="/aniquiz/contribute" element={<><Navbar /><ContributePage /></>} />
+              <Route path="/aniquiz/review" element={<><Navbar /><ReviewSubmissionsPage /></>} />
+              <Route path="/aniquiz/shame" element={<><Navbar /><HallOfShamePage /></>} />
+              <Route path="/aniquiz/rooms" element={<><Navbar /><QuizRoomsPage /></>} />
+              <Route path="/aniquiz/tournaments" element={<><Navbar /><CommunityTournamentsPage /></>} />
+              <Route path="/aniquiz/battle" element={<BattleArenaPage />} />
             </Route>
 
             {/* Fallback */}

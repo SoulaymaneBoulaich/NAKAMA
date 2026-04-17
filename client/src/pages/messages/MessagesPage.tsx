@@ -4,7 +4,7 @@ import {
   Search, Plus, Send, Phone, Video, 
   Info, ChevronLeft, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
-import socket from '../../api/socket';
+import { messagingSocket as socket } from '../../api/socket';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';

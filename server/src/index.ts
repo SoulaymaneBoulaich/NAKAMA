@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
+import { logger } from './utils/logger.js';
+import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import animeRoutes from './routes/animeRoutes.js';
 import entryRoutes from './routes/entryRoutes.js';
@@ -23,26 +28,32 @@ import anijudgeRoutes from './routes/anijudge.js';
 import messageRoutes from './routes/messages.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import watchPartyRoutes from './routes/watchPartyRoutes.js';
+import quizRoutes from './routes/quiz.js';
 import * as recs from './services/recommendationEngine.js';
 import { prisma } from './lib/prisma.js';
 import { authenticateToken } from './middleware/auth.js';
 import cron from 'node-cron';
 import { createServer } from 'http';
 import { initSocket } from './socket/index.js';
+import { startDailyQuizCron } from './utils/dailyQuizCron.js';
 
 dotenv.config();
 
 const app = express();
+export { app }; 
 const server = createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Initialize Sockets
 initSocket(server);
 
+// Start Daily Quiz Rotation System
+startDailyQuizCron();
+
 // Community Validation Job (runs every 24 hours)
 const cleanupUnvalidatedCommunities = async () => {
   try {
-    console.log('[Job] Running community validation cleanup...');
+    logger.info('[Job] Running community validation cleanup...');
     const now = new Date();
     await prisma.community.deleteMany({
       where: {
@@ -51,7 +62,7 @@ const cleanupUnvalidatedCommunities = async () => {
       }
     });
   } catch (error) {
-    console.error('[Job] Error in community cleanup:', error);
+    logger.error('[Job] Error in community cleanup:', error);
   }
 };
 
@@ -62,16 +73,16 @@ setTimeout(cleanupUnvalidatedCommunities, 60 * 1000);
 // AniShot Expiry Cleanup (runs every hour)
 cron.schedule('0 * * * *', async () => {
   try {
-    console.log('[Job] Cleaning up expired AniShots...');
+    logger.info('[Job] Cleaning up expired AniShots...');
     const now = new Date();
     const result = await prisma.aniShot.deleteMany({
       where: { expiresAt: { lt: now } }
     });
     if (result.count > 0) {
-      console.log(`[Job] Deleted ${result.count} expired AniShots.`);
+      logger.info(`[Job] Deleted ${result.count} expired AniShots.`);
     }
   } catch (error) {
-    console.error('[Job] Error in AniShot cleanup:', error);
+    logger.error('[Job] Error in AniShot cleanup:', error);
   }
 });
 
@@ -79,7 +90,7 @@ cron.schedule('0 * * * *', async () => {
 // Batch process up to 50 users to stay within Jikan limits
 cron.schedule('0 3 * * *', async () => {
   try {
-    console.log('[Job] Starting batch recommendation refresh...');
+    logger.info('[Job] Starting batch recommendation refresh...');
     // Only refresh users who haven't had a refresh in 24h, max 50
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const usersToRefresh = await prisma.user.findMany({
@@ -94,16 +105,16 @@ cron.schedule('0 3 * * *', async () => {
     });
 
     for (const user of usersToRefresh) {
-      console.log(`[Job] Refreshing recs for user ${user.id}...`);
+      logger.info(`[Job] Refreshing recs for user ${user.id}...`);
       await recs.generateRecommendations(user.id).catch(err => 
-        console.error(`Error generating recs for ${user.id}:`, err)
+        logger.error(`Error generating recs for ${user.id}:`, err)
       );
       // Wait between users to avoid API pressure
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    console.log(`[Job] Batch recommendation refresh complete (${usersToRefresh.length} users).`);
+    logger.info(`[Job] Batch recommendation refresh complete (${usersToRefresh.length} users).`);
   } catch (error) {
-    console.error('[Job] Error in recommendation job:', error);
+    logger.error('[Job] Error in recommendation job:', error);
   }
 });
 
@@ -113,7 +124,29 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json());
+// Security Middleware
+app.use(helmet()); // Set security headers
+app.use(hpp()); // Prevent HTTP parameter pollution
+
+// Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' }
+});
+app.use('/api', limiter);
+
+// Auth Specific Rate Limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // Strict limit for auth
+  message: { message: 'Excessive login attempts, please try again in 15 minutes.' }
+});
+app.use('/api/auth', authLimiter);
+
+app.use(express.json({ limit: '10kb' })); // Body limit to prevent large payload attacks
 app.use(cookieParser());
 
 // Static uploads folder
@@ -139,7 +172,8 @@ app.use('/api/anishots', anishotsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/anijudge', authenticateToken, anijudgeRoutes);
 app.use('/api/messages', authenticateToken, messageRoutes);
-app.use('/api/watchparty', authenticateToken, watchPartyRoutes);
+app.use('/api/watchparty', watchPartyRoutes); // Removed forced auth middleware here as handled inside for public/private
+app.use('/api/quiz', quizRoutes);
 app.use('/api/recommendations', authenticateToken, recommendationsRoutes);
 
 // Health check
@@ -147,6 +181,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} (with Sockets)`);
-});
+// Global Error Handler (must be last)
+app.use(errorHandler);
+
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT} (with Sockets)`);
+  });
+}

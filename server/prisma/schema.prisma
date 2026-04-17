@@ -89,9 +89,31 @@ model User {
   tagAffinities     UserTagAffinity[]
   interactions      UserAnimeInteraction[]
   recommendationCache RecommendationCache?
-  watchPartiesHosted WatchParty[]      @relation("WatchPartyHost")
-  watchPartyMemberships WatchPartyParticipant[]
   watchPartyMessages WatchPartyMessage[]
+  watchPartiesHosted    WatchParty[]      @relation("WatchPartyHost")
+  watchPartyMemberships WatchPartyParticipant[]
+
+  // AniQuiz Relations
+  quizAttempts      QuizAttempt[]
+  quizLeaderboards  QuizLeaderboard[]
+  hallOfFameEntries GauntletHallOfFame[]
+  gauntletVotes     GauntletVote[]
+  
+  questionSubmissions   QuestionSubmission[]
+  submissionVotes       SubmissionVote[]
+  quizArchitectBadge    QuizArchitectBadge?
+  dailyAnswers          DailyAnswer[]
+  streak                UserStreak?
+  elo                   PlayerELO?
+  battleParticipations  QuizBattleParticipant[]
+  tournamentParticipations TournamentParticipant[]
+
+  // Status Fields
+  isUltraNakama       Boolean          @default(false)
+  ultraNakamaExpiresAt DateTime?
+  isNakamaLeader      Boolean          @default(false)
+  nakamaLeaderSince   DateTime?
+  gauntletFrameUrl    String?
 
   @@index([username])
   @@index([email])
@@ -238,6 +260,8 @@ model Community {
   members            CommunityMember[]
   rules              CommunityRule[]
   posts              Post[]
+  submissions        QuestionSubmission[]
+  tournaments        Tournament[]
 
   @@index([slug])
 }
@@ -735,6 +759,7 @@ model RecommendationCache {
 // --- Live Watch Party Models ---
 
 enum WatchPartyStatus {
+  REGISTRATION
   WAITING
   WATCHING
   PAUSED
@@ -787,4 +812,345 @@ model WatchPartyMessage {
   content     String               // max 300 chars
   messageType WatchPartyMessageType @default(CHAT)
   createdAt   DateTime             @default(now())
+}
+
+// --- AniQuiz Models ---
+
+enum QuizType {
+  QA
+  SCREENSHOT
+  AUDIO
+  QUOTE
+  VOICE
+}
+
+enum QuizDifficulty {
+  GENIN
+  CHUNIN
+  JONIN
+  KAGE
+  LEGENDARY
+}
+
+enum QuizAttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+model Quiz {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  category    QuizType
+  difficulty  QuizDifficulty
+  isGauntlet  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  questions   Question[]
+  attempts    QuizAttempt[]
+  leaderboard QuizLeaderboard[]
+}
+
+model Question {
+  id               String         @id @default(cuid())
+  quizId           String?
+  quiz             Quiz?          @relation(fields: [quizId], references: [id])
+  animeQuizRoomId  String?
+  animeQuizRoom    AnimeQuizRoom? @relation(fields: [animeQuizRoomId], references: [id])
+  type             QuizType
+  difficulty       QuizDifficulty
+  questionText     String
+  mediaUrl         String?
+  mediaType        MediaType?
+  options          String[]
+  correctAnswer    String
+  animeReference   String?
+  timeLimitSeconds Int
+  pointsBase       Int
+  createdAt        DateTime       @default(now())
+  answers          QuizAnswer[]
+  dailyEntries     DailyQuestion[]
+  stats            QuestionStats?
+}
+
+model QuizAttempt {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId          String?
+  quiz            Quiz?             @relation(fields: [quizId], references: [id])
+  isGauntlet      Boolean           @default(false)
+  status          QuizAttemptStatus @default(IN_PROGRESS)
+  currentQuestion Int               @default(0)
+  score           Int               @default(0)
+  mistakes        Int               @default(0)
+  totalAnswered   Int               @default(0)
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+  weekNumber      Int
+  yearNumber      Int
+  answers         QuizAnswer[]
+  hallOfFame      GauntletHallOfFame?
+  gauntletSession      GauntletSession?
+  seasonalGauntletId   String?
+  seasonalGauntlet     SeasonalGauntlet? @relation(fields: [seasonalGauntletId], references: [id])
+
+  @@unique([userId, isGauntlet, weekNumber, yearNumber])
+}
+
+model SeasonalGauntlet {
+  id        String        @id @default(cuid())
+  title     String        @default("Seasonal Gauntlet")
+  startDate DateTime
+  endDate   DateTime
+  attempts  QuizAttempt[]
+  createdAt DateTime      @default(now())
+}
+
+model QuizAnswer {
+  id                String      @id @default(cuid())
+  attemptId         String
+  attempt           QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId        String
+  question          Question    @relation(fields: [questionId], references: [id])
+  selectedAnswer    String
+  isCorrect         Boolean
+  timeSpentSeconds  Float
+  pointsEarned      Int
+  createdAt         DateTime    @default(now())
+}
+
+model QuizLeaderboard {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId         String?
+  quiz           Quiz?    @relation(fields: [quizId], references: [id])
+  isGauntlet     Boolean  @default(false)
+  score          Int
+  correctAnswers Int
+  mistakes       Int
+  completedAt    DateTime @default(now())
+  weekNumber     Int
+  yearNumber     Int
+}
+
+model GauntletHallOfFame {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptId   String      @unique
+  attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  score       Int
+  mistakes    Int
+  isPerfect   Boolean
+  completedAt DateTime    @default(now())
+  upvotes     Int         @default(0)
+  votes       GauntletVote[]
+}
+
+model GauntletVote {
+  id             String             @id @default(cuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hallOfFameId   String
+  hallOfFame     GauntletHallOfFame @relation(fields: [hallOfFameId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
+
+  @@unique([userId, hallOfFameId])
+}
+
+model GauntletSession {
+  id          String      @id @default(cuid())
+  attemptId   String      @unique
+  attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionIds Json        // Array of question IDs
+}
+
+// --- Community & Competitive Extension ---
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubmissionVoteType {
+  APPROVE
+  REJECT
+}
+
+model QuestionSubmission {
+  id               String           @id @default(cuid())
+  submittedBy      String
+  user             User             @relation(fields: [submittedBy], references: [id], onDelete: Cascade)
+  communityId      String?
+  community        Community?       @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  type             QuizType
+  difficulty       QuizDifficulty
+  questionText     String
+  mediaUrl         String?
+  mediaType        MediaType?
+  options          String[]
+  correctAnswer    String
+  animeReference   String
+  timeLimitSeconds Int              @default(15)
+  status           SubmissionStatus @default(PENDING)
+  approvalVotes    Int              @default(0)
+  rejectionVotes   Int              @default(0)
+  votes            SubmissionVote[]
+  reviewedAt       DateTime?
+  createdAt        DateTime         @default(now())
+}
+
+model SubmissionVote {
+  id           String             @id @default(cuid())
+  submissionId String
+  submission   QuestionSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vote         SubmissionVoteType
+  createdAt    DateTime           @default(now())
+
+  @@unique([submissionId, userId])
+}
+
+model QuizArchitectBadge {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String   @default("Quiz Architect")
+  level             Int      @default(1)
+  questionsApproved Int      @default(0)
+  awardedAt         DateTime @default(now())
+}
+
+model DailyQuestion {
+  id             String        @id @default(cuid())
+  questionId     String
+  question       Question      @relation(fields: [questionId], references: [id])
+  date           DateTime      @unique // truncated to YYYY-MM-DD
+  totalAttempts  Int           @default(0)
+  correctAttempts Int           @default(0)
+  answers        DailyAnswer[]
+}
+
+model DailyAnswer {
+  id              String        @id @default(cuid())
+  dailyQuestionId String
+  dailyQuestion   DailyQuestion @relation(fields: [dailyQuestionId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isCorrect       Boolean
+  pointsEarned    Int
+  answeredAt      DateTime      @default(now())
+
+  @@unique([dailyQuestionId, userId])
+}
+
+model UserStreak {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastAnsweredDate DateTime?
+}
+
+model AnimeQuizRoom {
+  id            String   @id @default(cuid())
+  animeId       String   @unique // Jikan ID
+  animeTitle    String
+  animeCover    String
+  roomSlug      String   @unique
+  activePlayers Int      @default(0)
+  totalAttempts Int      @default(0)
+  topScore      Int      @default(0)
+  topScorerId   String?
+  updatedAt     DateTime @updatedAt
+  questions     Question[]
+}
+
+model Tournament {
+  id           String                  @id @default(cuid())
+  communityId  String
+  community    Community               @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  status       WatchPartyStatus        @default(WAITING) // Reusing status
+  startDate    DateTime
+  endDate      DateTime
+  participants TournamentParticipant[]
+  createdAt    DateTime                @default(now())
+}
+
+model TournamentParticipant {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score        Int        @default(0)
+  rank         Int?
+  joinedAt     DateTime   @default(now())
+
+  @@unique([tournamentId, userId])
+}
+
+model QuizBattle {
+  id         String                  @id @default(cuid())
+  code       String                  @unique
+  status     WatchPartyStatus        @default(WAITING)
+  questions  Json                    // IDs of chosen questions
+  createdAt  DateTime                @default(now())
+  participants QuizBattleParticipant[]
+}
+
+model QuizBattleParticipant {
+  id        String     @id @default(cuid())
+  battleId  String
+  battle    QuizBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int        @default(0)
+  isReady   Boolean    @default(false)
+  answers   BattleAnswer[]
+
+  @@unique([battleId, userId])
+}
+
+model BattleAnswer {
+  id            String                @id @default(cuid())
+  participantId String
+  participant   QuizBattleParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  questionId    String
+  isCorrect     Boolean
+  responseTime  Float
+}
+
+model PlayerELO {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int      @default(1000)
+  wins      Int      @default(0)
+  losses    Int      @default(0)
+  draws     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model QuestionStats {
+  id             String   @id @default(cuid())
+  questionId     String   @unique
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  totalServed    Int      @default(0)
+  totalCorrect   Int      @default(0)
+  accuracyRate   Float    @default(1.0)
+  avgTimeSeconds Float    @default(0.0)
 }

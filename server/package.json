@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "description": "NAKAMA Express Server",
-  "main": "src/index.ts",
+  "main": "dist/server/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/server/src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest --config vitest.config.integration.ts",
+    "test:integration:push": "npx cross-env dotenv -e .env.test -- npx prisma db push",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node-esm prisma/seed.ts"
@@ -23,23 +28,29 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^24.12.2",
+    "@types/node-cron": "^3.0.11",
     "@types/socket.io": "^3.0.1",
+    "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.4",
     "nodemon": "^3.1.14",
     "prisma": "^6.2.1",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
-    "@types/node-cron": "^3.0.11",
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^4.0.0",
@@ -47,6 +58,8 @@
     "node-cron": "^4.2.1",
     "rss-parser": "^3.13.0",
     "slugify": "^1.6.9",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
   }
 }
