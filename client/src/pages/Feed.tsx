@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
-import { FeedNavbar } from '../components/layout/FeedNavbar';
+import { useNavigate } from 'react-router-dom';
 import FollowingTab from '../components/feed/FollowingTab';
 import TrendingTab from '../components/feed/TrendingTab';
 import { PlaylistsTab } from '../components/feed/PlaylistsTab';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreatePostModal } from '../components/feed/CreatePostModal';
-import { Pencil } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import AniShotRow from '../components/feed/AniShotRow';
 
 export const FeedPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'playlists'>('following');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const tabs = [
+    { id: 'trending', label: 'Trending' },
+    { id: 'following', label: 'Following' },
+    { id: 'playlists', label: 'Playlists' }
+  ] as const;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -25,45 +31,83 @@ export const FeedPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[#f4f4f5]">
-      {/* Feed Navbar replaces Global Navbar */}
-      <FeedNavbar activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Content Area */}
-      <main className="pt-[56px] pb-24">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderTabContent()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-8 right-8 z-40 group">
-        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#000]/80 backdrop-blur-md rounded-lg border border-[#232329] text-white text-[0.85rem] font-dm-sans font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-x-2 group-hover:translate-x-0">
-          Share your thoughts
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsCreateModalOpen(true)}
-          className="w-[56px] h-[56px] bg-[#7c3aed] text-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(124,58,237,0.5)] cursor-pointer"
+    <div className="min-h-screen bg-[#0a0a0c] text-[#f4f4f5] font-dm-sans selection:bg-white/10 relative">
+      
+      {/* Fixed Top Bar */}
+      <header className="fixed top-0 left-0 right-0 h-[52px] bg-[#0a0a0c] border-b border-[#1a1a1a] z-50 flex items-center px-6">
+        {/* Back Arrow */}
+        <button 
+          onClick={() => navigate('/home')}
+          className="absolute left-6 text-[#f4f4f5] hover:text-white transition-colors cursor-pointer"
         >
-          <Pencil size={22} />
-        </motion.button>
-      </div>
+          <ChevronLeft size={22} />
+        </button>
 
-      {/* Create Post Modal */}
-      <CreatePostModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-      />
+        {/* Tabs */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-8">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative py-4 text-[0.82rem] font-semibold uppercase tracking-[0.08em] transition-colors ${
+                  isActive ? 'text-white' : 'text-[#71717a] hover:text-[#a1a1aa]'
+                }`}
+              >
+                {tab.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabUnderline"
+                    className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* AniShots Section - Edge to Edge */}
+      <AnimatePresence>
+        {activeTab === 'following' && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="pt-[52px] bg-[#0a0a0c]"
+          >
+            <AniShotRow />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Container */}
+      <main className={`max-w-[680px] mx-auto ${activeTab !== 'following' ? 'pt-[52px]' : ''}`}>
+        
+        {/* Tab Content Area */}
+        <div className="px-4 sm:px-0 pt-2 pb-32 min-h-screen relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderTabContent()}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Bottom Watermark */}
+          <div className="py-8 pt-16 text-center text-[#2a2a2a] font-medium text-[0.75rem] uppercase tracking-[0.25em] select-none">
+            — NAKAMA —
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
+
+export default FeedPage;

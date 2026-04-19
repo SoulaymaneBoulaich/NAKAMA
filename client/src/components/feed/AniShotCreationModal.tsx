@@ -44,7 +44,7 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
       const uploadRes = await api.post('/upload/anishot', formData);
       const { url: mediaUrl } = uploadRes.data;
 
-      // Step 2: Manifest AniShot Metadata
+      // Step 2: Create AniShot Metadata
       const res = await api.post('/anishots', {
         content: title, // Map UI 'title' to server 'content'
         mediaUrl,
@@ -62,7 +62,7 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
       setAnimeQuery('');
       setSelectedAnime(null);
     } catch (err) {
-      console.error('Failed to manifest shot', err);
+      console.error('Failed to post shot', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -92,8 +92,8 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
                 <Camera size={20} className="text-[var(--accent-primary)]" />
               </div>
               <div>
-                <div className="text-white font-black uppercase tracking-tighter italic text-xl">Manifest AniShot</div>
-                <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Share the ephemeral resonance</div>
+                <div className="text-white font-black uppercase tracking-tighter italic text-xl">Add AniShot</div>
+                <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Share a quick update</div>
               </div>
             </div>
             <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all">
@@ -126,7 +126,7 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
                     <Plus size={32} />
                   </div>
                   <div className="text-center">
-                    <div className="text-[11px] font-black text-white uppercase tracking-widest italic">Ignite Medium</div>
+                    <div className="text-[11px] font-black text-white uppercase tracking-widest italic">Upload Media</div>
                     <div className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest mt-1">Image or Video</div>
                   </div>
                 </>
@@ -144,31 +144,31 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] pl-1 flex items-center gap-2">
-                   <MessageSquare size={12} className="text-[var(--accent-primary)]" /> 
-                   Manifestation Title
+                   <MessageSquare size={12} className="text-red-500" /> 
+                   Caption
                 </label>
                 <input 
                   type="text" 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. 'PEAK RESONANCE ATTAINED...'"
-                  className="w-full bg-white/5 border border-[var(--border-color)] rounded-2xl px-6 py-4 text-sm font-bold text-white outline-none focus:border-[var(--accent-primary)]/40 focus:bg-white/10 transition-all italic placeholder:text-zinc-800"
+                  placeholder="What's happening?"
+                  className="w-full bg-white/5 border border-[#232329] rounded-2xl px-6 py-4 text-sm font-bold text-white outline-none focus:border-red-500/40 focus:bg-white/10 transition-all italic placeholder:text-zinc-800"
                 />
               </div>
 
                {/* Anime Search Placeholder/Selection */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] pl-1 flex items-center gap-2">
-                   <Flame size={12} className="text-[var(--accent-primary)]" /> 
-                   Resonance Target
+                   <Flame size={12} className="text-red-500" /> 
+                   Tagged Anime
                 </label>
                 <div className="relative">
                   <input 
                     type="text" 
                     value={animeQuery}
                     onChange={(e) => setAnimeQuery(e.target.value)}
-                    placeholder="Link Anime Record..."
-                    className="w-full bg-white/5 border border-[var(--border-color)] rounded-2xl px-6 py-4 text-[11px] font-bold text-white outline-none focus:border-[var(--accent-primary)]/40 transition-all uppercase tracking-widest placeholder:text-zinc-900"
+                    placeholder="Search anime..."
+                    className="w-full bg-white/5 border border-[#232329] rounded-2xl px-6 py-4 text-[11px] font-bold text-white outline-none focus:border-red-500/40 transition-all uppercase tracking-widest placeholder:text-zinc-900"
                   />
                   {selectedAnime && (
                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[var(--accent-primary)] text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tight">
@@ -189,12 +189,12 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
               {isSubmitting ? (
                 <>
                   <Spinner size="sm" />
-                  <span>TRANSMITTING...</span>
+                  <span>UPLOADING...</span>
                 </>
               ) : (
                 <>
                   <Play size={18} />
-                  <span>DROP SHOT</span>
+                  <span>POST SHOT</span>
                 </>
               )}
             </button>
