@@ -46,10 +46,10 @@ const PollCard: React.FC<Props> = ({ poll, onVoteSuccess }) => {
   };
 
   return (
-    <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-6 mt-4 mb-2">
+    <div className="w-full mt-4 mb-2">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-1.5 h-6 bg-red-600 rounded-full" />
-        <h4 className="text-lg font-black text-zinc-100 tracking-tight italic uppercase">
+        <div className="w-1 h-4 bg-white rounded-full" />
+        <h4 className="text-[0.875rem] font-bold text-[#f4f4f5] uppercase tracking-[0.05em] font-dm-sans">
           {poll.question}
         </h4>
       </div>
@@ -64,36 +64,36 @@ const PollCard: React.FC<Props> = ({ poll, onVoteSuccess }) => {
               key={option.id}
               disabled={hasVoted || isExpired || !!loading}
               onClick={() => handleVote(option.id)}
-              className={`relative w-full text-left rounded-xl border p-4 transition-all overflow-hidden group ${
+              className={`relative w-full text-left rounded-[10px] border p-3.5 transition-all overflow-hidden group ${
                 hasVoted 
                 ? isSelected 
-                  ? 'border-red-600/50 bg-red-600/5' 
-                  : 'border-[var(--border-color)] bg-zinc-900/20' 
-                : 'border-[var(--border-color)] bg-zinc-900/40 hover:border-zinc-700 active:scale-[0.99]'
+                  ? 'border-white/50 bg-white/5' 
+                  : 'border-[#1a1a1a] bg-transparent' 
+                : 'border-[#1a1a1a] bg-transparent hover:border-[#333] active:scale-[0.99]'
               }`}
             >
               {/* Progress Background */}
               {hasVoted && (
                 <div 
-                  className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ease-out ${isSelected ? 'bg-red-600/10' : 'bg-zinc-800/30'}`}
+                  className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ease-out ${isSelected ? 'bg-white/10' : 'bg-white/5'}`}
                   style={{ width: `${percentage}%` }}
                 />
               )}
 
-              <div className="relative z-10 flex items-center justify-between">
+              <div className="relative z-10 flex items-center justify-between font-dm-sans">
                 <div className="flex items-center gap-3">
-                  <span className={`font-bold transition-all ${isSelected ? 'text-red-500' : 'text-zinc-300'}`}>
+                  <span className={`text-[0.85rem] font-medium transition-all ${isSelected ? 'text-white' : 'text-[#a1a1aa]'}`}>
                     {option.optionText}
                   </span>
-                  {isSelected && <CheckCircle2 size={16} className="text-red-500 animate-in zoom-in-50 duration-300" />}
+                  {isSelected && <CheckCircle2 size={14} className="text-white animate-in zoom-in-50 duration-300" />}
                 </div>
                 {hasVoted && (
-                  <span className={`text-sm font-black ${isSelected ? 'text-red-500' : 'text-zinc-500'}`}>
+                  <span className={`text-[0.75rem] font-bold ${isSelected ? 'text-white' : 'text-[#71717a]'}`}>
                     {percentage}%
                   </span>
                 )}
                 {!hasVoted && !isExpired && (
-                  <ChevronRight size={18} className="text-zinc-700 group-hover:text-zinc-500 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight size={16} className="text-[#3a3a3a] group-hover:text-[#71717a] group-hover:translate-x-1 transition-all" />
                 )}
               </div>
             </button>
@@ -101,14 +101,14 @@ const PollCard: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         })}
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-[10px] font-black tracking-widest text-zinc-600 uppercase">
+      <div className="mt-4 flex items-center justify-between text-[0.65rem] font-bold tracking-[0.1em] text-[#71717a] uppercase font-dm-sans">
         <div className="flex items-center gap-4">
           <span>{totalVotes.toLocaleString()} VOTES</span>
-          {hasVoted && <span className="text-red-600/80">SELECTION RECORDED</span>}
+          {hasVoted && <span className="text-white/80">VOTED</span>}
         </div>
         {isExpired ? (
-          <span className="text-zinc-700 flex items-center gap-1">
-            <Info size={12} /> POLL CLOSED
+          <span className="text-[#3a3a3a] flex items-center gap-1">
+            <Info size={12} /> CLOSED
           </span>
         ) : poll.expiresAt && (
           <span>ENDS {new Date(poll.expiresAt).toLocaleDateString()}</span>

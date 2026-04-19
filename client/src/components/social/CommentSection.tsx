@@ -52,12 +52,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add to the stream..."
-          className="w-full bg-[var(--bg-secondary)114] border border-[#232329] rounded-2xl px-5 py-3.5 pr-14 text-sm font-dm-sans text-[#f4f4f5] placeholder-[#3f3f46] focus:outline-none focus:border-[#7c3aed] transition-all"
+          className="w-full bg-[var(--bg-secondary)114] border border-[#232329] rounded-2xl px-5 py-3.5 pr-14 text-sm font-dm-sans text-[#f4f4f5] placeholder-[#3f3f46] focus:outline-none focus:border-white transition-all transition-all"
         />
         <button 
           type="submit"
           disabled={!content.trim() || commentMutation.isPending}
-          className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:opacity-50 text-white p-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#7c3aed]/20"
+          className="absolute right-3 top-1/2 -translate-y-1/2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black p-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-white/5"
         >
           {commentMutation.isPending ? <Spinner size="sm" /> : <Send size={18} />}
           {commentMutation.isPending ? <Spinner size="sm" /> : <Send size={18} />}

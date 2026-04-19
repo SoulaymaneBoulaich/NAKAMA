@@ -75,7 +75,7 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
         poll: pollData
       });
 
-      addToast('success', 'Post manifested in the collective');
+      addToast('success', 'Post shared successfully');
       onClose();
       setContent('');
       setMediaFile(null);
@@ -83,7 +83,7 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
       setShowPoll(false);
       setSelectedAnime(null);
     } catch (err) {
-      addToast('error', 'Manifestation failed');
+      addToast('error', 'Failed to share post');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,26 +101,26 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
         />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-2xl bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.9)] overflow-hidden"
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          className="relative w-full max-w-2xl bg-[#0a0a0c] border border-[#1a1a1a] rounded-[24px] shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-[var(--border-color)] flex items-center justify-between">
+          <div className="px-8 py-6 border-b border-[#1a1a1a] flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full border border-[var(--accent-primary)]/30 overflow-hidden p-0.5">
+              <div className="w-10 h-10 rounded-full border border-[var(--border-color)] overflow-hidden">
                 <img src={user?.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
               </div>
               <div>
-                <div className="text-white font-black uppercase tracking-tighter italic text-lg">{user?.username}</div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                  <Globe size={10} className="text-[var(--accent-primary)]" /> Collective Intelligence
+                <div className="text-[#f4f4f5] font-semibold text-[0.95rem] font-dm-sans">{user?.username}</div>
+                <div className="flex items-center gap-2 text-[0.65rem] font-bold text-[#71717a] uppercase tracking-[0.08em] font-dm-sans">
+                  <Globe size={11} className="text-white" /> Public Post
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all">
-              <X size={20} />
+            <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-[#71717a] hover:text-[#f4f4f5] transition-all">
+              <X size={18} />
             </button>
           </div>
 
@@ -129,13 +129,13 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's manifesting in your archive?"
-              className="w-full h-32 bg-transparent text-xl font-bold text-white placeholder:text-zinc-800 outline-none resize-none selection:bg-[var(--accent-primary)] selection:text-white italic tracking-tighter"
+              placeholder="What's on your mind?"
+              className="w-full h-32 bg-transparent text-[1.1rem] font-medium text-[#f4f4f5] placeholder:text-[#2a2a2a] outline-none resize-none font-dm-sans leading-relaxed tracking-tight"
             />
 
             {/* Media Blocks */}
             {mediaPreview && (
-              <div className="relative mt-4 rounded-3xl overflow-hidden group shadow-2xl border border-[var(--border-color)]">
+              <div className="relative mt-4 rounded-xl overflow-hidden group border border-[#1a1a1a] bg-[#000]">
                 {mediaType === 'image' ? (
                   <img src={mediaPreview} className="w-full max-h-96 object-cover" alt="" />
                 ) : (
@@ -143,35 +143,35 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
                 )}
                 <button 
                   onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                  className="absolute top-4 right-4 p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-[var(--accent-primary)] transition-all opacity-0 group-hover:opacity-100"
+                  className="absolute top-4 right-4 p-2.5 bg-black/70 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-all opacity-0 group-hover:opacity-100"
                 >
-                  <X size={16} />
+                  <X size={14} />
                 </button>
               </div>
             )}
 
             {/* Anime Reference Section */}
             {selectedAnime ? (
-              <div className="mt-6 flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-[var(--border-color)] group">
-                <div className="w-12 h-16 rounded-xl overflow-hidden border border-[var(--border-color)]">
+              <div className="mt-6 flex items-center gap-4 p-3.5 bg-white/5 rounded-xl border border-[#1a1a1a] group">
+                <div className="w-10 h-14 rounded-md overflow-hidden border border-[#2a2a2a]">
                   <img src={selectedAnime.images?.jpg?.large_image_url} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-black text-white italic truncate uppercase">{selectedAnime.title}</div>
-                  <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Resonance Target Locked</div>
+                  <div className="text-[0.82rem] font-bold text-[#f4f4f5] font-dm-sans truncate tracking-tight">{selectedAnime.title}</div>
+                  <div className="text-[0.65rem] text-[#71717a] uppercase tracking-widest font-bold font-dm-sans">Anime Tagged</div>
                 </div>
-                <button onClick={() => setSelectedAnime(null)} className="p-2 opacity-0 group-hover:opacity-100 transition-all text-zinc-500 hover:text-white">
-                  <X size={16} />
+                <button onClick={() => setSelectedAnime(null)} className="p-2 opacity-0 group-hover:opacity-100 transition-all text-[#71717a] hover:text-[#f4f4f5]">
+                  <X size={14} />
                 </button>
               </div>
             ) : (
-               <div className="mt-6">
+               <div className="mt-4">
                   <input 
                     type="text" 
                     value={animeQuery}
                     onChange={(e) => setAnimeQuery(e.target.value)}
-                    placeholder="Link Resonance Target (Anime Name)..."
-                    className="w-full bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-zinc-500 italic outline-none placeholder:text-zinc-900"
+                    placeholder="Tag an anime..."
+                    className="w-full bg-transparent border-none text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[#3a3a3a] outline-none placeholder:text-[#2a2a2a] font-dm-sans"
                   />
                </div>
             )}
@@ -181,19 +181,19 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-6 bg-white/5 rounded-3xl border border-[var(--border-color)] space-y-4 shadow-2xl"
+                className="mt-6 p-6 bg-white/5 rounded-2xl border border-[#1a1a1a] space-y-4"
               >
                 <input 
                   type="text" 
                   value={pollQuestion}
                   onChange={(e) => setPollQuestion(e.target.value)}
-                  placeholder="The query for the collective..."
-                  className="w-full bg-transparent border-none text-white font-black uppercase italic tracking-tighter outline-none text-sm placeholder:text-zinc-600 mb-2"
+                  placeholder="Ask the community..."
+                  className="w-full bg-transparent border-none text-[#f4f4f5] font-bold text-[0.9rem] outline-none placeholder:text-[#71717a] mb-2 font-dm-sans"
                 />
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {pollOptions.map((opt, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <div className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-lg text-[10px] font-black text-[var(--accent-primary)]">{idx + 1}</div>
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="w-7 h-7 flex items-center justify-center bg-[#111114] border border-[#1a1a1a] rounded-md text-[0.65rem] font-bold text-white font-dm-sans">{idx + 1}</div>
                       <input 
                         type="text" 
                         value={opt}
@@ -203,46 +203,46 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
                           setPollOptions(newOpts);
                         }}
                         placeholder={`Option ${idx + 1}`}
-                        className="flex-1 bg-white/3 border-none text-xs font-bold p-2 px-4 rounded-xl text-zinc-300 outline-none focus:bg-white/10"
+                        className="flex-1 bg-[#111114] border border-[#1a1a1a] text-[0.8rem] p-2.5 px-4 rounded-xl text-[#a1a1aa] outline-none focus:border-[#333] font-dm-sans"
                       />
                     </div>
                   ))}
                 </div>
                 {pollOptions.length < 5 && (
-                  <button onClick={addPollOption} className="text-[9px] font-black text-zinc-600 uppercase tracking-widest hover:text-[var(--accent-primary)] transition-colors pl-10">+ Append Choice</button>
+                  <button onClick={addPollOption} className="text-[0.65rem] font-bold text-[#71717a] uppercase tracking-[0.1em] hover:text-white transition-colors pl-10 font-dm-sans">+ Add Option</button>
                 )}
               </motion.div>
             )}
           </div>
 
           {/* Controls Footer */}
-          <div className="p-8 bg-black/40 border-t border-[var(--border-color)] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <label className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-zinc-400 hover:text-white transition-all cursor-pointer group">
+          <div className="px-8 py-6 bg-black/40 border-t border-[#1a1a1a] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <label className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-[#71717a] hover:text-[#f4f4f5] transition-all cursor-pointer group">
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaSelect(e, 'image')} />
-                <ImageIcon size={20} className="group-hover:scale-110 transition-transform" />
+                <ImageIcon size={18} className="group-hover:scale-110 transition-transform" />
               </label>
-              <label className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-zinc-400 hover:text-white transition-all cursor-pointer group">
+              <label className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-[#71717a] hover:text-[#f4f4f5] transition-all cursor-pointer group">
                 <input type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaSelect(e, 'video')} />
-                <Video size={20} className="group-hover:scale-110 transition-transform" />
+                <Video size={18} className="group-hover:scale-110 transition-transform" />
               </label>
               <button 
                 onClick={() => setShowPoll(!showPoll)}
-                className={`p-4 rounded-2xl transition-all group ${showPoll ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)]' : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'}`}
+                className={`p-3 rounded-xl transition-all group ${showPoll ? 'bg-white/10 text-white' : 'bg-white/5 text-[#71717a] hover:text-[#f4f4f5] hover:bg-white/10'}`}
               >
-                <Sparkles size={20} className="group-hover:rotate-12 transition-transform" />
+                <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
               </button>
             </div>
 
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || (!content && !mediaFile && !youtubeUrl)}
-              className="px-12 py-5 bg-[var(--accent-primary)] text-white rounded-2xl text-xs font-black uppercase tracking-[0.4rem] shadow-[0_10px_40px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center gap-3"
+              className="px-10 py-3.5 bg-white text-black rounded-xl text-[0.75rem] font-bold uppercase tracking-[0.2em] shadow-lg hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center gap-3 font-dm-sans"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Manifest</>
+                <>Post</>
               )}
             </button>
           </div>

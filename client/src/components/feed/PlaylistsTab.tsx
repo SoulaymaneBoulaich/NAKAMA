@@ -22,21 +22,23 @@ export const PlaylistsTab: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-[720px] mx-auto px-4 sm:px-0 pt-6">
+    <div className="w-full pt-6">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <List size={22} className="text-[var(--accent-primary)]" />
-          <h2 className="text-xl font-black font-jp uppercase italic italic tracking-wider">Editorial Sets</h2>
+          {/* Label instead of icon for minimal look? Spec says "nothing decorative". 
+              I'll keep a small icon but make it very subtle. */}
+          <List size={18} className="text-white" />
+          <h2 className="text-[0.9rem] font-bold text-[#f4f4f5] uppercase tracking-[0.1em] font-dm-sans">Featured Playlists</h2>
         </div>
-        <button className="flex items-center gap-2 text-[0.8rem] font-dm-sans font-bold text-[#71717a] hover:text-[#f4f4f5] transition-colors">
-          Browse All <ArrowRight size={16} />
+        <button className="flex items-center gap-2 text-[0.72rem] font-medium font-dm-sans text-[#71717a] hover:text-[#f4f4f5] transition-colors uppercase tracking-[0.05em]">
+          Browse All <ArrowRight size={14} />
         </button>
       </div>
 
       <div className="space-y-12">
         {loading ? (
           [1, 2].map(n => (
-            <div key={n} className="w-full h-[180px] bg-[var(--bg-secondary)114] border border-[#232329] rounded-2xl animate-pulse" />
+            <div key={n} className="w-full h-[180px] bg-[#111114] border border-[#1a1a1a] rounded-[14px] animate-pulse" />
           ))
         ) : (
           playlists.map((playlist, idx) => (
@@ -49,34 +51,31 @@ export const PlaylistsTab: React.FC = () => {
             >
               <div className="flex flex-col sm:flex-row gap-8 items-start">
                 {/* Letterboxd Fanned Cover Effect */}
-                <div className="relative w-[210px] h-[150px] flex-shrink-0">
+                <div className="relative w-[180px] h-[130px] flex-shrink-0">
                   {/* Third Cover */}
-                  <div className="absolute left-[40px] top-[10px] w-[100px] h-[140px] rounded-lg bg-[#232329] border border-[var(--border-color)] shadow-2xl rotate-[3deg] group-hover:rotate-[6deg] transition-transform duration-500 overflow-hidden">
+                  <div className="absolute left-[30px] top-[8px] w-[90px] h-[120px] rounded-md bg-[#232329] border border-[#1a1a1a] shadow-2xl rotate-[3deg] group-hover:rotate-[6deg] transition-transform duration-500 overflow-hidden">
                     <img src={playlist.entries[2]?.animeCover || ''} className="w-full h-full object-cover opacity-60" alt="" />
                   </div>
                   {/* Second Cover */}
-                  <div className="absolute left-[20px] top-[5px] w-[100px] h-[140px] rounded-lg bg-[#18181d] border border-[var(--border-color)] shadow-xl rotate-[-2deg] group-hover:rotate-[-5deg] transition-transform duration-500 overflow-hidden">
-                    <img src={playlist.entries[1]?.animeCover || ''} className="w-full h-full object-cover opacity-80" alt="" />
-                  </div>
+                  <div className="absolute left-[15px] top-[4px] w-[90px] h-[120px] rounded-md bg-[#18181d] border border-[#1a1a1a] shadow-xl rotate-[-2deg] group-hover:rotate-[-5deg] transition-transform duration-500 overflow-hidden" />
                   {/* Main Cover */}
-                  <div className="absolute left-0 top-0 w-[100px] h-[140px] rounded-lg bg-[var(--bg-secondary)114] border border-white/20 shadow-lg group-hover:scale-105 transition-transform duration-500 overflow-hidden z-10">
+                  <div className="absolute left-0 top-0 w-[90px] h-[120px] rounded-md bg-[#111114] border border-white/10 shadow-lg group-hover:scale-105 transition-transform duration-500 overflow-hidden z-10">
                     <img src={playlist.entries[0]?.animeCover || ''} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   </div>
                 </div>
 
                 {/* Playlist Info */}
-                <div className="flex-1 pt-1">
+                <div className="flex-1 pt-0.5">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-[var(--border-color)]">
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-[#1a1a1a]">
                       <img src={playlist.user.avatar || ''} className="w-full h-full object-cover" alt="" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#71717a] uppercase tracking-widest">{playlist.user.username}</span>
+                    <span className="text-[10px] font-bold text-[#71717a] uppercase tracking-widest font-dm-sans">{playlist.user.username}</span>
                   </div>
-                  <h3 className="text-2xl font-black font-jp uppercase italic tracking-tight text-[#f4f4f5] group-hover:text-[var(--accent-primary)] transition-colors mb-2">
+                  <h3 className="text-[1.1rem] font-bold text-[#f4f4f5] group-hover:text-white transition-colors mb-2 font-dm-sans leading-tight">
                     {playlist.title}
                   </h3>
-                  <p className="text-[0.9rem] font-dm-sans text-[#71717a] line-clamp-2 mb-4 leading-relaxed">
+                  <p className="text-[0.8rem] font-dm-sans text-[#71717a] line-clamp-2 mb-4 leading-relaxed">
                     {playlist.description || "No description provided."}
                   </p>
                   <div className="flex items-center gap-6">

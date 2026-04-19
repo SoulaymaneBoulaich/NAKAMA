@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PostCard from '../social/PostCard';
 import api from '../../api/axios';
 import { useQuery } from '@tanstack/react-query';
@@ -14,28 +14,33 @@ const TrendingTab: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-12">
-        <div className="w-8 h-8 border-4 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin" />
+      <div className="flex flex-col gap-6 pt-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="w-full h-[200px] bg-[#111114] border border-[#1a1a1a] rounded-[14px] animate-pulse" />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-6">
-        {Array.isArray(posts) && posts.length > 0 ? (
-          posts.map((post: any) => (
-            <PostCard key={post.id} post={post} />
-          ))
-        ) : (
-          <div className="text-center py-20 bg-white/5 rounded-[2rem] border border-dashed border-[var(--border-color)]">
-            <p className="text-zinc-500 font-black uppercase tracking-widest italic">No trending resonance found.</p>
-            <p className="text-zinc-700 text-xs mt-2 uppercase tracking-widest font-bold">The collective is quiet... for now.</p>
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col gap-[0.75rem] pt-6">
+      {Array.isArray(posts) && posts.length > 0 ? (
+        posts.map((post: any) => (
+          <PostCard key={post.id} post={post} />
+        ))
+      ) : (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+          <h3 className="text-[#f4f4f5] text-[0.9rem] font-bold uppercase tracking-[0.1em] font-dm-sans">
+            Nothing trending yet
+          </h3>
+          <p className="text-[#71717a] text-[0.72rem] font-normal uppercase tracking-[0.08em] mt-2 max-w-[40ch] leading-relaxed font-dm-sans">
+            New posts will appear here as they gain traction
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
 export default TrendingTab;
+

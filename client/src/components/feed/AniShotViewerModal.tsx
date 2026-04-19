@@ -133,7 +133,7 @@ const AniShotViewerModal: React.FC<Props> = ({ isOpen, onClose, shots, initialIn
             <div className="absolute bottom-0 left-0 right-0 p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full border-2 border-[#7c3aed] overflow-hidden shadow-lg p-0.5">
+                  <div className="w-12 h-12 rounded-full border-2 border-red-600 overflow-hidden shadow-lg p-0.5">
                     <img src={currentShot.user?.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
                   </div>
                   <div>
@@ -141,7 +141,7 @@ const AniShotViewerModal: React.FC<Props> = ({ isOpen, onClose, shots, initialIn
                     <div className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">{new Date(currentShot.createdAt).toLocaleTimeString()}</div>
                   </div>
                 </div>
-                <button className="px-6 py-2 bg-[#7c3aed] text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all shadow-lg active:scale-95 pointer-events-auto">Follow</button>
+                <button className="px-6 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:scale-105 transition-all shadow-lg active:scale-95 pointer-events-auto">Follow</button>
               </div>
 
               <div className="text-white font-medium text-[15px] leading-relaxed line-clamp-3">
@@ -156,7 +156,7 @@ const AniShotViewerModal: React.FC<Props> = ({ isOpen, onClose, shots, initialIn
                   <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Like</span>
                 </button>
                 <div className="flex flex-col items-center gap-1 group">
-                  <div className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white group-hover:bg-[#7c3aed] transition-all">
+                  <div className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white group-hover:bg-red-600 transition-all">
                     <MessageSquare size={20} />
                   </div>
                   <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Reply</span>

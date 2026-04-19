@@ -61,13 +61,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-24px overflow-hidden hover:border-[var(--text-secondary)]/20 transition-all duration-300 shadow-sm"
+      className="bg-[#111114] border border-[#1a1a1a] rounded-[14px] overflow-hidden transition-colors duration-300"
     >
       {/* Header */}
-      <div className="p-4 flex items-center justify-between">
+      <div className="p-[1.2rem] pb-[0.8rem] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to={`/profile/${post.user.username}`} className="relative group">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-[var(--border-color)] group-hover:border-[var(--accent-primary)] transition-colors">
+          <Link to={`/profile/${post.user.username}`} className="relative">
+            <div className="w-9 h-9 rounded-full overflow-hidden border border-[#2a2a2a]">
               <img 
                 src={post.user.avatar || '/default-avatar.png'} 
                 alt={post.user.username}
@@ -75,42 +75,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               />
             </div>
           </Link>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap text-[0.875rem]">
-              <Link to={`/profile/${post.user.username}`} className="font-dm-sans font-bold text-[var(--text-primary)] hover:text-[var(--accent-primary)] transition-colors uppercase tracking-tight">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link to={`/profile/${post.user.username}`} className="font-dm-sans font-semibold text-[0.875rem] text-[#f4f4f5] hover:text-white transition-colors">
                 {post.user.username}
               </Link>
               {post.community && (
-                <>
-                  <span className="text-[var(--text-secondary)] font-dm-sans">in</span>
-                  <Link to={`/communities/${post.community.slug}`} className="text-[var(--accent-primary)] font-dm-sans font-bold hover:underline">
-                    r/{post.community.slug}
-                  </Link>
-                </>
+                <Link to={`/communities/${post.community.slug}`} className="text-[#71717a] text-[0.875rem] font-dm-sans hover:text-[#f4f4f5]">
+                  in {post.community.slug}
+                </Link>
               )}
             </div>
-            <span className="text-[var(--text-secondary)] text-[10px] font-dm-sans font-bold uppercase tracking-[0.15em]">
-              {formatDistanceToNow(new Date(post.createdAt))} ago
+            <span className="text-[#71717a] text-[0.7rem] font-dm-sans">
+              {formatDistanceToNow(new Date(post.createdAt))}
             </span>
           </div>
         </div>
-        <button className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--accent-primary)]/5 transition-all">
+        <button className="text-[#3a3a3a] hover:text-[#f4f4f5] transition-colors">
           <MoreHorizontal size={18} />
         </button>
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-3">
-        <p className="text-[1rem] font-dm-sans text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">
+      <div className="px-[1.2rem] pb-4">
+        <p className="text-[0.9rem] font-dm-sans text-[#f4f4f5] whitespace-pre-wrap leading-[1.7]">
           {post.content}
         </p>
       </div>
 
       {/* Media Rendering */}
-      <div className="px-4 pb-4 space-y-4">
+      <div className="px-[1.2rem] pb-4 space-y-4">
         {/* Poll */}
         {post.poll && (
-          <div className="bg-[var(--bg-secondary)114] border border-[#232329] rounded-2xl p-1">
+          <div className="bg-[#0a0a0c] border border-[#1a1a1a] rounded-[10px] p-0.5">
             <PollCard poll={post.poll as any} onVoteSuccess={() => {}} />
           </div>
         )}
@@ -120,20 +117,20 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         {/* Image */}
         {post.imageUrl && (
-          <div className="relative rounded-2xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+          <div className="relative rounded-[12px] overflow-hidden border border-[#1a1a1a] bg-[#0a0a0c]">
             <img 
               src={post.imageUrl} 
               alt="Post content"
-              className="w-full object-cover max-h-[500px]"
+              className="w-full object-cover max-h-[600px]"
             />
           </div>
         )}
 
         {/* Anime Tag */}
         {post.animeId && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)]/5 border border-[var(--accent-primary)]/10 rounded-full group cursor-pointer hover:bg-[var(--accent-primary)]/10 transition-all">
-            <Hash size={14} className="text-[var(--accent-primary)]" />
-            <span className="text-[0.75rem] font-dm-sans font-bold text-[var(--text-primary)] uppercase tracking-wider italic">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0a0a0c] border border-[#1a1a1a] rounded-full group cursor-pointer hover:border-[#333] transition-colors">
+            <Hash size={12} className="text-[#71717a]" />
+            <span className="text-[0.72rem] font-medium text-[#71717a] font-dm-sans group-hover:text-[#f4f4f5]">
               {post.animeData?.title || "Anime Tag"}
             </span>
           </div>
@@ -141,40 +138,32 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </div>
 
       {/* Footer Actions */}
-      <div className="px-5 py-4 border-t border-[var(--border-color)] flex items-center gap-8">
+      <div className="px-[1.2rem] py-[1rem] border-t border-[#1a1a1a] flex items-center gap-8">
         <button 
           onClick={() => likeMutation.mutate()}
-          className={`flex items-center gap-2 group transition-all ${isLiked ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--accent-primary)]'}`}
+          className={`flex items-center gap-2 transition-colors ${isLiked ? 'text-white' : 'text-[#71717a] hover:text-[#f4f4f5]'}`}
         >
-          <div className={`p-2 rounded-full ${isLiked ? 'bg-[var(--accent-primary)]/10' : 'group-hover:bg-[var(--accent-primary)]/10'} transition-all`}>
-            <Heart 
-              size={20} 
-              fill={isLiked ? 'currentColor' : 'none'} 
-              strokeWidth={2.5}
-              className={isLiked ? 'scale-110' : 'group-hover:scale-110 transition-transform'}
-            />
-          </div>
-          <span className="text-[0.85rem] font-dm-sans font-black tracking-tight">{likeCount}</span>
+          <Heart 
+            size={18} 
+            fill={isLiked ? 'currentColor' : 'none'} 
+            strokeWidth={2}
+          />
+          <span className="text-[0.8rem] font-medium font-dm-sans">{likeCount}</span>
         </button>
 
         <button 
           onClick={() => setShowComments(!showComments)}
-          className={`flex items-center gap-2 group transition-all ${showComments ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--accent-primary)]'}`}
+          className={`flex items-center gap-2 transition-colors ${showComments ? 'text-white' : 'text-[#71717a] hover:text-[#f4f4f5]'}`}
         >
-          <div className={`p-2 rounded-full ${showComments ? 'bg-[var(--accent-primary)]/10' : 'group-hover:bg-[var(--accent-primary)]/10'} transition-all`}>
-            <MessageSquare 
-              size={20} 
-              strokeWidth={2.5}
-              className={showComments ? 'scale-110' : 'group-hover:scale-110 transition-transform'}
-            />
-          </div>
-          <span className="text-[0.85rem] font-dm-sans font-black tracking-tight">{post._count?.comments || 0}</span>
+          <MessageSquare 
+            size={18} 
+            strokeWidth={2}
+          />
+          <span className="text-[0.8rem] font-medium font-dm-sans">{post._count?.comments || 0}</span>
         </button>
 
-        <button className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] group transition-all ml-auto">
-          <div className="p-2 rounded-full group-hover:bg-[var(--accent-primary)]/10 transition-all">
-            <Share2 size={20} strokeWidth={2.5} />
-          </div>
+        <button className="text-[#71717a] hover:text-[#f4f4f5] transition-colors ml-auto">
+          <Share2 size={18} strokeWidth={2} />
         </button>
       </div>
 
@@ -185,7 +174,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden"
+            className="border-t border-[#1a1a1a] bg-[#0a0a0c] overflow-hidden"
           >
             <CommentSection postId={post.id} />
           </motion.div>
