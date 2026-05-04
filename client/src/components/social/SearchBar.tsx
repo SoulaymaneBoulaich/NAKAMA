@@ -5,15 +5,18 @@ import api from '../../api/axios';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import type { SearchResponse } from '../../../../shared/types/index.js';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar } from '../common/Avatar';
+import { SafeImage } from '../common/SafeImage';
 
 const SearchBar: React.FC = () => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const debouncedQuery = useDebounce(query, 200); // Faster debounce for "immediate" feel
+  const debouncedQuery = useDebounce(query, 150); // Faster debounce for snappier feel
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
+  const cache = useRef<Record<string, SearchResponse>>({});
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -27,14 +30,23 @@ const SearchBar: React.FC = () => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (!debouncedQuery || debouncedQuery.length < 2) {
+      const q = debouncedQuery.trim().toLowerCase();
+      if (!q || q.length < 2) {
         setResults(null);
+        return;
+      }
+
+      // Check Cache
+      if (cache.current[q]) {
+        setResults(cache.current[q]);
+        setIsOpen(true);
         return;
       }
 
       setIsLoading(true);
       try {
         const res = await api.get(`/search?q=${debouncedQuery}`);
+        cache.current[q] = res.data;
         setResults(res.data);
         setIsOpen(true);
       } catch (err) {
@@ -133,7 +145,7 @@ const SearchBar: React.FC = () => {
                           >
                             <div className="w-12 h-16 bg-zinc-900 rounded-xl overflow-hidden shadow-xl flex-shrink-0 border border-[var(--border-color)]">
                               {a.images?.jpg?.large_image_url ? (
-                                <img src={a.images.jpg.large_image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                <SafeImage src={a.images.jpg.large_image_url} alt={a.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                               ) : (
                                 <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                                   <Tv size={16} className="text-zinc-600" />
@@ -173,7 +185,7 @@ const SearchBar: React.FC = () => {
                                 className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-all text-left group"
                               >
                                 <div className="w-10 h-10 rounded-xl border border-[var(--border-color)] overflow-hidden flex-shrink-0 shadow-lg">
-                                  <img src={c.avatarUrl || '/default-community.png'} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+                                  <Avatar src={c.avatarUrl} name={c.name} size="md" className="!w-10 !h-10 !rounded-none" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[11px] font-black text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate uppercase italic">{c.name}</div>
@@ -199,7 +211,7 @@ const SearchBar: React.FC = () => {
                                 className="w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-all text-left group"
                               >
                                 <div className="w-10 h-10 rounded-full border border-[var(--border-color)] overflow-hidden flex-shrink-0 shadow-lg">
-                                  <img src={u.avatar || '/default-avatar.png'} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+                                  <Avatar src={u.avatar} username={u.username} size="md" className="!w-10 !h-10" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[11px] font-black text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate uppercase italic">{u.username}</div>

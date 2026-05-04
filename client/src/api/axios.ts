@@ -75,9 +75,14 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError: any) {
         processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        if (window.location.pathname !== '/' && !window.location.pathname.includes('/auth')) {
-           window.location.href = '/';
+        
+        // Only clear session and redirect if it's an Auth error (401/403)
+        // If it's a 429, stay on the page and let the user wait
+        if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+          localStorage.removeItem('accessToken');
+          if (window.location.pathname !== '/' && !window.location.pathname.includes('/auth')) {
+             window.location.href = '/';
+          }
         }
         return Promise.reject(refreshError);
       } finally {

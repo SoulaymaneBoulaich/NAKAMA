@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, 
-    Layers, 
     Zap, 
-    Users, 
     ChevronRight, 
     Puzzle, 
     Loader2,
-    Sparkles,
     Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { SafeImage } from '../../components/common/SafeImage';
 
 interface QuizRoom {
     id: string;
@@ -114,7 +112,7 @@ export default function QuizRoomsPage() {
                                     className="group cursor-pointer bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden backdrop-blur-xl hover:border-red-600/30 transition-all duration-500 relative"
                                 >
                                     <div className="aspect-[4/3] relative overflow-hidden">
-                                        <img 
+                                        <SafeImage 
                                             src={room.animeCover} 
                                             alt={room.animeTitle} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"

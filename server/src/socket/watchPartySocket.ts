@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
 import { WatchPartyStatus } from '@prisma/client';
+import { sanitizeInput } from '../utils/sanitizer.js';
 
 export const setupWatchPartySocket = (io: Server, socket: Socket) => {
   let currentRoomCode: string | null = null;
@@ -8,8 +9,9 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
 
   socket.on('join-party', async ({ code, userId }: { code: string; userId: string }) => {
     try {
+      const safeCode = sanitizeInput(code);
       const party = await prisma.watchParty.findUnique({
-        where: { code },
+        where: { code: safeCode },
         include: { host: true }
       });
 
@@ -32,9 +34,9 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
         }
       }
 
-      currentRoomCode = code;
+      currentRoomCode = safeCode;
       currentUserId = userId;
-      const roomName = `party:${code}`;
+      const roomName = `party:${safeCode}`;
       socket.join(roomName);
 
       // Join/Update record
@@ -80,7 +82,8 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
 
   socket.on('ready-up', async ({ code, userId, isReady }: { code: string; userId: string; isReady: boolean }) => {
     try {
-      const party = await prisma.watchParty.findUnique({ where: { code } });
+      const safeCode = sanitizeInput(code);
+      const party = await prisma.watchParty.findUnique({ where: { code: safeCode } });
       if (!party) return;
 
       await prisma.watchPartyParticipant.update({
@@ -92,7 +95,7 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
         where: { partyId: party.id },
         include: { user: { select: { id: true, username: true, avatar: true } } }
       });
-      io.to(`party:${code}`).emit('participants-list', participants);
+      io.to(`party:${safeCode}`).emit('participants-list', participants);
     } catch (error) {
       console.error('[WP] READY ERROR:', error);
     }
@@ -105,20 +108,28 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
     episodeNumber?: number;
   }) => {
     try {
-      const party = await prisma.watchParty.findUnique({ where: { code } });
+      const safeCode = sanitizeInput(code);
+      const party = await prisma.watchParty.findUnique({ where: { code: safeCode } });
       if (!party || party.hostId !== currentUserId) return;
 
-      await prisma.watchParty.update({
-        where: { id: party.id },
-        data: { status, currentTimestamp, episodeNumber }
-      });
+      // Only update DB if status changed, episode changed, or a large time jump (seek) occurred (> 10s)
+      const shouldUpdateDB = 
+        party.status !== status || 
+        party.episodeNumber !== episodeNumber || 
+        Math.abs(party.currentTimestamp - currentTimestamp) > 10;
 
-      io.to(`party:${code}`).emit('party-state', { 
+      if (shouldUpdateDB) {
+        await prisma.watchParty.update({
+          where: { id: party.id },
+          data: { status, currentTimestamp: Number(currentTimestamp), episodeNumber }
+        });
+      }
+
+      // Broadcast to room: standardized to 'sync-state'
+      io.to(`party:${safeCode}`).emit('sync-state', { 
         status, 
         currentTimestamp, 
-        episodeNumber,
-        animeTitle: party.animeTitle,
-        animeCover: party.animeCover
+        episodeNumber
       });
     } catch (error) {
       console.error('[WP] SYNC ERROR:', error);
@@ -127,31 +138,35 @@ export const setupWatchPartySocket = (io: Server, socket: Socket) => {
 
   socket.on('broadcast-message', async ({ code, userId, content }: { code: string; userId: string; content: string }) => {
     try {
-      const party = await prisma.watchParty.findUnique({ where: { code } });
+      const safeCode = sanitizeInput(code);
+      const safeContent = sanitizeInput(content);
+      const party = await prisma.watchParty.findUnique({ where: { code: safeCode } });
       if (!party) return;
 
       const message = await prisma.watchPartyMessage.create({
         data: {
           partyId: party.id,
           userId,
-          content,
+          content: safeContent,
           messageType: 'CHAT'
         },
         include: { user: { select: { username: true, avatar: true } } }
       });
 
-      io.to(`party:${code}`).emit('new-message', message);
+      io.to(`party:${safeCode}`).emit('new-message', message);
     } catch (error) {
       console.error('[WP] CHAT ERROR:', error);
     }
   });
 
   socket.on('floating-reaction', async ({ code, userId, reaction }: { code: string; userId: string; reaction: string }) => {
-    io.to(`party:${code}`).emit('reaction-event', { userId, reaction });
+    const safeCode = sanitizeInput(code);
+    const safeReaction = sanitizeInput(reaction);
+    io.to(`party:${safeCode}`).emit('reaction-event', { userId, reaction: safeReaction });
   });
 
   socket.on('leave-party', async ({ code, userId }: { code: string, userId: string }) => {
-    handleLeave(code, userId);
+    handleLeave(sanitizeInput(code), userId);
   });
 
   socket.on('disconnect', () => {

@@ -5,6 +5,7 @@ import { Trophy, Crown, Star, ChevronRight, Search, X, Sparkles } from 'lucide-r
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
+import { SafeImage } from '../common/SafeImage';
 
 interface ProfileTopTenProps {
   entries: TopTenEntry[];
@@ -105,7 +106,7 @@ const ProfileTopTen: React.FC<ProfileTopTenProps> = ({ entries, isSelf = false, 
               {/* Cover */}
               <div className="w-10 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#222] border border-gray-800/30">
                 {entry.animeCover ? (
-                  <img
+                  <SafeImage
                     src={entry.animeCover}
                     alt={entry.animeTitle}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -284,7 +285,7 @@ const AddAnimeModal = ({
                   className="w-full flex items-center gap-4 p-3 bg-white/2 hover:bg-pink-500/10 border border-[var(--border-color)] hover:border-pink-500/30 rounded-2xl transition-all text-left group"
                 >
                   <div className="w-12 h-16 bg-zinc-900 rounded-xl overflow-hidden shadow-xl border border-[var(--border-color)] flex-shrink-0">
-                    <img src={anime.images?.jpg?.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                    <SafeImage src={anime.images?.jpg?.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-black text-white group-hover:text-pink-400 transition-colors uppercase italic truncate tracking-tighter">{anime.title}</div>

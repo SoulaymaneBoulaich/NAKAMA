@@ -25,3 +25,17 @@ export const useSocket = () => {
 
     return socket;
 };
+
+export const useSocketEvent = <T>(eventName: string, handler: (data: T) => void) => {
+    const socket = useSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on(eventName, handler);
+
+        return () => {
+            socket.off(eventName, handler);
+        };
+    }, [socket, eventName, handler]);
+};

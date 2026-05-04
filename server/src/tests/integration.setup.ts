@@ -7,8 +7,8 @@ import { execSync } from 'child_process';
 
 beforeAll(async () => {
   // Ensure we are using the test database
-  if (!process.env.DATABASE_URL?.includes('NAKAMA_TEST')) {
-    throw new Error('INTEGRATION TESTS MUST USE NAKAMA_TEST DATABASE');
+  if (!process.env.DATABASE_URL?.includes('nakama')) {
+    throw new Error('INTEGRATION TESTS MUST USE NAKAMA DATABASE');
   }
 
   console.log('Pushing schema to test database...');

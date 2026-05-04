@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axios';
 import { useToast } from '../../components/common/Toast';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { SafeImage } from '../../components/common/SafeImage';
 
 export const ChronicleManagePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -125,7 +126,7 @@ export const ChronicleManagePage: React.FC = () => {
         <div className="flex items-start gap-10">
            <div className="w-40 h-60 rounded-[2.5rem] bg-zinc-950 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[var(--border-color)] flex-shrink-0 relative group">
               {chronicle.coverUrl ? (
-                <img src={chronicle.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
+                <SafeImage src={chronicle.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                    <BookOpen size={48} className="text-zinc-800" />
@@ -294,7 +295,7 @@ export const ChronicleManagePage: React.FC = () => {
                         <div className="flex gap-6 items-center">
                           <div className="w-24 h-36 bg-zinc-950 rounded-2xl overflow-hidden flex-shrink-0 border border-[var(--border-color)] flex items-center justify-center relative group shadow-2xl">
                             {coverPreview ? (
-                              <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" />
+                              <SafeImage src={coverPreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                               <ImageIcon className="text-zinc-800" size={32} />
                             )}

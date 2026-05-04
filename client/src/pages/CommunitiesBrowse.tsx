@@ -5,6 +5,8 @@ import CreateCommunityModal from '../components/communities/CreateCommunityModal
 import { useNavigate } from 'react-router-dom';
 import TopCommunitiesWidget from '../components/social/TopCommunitiesWidget';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SafeImage } from '../components/common/SafeImage';
+import { Avatar } from '../components/common/Avatar';
 
 interface Community {
   id: string;
@@ -146,7 +148,7 @@ const CommunitiesBrowse: React.FC = () => {
                   >
                     <div className="h-28 bg-zinc-900 relative">
                       {community.bannerUrl ? (
-                        <img src={community.bannerUrl} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
+                        <SafeImage src={community.bannerUrl} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950"></div>
                       )}
@@ -159,13 +161,12 @@ const CommunitiesBrowse: React.FC = () => {
                     
                     <div className="px-8 pb-8 -mt-10 relative z-10">
                       <div className="w-20 h-20 rounded-2xl bg-zinc-900 border-4 border-[var(--bg-secondary)] overflow-hidden shadow-2xl mb-4 group-hover:scale-105 transition-transform">
-                        {community.avatarUrl ? (
-                          <img src={community.avatarUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-zinc-700 bg-zinc-800">
-                            <Users size={32} />
-                          </div>
-                        )}
+                        <Avatar 
+                          src={community.avatarUrl} 
+                          name={community.name}
+                          size="lg"
+                          className="w-full h-full"
+                        />
                       </div>
                       
                       <h3 className="text-2xl font-black text-white group-hover:text-[var(--accent-primary)] transition-colors mb-2 italic uppercase tracking-tighter truncate">

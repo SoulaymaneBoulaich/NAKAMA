@@ -1,8 +1,12 @@
 import React from 'react';
 import type { UserProfile, UserStats } from '../../../../shared/types/index.js';
 import { useFollowMutation } from '../../hooks/useProfile';
-import { Settings, UserPlus, UserCheck, MessageSquare } from 'lucide-react';
+import { Settings, UserPlus, UserCheck, MessageSquare, ChevronDown, ChevronUp, MapPin, Calendar, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar } from '../common/Avatar';
+import { SafeImage } from '../common/SafeImage';
+import { format } from 'date-fns';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -11,6 +15,7 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const followMutation = useFollowMutation();
 
   const handleFollow = () => {
@@ -25,7 +30,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats })
       {/* Banner */}
       <div className="h-48 md:h-56 w-full overflow-hidden relative">
         {profile.banner ? (
-          <img 
+          <SafeImage 
             src={profile.banner} 
             alt="Banner" 
             className="w-full h-full object-cover"
@@ -50,24 +55,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats })
         <div className="flex flex-col md:flex-row md:items-end gap-6">
           {/* Left: Avatar + Name */}
           <div className="flex flex-col md:flex-row md:items-end gap-5 flex-1">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0 group/avatar">
-              <div className={`relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-[var(--bg-secondary)] bg-[var(--bg-tertiary)] overflow-hidden shadow-2xl transition-all duration-700 ${profile.isNakamaLeader ? 'ring-4 ring-yellow-500/50 ring-offset-4 ring-offset-[var(--bg-secondary)] shadow-yellow-500/20' : 'shadow-black/50 ring-2 ring-[var(--border-color)]/20'}`}>
-                {profile.avatar ? (
-                  <img src={profile.avatar} alt={profile.username} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)]">
-                    <span className="text-4xl font-black text-[var(--text-primary)]/20">
-                      {profile.username[0].toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                
-                {/* Golden Ornate Frame Overlay for Nakama Leader */}
-                {profile.isNakamaLeader && (
-                  <div className="absolute inset-0 pointer-events-none border-[6px] border-double border-yellow-600/30 rounded-full animate-pulse" />
-                )}
-              </div>
+            <div className="relative flex-shrink-0">
+              <Avatar 
+                src={profile.avatar}
+                username={profile.username}
+                name={profile.fullName}
+                size="xl"
+                isNakamaLeader={profile.isNakamaLeader}
+              />
 
               {/* Status Badges Overlay */}
               <div className="absolute -bottom-1 -right-1 flex gap-1">
@@ -116,12 +111,54 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isSelf, stats })
                   </span>
                 )}
               </div>
-              <p className="text-[var(--text-secondary)] mt-2 max-w-xl text-sm leading-relaxed line-clamp-2">
+              <p className={`text-[var(--text-secondary)] mt-2 max-w-xl text-sm leading-relaxed transition-all ${isExpanded ? '' : 'line-clamp-2'}`}>
                 {profile.bio || "No bio yet."}
               </p>
 
-              {/* Actions */}
-              <div className="flex items-center gap-3 mt-4">
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-wrap items-center gap-6 mt-6 pt-6 border-t border-[var(--border-color)]">
+                      {profile.location && (
+                        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                          <MapPin size={14} className="text-[var(--accent-primary)]" />
+                          <span className="text-xs font-medium uppercase tracking-tight">{profile.location}</span>
+                        </div>
+                      )}
+                      {profile.createdAt && (
+                        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                          <Calendar size={14} className="text-[var(--accent-primary)]" />
+                          <span className="text-xs font-medium uppercase tracking-tight">
+                            Joined {format(new Date(profile.createdAt), 'MMMM yyyy')}
+                          </span>
+                        </div>
+                      )}
+                      {profile.fullName && (
+                        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                          <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-40">Alias |</span>
+                          <span className="text-xs font-medium uppercase tracking-tight">{profile.fullName}</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Actions + Expand Toggle */}
+              <div className="flex items-center gap-3 mt-6">
+                <button 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="flex items-center gap-2 px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-all rounded-xl text-[10px] font-black uppercase tracking-widest"
+                >
+                  {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  {isExpanded ? 'Show Less' : 'About User'}
+                </button>
+                <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
                 {isSelf ? (
                   <Link
                     to="/settings"

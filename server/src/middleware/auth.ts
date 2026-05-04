@@ -37,10 +37,18 @@ export const optionalAuthenticateToken = (req: AuthenticatedRequest, res: Respon
   next();
 };
 
-export const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per windowMs
+export const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // 20 attempts for login
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
+  message: { message: 'Excessive login attempts, please try again in 15 minutes.' },
+});
+
+export const signupRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50, // 50 attempts for signup (more relaxed for dev/testing)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many account creation attempts, please try again later.' },
 });

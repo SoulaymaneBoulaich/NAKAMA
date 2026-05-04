@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Timer, Zap, Trophy, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../../api/axios';
 import { Spinner } from '../../components/common/Spinner';
+import { SafeImage } from '../../components/common/SafeImage';
 
 interface Question {
     id: string;
@@ -286,7 +287,7 @@ const AniQuizSession: React.FC = () => {
                             {currentQuestion?.mediaUrl && (
                                 <div className="max-w-md mx-auto aspect-video rounded-3xl overflow-hidden border border-white/5 shadow-2xl mb-8">
                                     {currentQuestion.mediaType === 'IMAGE' ? (
-                                        <img src={currentQuestion.mediaUrl} className="w-full h-full object-cover" alt="" />
+                                        <SafeImage src={currentQuestion.mediaUrl} className="w-full h-full object-cover" alt="" />
                                     ) : (
                                         <div className="w-full h-full bg-red-900/20 flex items-center justify-center">
                                             <Zap size={48} className="text-red-600 animate-pulse" />

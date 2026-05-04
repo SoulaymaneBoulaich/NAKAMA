@@ -9,6 +9,12 @@ import {
   clearRefreshTokenCookie,
   verifyRefreshToken,
 } from '../utils/tokens.js';
+import { 
+  signupSchema, 
+  loginSchema, 
+  forgotPasswordSchema, 
+  resetPasswordSchema 
+} from '../schemas/authSchema.js';
 import { logger } from '../utils/logger.js';
 
 
@@ -23,11 +29,16 @@ export const signup = async (req: Request, res: Response) => {
 
 
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: {
+        OR: [
+          { email: { equals: email, mode: 'insensitive' } },
+          { username: { equals: username, mode: 'insensitive' } }
+        ]
+      },
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -59,11 +70,16 @@ export const login = async (req: Request, res: Response) => {
 
 
     const user = await prisma.user.findFirst({
-      where: { OR: [{ email: emailOrUsername }, { username: emailOrUsername }] },
+      where: {
+        OR: [
+          { email: { equals: emailOrUsername, mode: 'insensitive' } },
+          { username: { equals: emailOrUsername, mode: 'insensitive' } }
+        ]
+      },
     });
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Reactivate if soft deleted
@@ -136,7 +152,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     // I'll update the schema in an ephemeral step if needed, but let's assume User has them for now
     // and I'll add them to the User model in a moment.
 
-    await (prisma.user as any).update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         resetToken: resetTokenHash,
@@ -165,7 +181,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await (prisma.user as any).findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         resetToken: resetTokenHash,
         resetTokenExpiry: { gt: new Date() },
@@ -178,7 +194,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    await (prisma.user as any).update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash,

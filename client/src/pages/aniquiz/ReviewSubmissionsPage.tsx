@@ -1,18 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ThumbsUp, 
     ThumbsDown, 
-    Info, 
     Music, 
-    ImageIcon, 
-    MessageSquare, 
-    Quote, 
-    Mic,
     ShieldCheck,
-    AlertTriangle,
     Loader2
 } from 'lucide-react';
+import { Avatar } from '../../components/common/Avatar';
+import { SafeImage } from '../../components/common/SafeImage';
 import api from '../../api/axios';
 import { useToast } from '../../components/common/Toast';
 
@@ -48,7 +44,7 @@ export default function ReviewSubmissionsPage() {
             const res = await api.get('/quiz/submissions/pending');
             setSubmissions(res.data);
         } catch (err) {
-            addToast('Error', 'Failed to load submissions', 'error');
+            addToast('error', 'Failed to load submissions');
         } finally {
             setLoading(false);
         }
@@ -60,17 +56,17 @@ export default function ReviewSubmissionsPage() {
             const res = await api.post(`/quiz/submissions/${submissionId}/vote`, { vote });
             
             if (res.data.status === 'APPROVED') {
-                addToast('Question Manifested!', 'This question has reached the threshold and is now official.', 'success');
+                addToast('success', 'Question Manifested! This question has reached the threshold and is now official.');
             } else if (res.data.status === 'REJECTED') {
-                addToast('Question Purged', 'This submission was rejected by the community.', 'info');
+                addToast('info', 'Question Purged. This submission was rejected by the community.');
             } else {
-                addToast('Vote Cast', 'Your judgment has been recorded.', 'success');
+                addToast('success', 'Vote Cast. Your judgment has been recorded.');
             }
 
             // Remove from list
             setSubmissions(prev => prev.filter(s => s.id !== submissionId));
         } catch (err: any) {
-            addToast('Error', err.response?.data?.message || 'Failed to cast vote', 'error');
+            addToast('error', err.response?.data?.message || 'Failed to cast vote');
         } finally {
             setVotingId(null);
         }
@@ -124,15 +120,12 @@ export default function ReviewSubmissionsPage() {
                                     <div className="p-8">
                                         <div className="flex justify-between items-start mb-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden">
-                                                    {sub.user.avatar ? (
-                                                        <img src={sub.user.avatar} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold bg-red-600/20 text-red-500">
-                                                            {sub.user.username[0].toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <Avatar 
+                                                    src={sub.user.avatar} 
+                                                    username={sub.user.username} 
+                                                    size="sm"
+                                                    className="w-full h-full rounded-full"
+                                                />
                                                 <div>
                                                     <h4 className="text-sm font-bold text-zinc-300">Submitter: <span className="text-white">@{sub.user.username}</span></h4>
                                                     <div className="flex items-center gap-2 mt-1">
@@ -161,7 +154,7 @@ export default function ReviewSubmissionsPage() {
                                             {sub.mediaUrl && (
                                                 <div className="mb-6 rounded-2xl overflow-hidden border border-zinc-800 aspect-video relative">
                                                     {sub.type === 'SCREENSHOT' ? (
-                                                        <img src={sub.mediaUrl} alt="Submission" className="w-full h-full object-cover" />
+                                                        <SafeImage src={sub.mediaUrl} alt="Submission" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                                                             <div className="text-center">

@@ -24,6 +24,8 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { useNavigate } from 'react-router-dom';
+import { Avatar } from '../../components/common/Avatar';
+import { SafeImage } from '../../components/common/SafeImage';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
@@ -251,7 +253,7 @@ export default function BattleArenaPage() {
                 <div className={`p-8 border-r border-zinc-800 transition-all duration-500 ${p1?.lastCorrect === true ? 'bg-green-600/5' : p1?.lastCorrect === false ? 'bg-red-600/5' : 'bg-black'}`}>
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-3xl bg-zinc-900 border-2 border-zinc-800 overflow-hidden relative">
-                            {p1?.avatar ? <img src={p1.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-600/20" />}
+                            <Avatar src={p1?.avatar} username={p1?.username || ''} size="md" className="w-full h-full" />
                             <div className="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-black rounded-full" />
                         </div>
                         <div>
@@ -274,7 +276,7 @@ export default function BattleArenaPage() {
                             </div>
                         </div>
                         <div className="w-16 h-16 rounded-3xl bg-zinc-900 border-2 border-zinc-800 overflow-hidden relative">
-                            {p2?.avatar ? <img src={p2.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-600/20" />}
+                            <Avatar src={p2?.avatar} username={p2?.username || ''} size="md" className="w-full h-full" />
                             <div className="absolute top-0 left-0 w-3 h-3 bg-zinc-600 border-2 border-black rounded-full" />
                         </div>
                     </div>
@@ -313,7 +315,7 @@ export default function BattleArenaPage() {
 
                         {question?.mediaUrl && (
                             <div className="mb-12 rounded-[40px] overflow-hidden border border-zinc-800 aspect-video relative group">
-                                <img src={question.mediaUrl} className="w-full h-full object-cover" />
+                                <SafeImage src={question.mediaUrl} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             </div>
                         )}

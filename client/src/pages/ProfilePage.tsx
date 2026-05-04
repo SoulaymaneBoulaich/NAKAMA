@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { 
   useProfile, 
   useProfileStats, 
-  useProfileFingerprint, 
   useProfileTopTen, 
   useProfileActivity,
   useProfilePlaylists,
@@ -17,35 +16,33 @@ import ProfileTopTen from '../components/profile/ProfileTopTen';
 import ProfileActivity from '../components/profile/ProfileActivity';
 import ProfilePlaylists from '../components/profile/ProfilePlaylists';
 import ProfilePosts from '../components/profile/ProfilePosts';
-import ProfileAbout from '../components/profile/ProfileAbout';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ProfileTab = 'playlists' | 'posts' | 'debates' | 'top10' | 'about' | 'activity';
 
 const TABS: { key: ProfileTab; label: string; countKey?: string }[] = [
-  { key: 'playlists', label: 'Playlists' },
   { key: 'posts', label: 'Posts' },
+  { key: 'playlists', label: 'Playlists' },
   { key: 'debates', label: 'Debates' },
-  { key: 'top10', label: 'Top 10' },
   { key: 'activity', label: 'Activity' },
-  { key: 'about', label: 'About' },
 ];
 
 const ProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<ProfileTab>('playlists');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
+  const [isTopTenOpen, setIsTopTenOpen] = useState(false);
   
-  const { data: profile, isLoading: isProfileLoading, error: profileError } = useProfile(username || '');
+  const isInvalidUser = !username || username === 'home' || username === 'undefined';
+  const { data: profile, isLoading: isProfileLoading, error: profileError } = useProfile(isInvalidUser ? '' : username!);
   const isSelf = currentUser?.username === username;
   
-  const { data: stats } = useProfileStats(username || '', !!profile);
-  const { data: fingerprint } = useProfileFingerprint(username || '', !!profile);
-  const { data: topten } = useProfileTopTen(username || '', !!profile);
-  const { data: activity } = useProfileActivity(username || '', !!profile);
-  const { data: playlists } = useProfilePlaylists(username || '', !!profile);
-  const { data: posts } = useProfilePosts(username || '', !!profile);
-  const { data: debatesData } = useProfileDebates(username || '', !!profile);
+  const { data: stats } = useProfileStats(isInvalidUser ? '' : username!, !!profile);
+  const { data: topten } = useProfileTopTen(isInvalidUser ? '' : username!, !!profile);
+  const { data: activity } = useProfileActivity(isInvalidUser ? '' : username!, !!profile);
+  const { data: playlists } = useProfilePlaylists(isInvalidUser ? '' : username!, !!profile);
+  const { data: posts } = useProfilePosts(isInvalidUser ? '' : username!, !!profile);
+  const { data: debatesData } = useProfileDebates(isInvalidUser ? '' : username!, !!profile);
 
   if (isProfileLoading) {
     return (
@@ -81,15 +78,17 @@ const ProfilePage: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'playlists':
-        return <ProfilePlaylists playlists={playlists || []} />;
+        return (
+          <ProfilePlaylists 
+            playlists={playlists || []} 
+            isSelf={isSelf}
+            topTen={topten || []}
+          />
+        );
       case 'posts':
         return <ProfilePosts posts={posts || []} />;
-      case 'top10':
-        return <ProfileTopTen entries={topten || []} isSelf={isSelf} username={username || ''} />;
-      case 'about':
-        return <ProfileAbout profile={profile} stats={stats} fingerprint={fingerprint} />;
       case 'activity':
-        return <ProfileActivity activities={activity || []} />;
+        return <ProfileActivity activities={activity || []} isSelf={isSelf} />;
       case 'debates':
         return <ProfileDebates arenas={debatesData?.arenas || []} stats={debatesData?.stats || { wins: 0, losses: 0, draws: 0, judgedCount: 0 }} />;
       default:
@@ -155,6 +154,56 @@ const ProfilePage: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Top 10 Popup for Owner */}
+      {isSelf && (
+        <>
+          <button
+            onClick={() => setIsTopTenOpen(true)}
+            className="fixed bottom-8 right-8 w-14 h-14 bg-[var(--accent-primary)] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
+          >
+            <span className="text-xl font-black italic tracking-tighter">10</span>
+            <div className="absolute -top-12 right-0 bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-[var(--border-color)]">
+              Manage Top 10
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {isTopTenOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsTopTenOpen(false)}
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl shadow-2xl flex flex-col"
+                >
+                  <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between">
+                    <h2 className="text-2xl font-black italic uppercase tracking-tighter text-[var(--accent-primary)]">
+                      Top 10 Rankings
+                    </h2>
+                    <button 
+                      onClick={() => setIsTopTenOpen(false)}
+                      className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase text-xs font-bold tracking-widest"
+                    >
+                      Close [esc]
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+                    <ProfileTopTen entries={topten || []} isSelf={isSelf} username={username || ''} />
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 };

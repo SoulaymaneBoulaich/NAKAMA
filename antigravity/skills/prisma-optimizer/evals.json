@@ -1,0 +1,44 @@
+[
+  {
+    "id": "case-01",
+    "query": "My anime list page is loading very slowly. Can you check my Prisma query?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Direct request for performance help with a Prisma query."
+  },
+  {
+    "id": "case-02",
+    "query": "Is there an N+1 problem in this code: users.map(u => prisma.post.findMany({ where: { userId: u.id } }))",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Classic N+1 detection request."
+  },
+  {
+    "id": "case-03",
+    "query": "How can I make my Prisma 'includes' faster for the feed page?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Specific technical question about Prisma performance."
+  },
+  {
+    "id": "case-04",
+    "query": "How do I add a new field to my User model in Prisma?",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "Schema definition is out of scope for the optimizer."
+  },
+  {
+    "id": "case-05",
+    "query": "Center this image using Tailwind.",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "UI styling is completely unrelated."
+  },
+  {
+    "id": "case-06",
+    "query": "I want to optimize the database.",
+    "should_trigger": true,
+    "label": "edge_case",
+    "notes": "Vague but involves the target domain."
+  }
+]

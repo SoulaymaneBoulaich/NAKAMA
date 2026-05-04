@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, X, MessageSquare, Plus } from 'lucide-react';
+import { Avatar } from '../common/Avatar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -88,7 +89,12 @@ export const NewConversationModal = ({ onClose, onStart }: NewConversationModalP
                 onClick={() => handleStart(u.username)}
                 className="w-full p-4 flex items-center gap-4 hover:bg-white/5 rounded-2xl transition-all group border border-transparent hover:border-red-500/20"
               >
-                <img src={u.avatar || '/default-avatar.png'} className="w-12 h-12 rounded-full border border-[var(--border-color)] shadow-sm" alt="" />
+                <Avatar 
+                  src={u.avatar} 
+                  username={u.username} 
+                  size="md" 
+                  className="w-12 h-12 rounded-full border border-[var(--border-color)] shadow-sm"
+                />
                 <div className="text-left flex-1">
                   <p className="font-bold group-hover:text-red-500 transition-colors uppercase tracking-tight">{u.username}</p>
                   <p className="text-[10px] text-[var(--text-secondary)] uppercase">Ready to talk</p>

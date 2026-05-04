@@ -31,6 +31,8 @@ import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { PlaylistEntryItem } from '../../components/playlists/PlaylistEntryItem';
 import { PlaylistAddAnimeModal } from '../../components/playlists/PlaylistAddAnimeModal';
+import { SafeImage } from '../../components/common/SafeImage';
+import { Avatar } from '../../components/common/Avatar';
 
 export const PlaylistDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -148,7 +150,7 @@ export const PlaylistDetailPage: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-8 mb-12">
         <div className="w-full md:w-64 h-64 bg-zinc-900 border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 relative group">
           {playlist.coverUrl ? (
-            <img src={playlist.coverUrl} alt={playlist.title} className="w-full h-full object-cover" />
+            <SafeImage src={playlist.coverUrl} alt={playlist.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-800">
               <Play size={80} className="fill-zinc-800" strokeWidth={0} />
@@ -181,9 +183,12 @@ export const PlaylistDetailPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden ring-2 ring-zinc-800">
-                {playlist.user.avatar && <img src={playlist.user.avatar} className="w-full h-full object-cover" />}
-              </div>
+              <Avatar 
+                src={playlist.user.avatar} 
+                username={playlist.user.username}
+                size="sm"
+                className="w-8 h-8 rounded-full"
+              />
               <div>
                 <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Curated by</span>
                 <span className="text-zinc-200 font-black text-sm uppercase italic">{playlist.user.username}</span>

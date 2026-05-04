@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
+import { sanitizeInput } from '../utils/sanitizer.js';
 
 interface ArenaState {
     timer: NodeJS.Timeout | null;
@@ -12,8 +13,9 @@ const arenaStates = new Map<string, ArenaState>();
 export const setupArenaSocket = (io: Server, socket: Socket) => {
     socket.on('join-arena', async ({ code, userId, team }) => {
         try {
+            const safeCode = sanitizeInput(code).toUpperCase();
             const arena = await prisma.arena.findUnique({
-                where: { code: code.toUpperCase() },
+                where: { code: safeCode },
                 include: { participants: true }
             });
 
@@ -127,12 +129,14 @@ export const setupArenaSocket = (io: Server, socket: Socket) => {
             const currentRound = arena.rounds[0];
             if (!currentRound) return;
 
+            const safeContent = sanitizeInput(content);
+
             await prisma.debateArgument.create({
                 data: {
                     roundId: currentRound.id,
                     userId,
                     team,
-                    content
+                    content: safeContent
                 }
             });
 
@@ -171,6 +175,8 @@ export const setupArenaSocket = (io: Server, socket: Socket) => {
             const arena = await prisma.arena.findUnique({ where: { id: arenaId } });
             if (!arena || arena.judgeId !== userId) return;
 
+            const safeQuestion = sanitizeInput(question);
+
             const nextRoundNum = arena.currentRound + 1;
             await prisma.arena.update({
                 where: { id: arenaId },
@@ -178,7 +184,7 @@ export const setupArenaSocket = (io: Server, socket: Socket) => {
             });
 
             const round = await prisma.debateRound.create({
-                data: { arenaId, roundNumber: nextRoundNum, judgeQuestion: question }
+                data: { arenaId, roundNumber: nextRoundNum, judgeQuestion: safeQuestion }
             });
 
             io.to(arena.code).emit('new-round-started', { round, roundNumber: nextRoundNum });
@@ -191,12 +197,14 @@ export const setupArenaSocket = (io: Server, socket: Socket) => {
             const arena = await prisma.arena.findUnique({ where: { id: arenaId } });
             if (!arena || arena.judgeId !== userId) return;
 
+            const safeVerdictText = sanitizeInput(verdictText);
+
             const updated = await prisma.arena.update({
                 where: { id: arenaId },
                 data: {
                     status: 'COMPLETED',
                     winnerTeam,
-                    verdictText,
+                    verdictText: safeVerdictText,
                     isArchived: true
                 }
             });
@@ -210,6 +218,7 @@ export const setupArenaSocket = (io: Server, socket: Socket) => {
         // Handle disconnect logic if needed, maybe notify room
     });
 };
+// ... (rest of file unchanged)
 
 const startTimer = (io: Server, code: string, arenaId: string, seconds: number, team: 'TEAM_A' | 'TEAM_B') => {
     stopTimer(code);

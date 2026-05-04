@@ -10,6 +10,7 @@ import {
   Type, Maximize, AlertTriangle 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar } from '../components/common/Avatar';
 
 type SettingsTab = 'identity' | 'contact' | 'appearance' | 'recommendations' | 'security' | 'privacy' | 'data';
 
@@ -84,7 +85,7 @@ const SettingsPage: React.FC = () => {
 
   const fetchRecSettings = async () => {
     try {
-      await api.get('/api/recommendations/personalized?limit=5'); // Just to check if it works
+      await api.get('/recommendations/personalized?limit=5'); // Just to check if it works
       const affinityRes = await api.get('/api/recommendations/affinities');
       setRecData(affinityRes.data);
     } catch (err) {
@@ -246,13 +247,12 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div className="relative group cursor-pointer">
                       <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[var(--bg-tertiary)] bg-[var(--bg-tertiary)]">
-                        {profileForm.avatar ? (
-                          <img src={profileForm.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-500">
-                            <UserIcon size={32} />
-                          </div>
-                        )}
+                        <Avatar 
+                          src={profileForm.avatar} 
+                          username={profileForm.username}
+                          size="xl"
+                          className="w-full h-full"
+                        />
                       </div>
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-full transition-opacity">
                         <Camera size={24} className="text-white" />

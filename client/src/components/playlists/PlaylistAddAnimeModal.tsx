@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X, Plus, Calendar, Film, Loader2 } from 'lucide-react';
 import api from '../../api/axios';
 import { useToast } from '../common/Toast.js';
+import { SafeImage } from '../common/SafeImage';
 
 interface JikanAnime {
   mal_id: number;
@@ -107,7 +108,7 @@ export const PlaylistAddAnimeModal: React.FC<PlaylistAddAnimeModalProps> = ({
             <div className="grid gap-2">
               {results.map((anime) => (
                 <div key={anime.mal_id} className="group p-3 flex gap-4 hover:bg-zinc-800/50 rounded-xl transition-all border border-transparent hover:border-[var(--border-color)]">
-                  <img 
+                  <SafeImage 
                     src={anime.images.jpg.image_url} 
                     alt={anime.title} 
                     className="w-16 h-24 object-cover rounded shadow-lg flex-shrink-0"

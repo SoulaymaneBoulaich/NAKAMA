@@ -31,18 +31,42 @@ export interface User {
   showActivityStatus: boolean;
   deactivatedAt?: string | Date | null;
   
-  // AniQuiz Status
+  // Status Fields
   isUltraNakama: boolean;
   ultraNakamaExpiresAt?: string | Date | null;
   isNakamaLeader: boolean;
   nakamaLeaderSince?: string | Date | null;
   gauntletFrameUrl?: string | null;
   
+  // Behavior & Lock Status
+  isSuspended: boolean;
+  suspensionReason?: string | null;
+  
   joinDate?: string | Date | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   followerCount?: number;
   followingCount?: number;
+}
+
+export interface UserActivitySession {
+  id: string;
+  userId: string;
+  startTime: string | Date;
+  endTime?: string | Date | null;
+  duration: number;
+  pageViews: any; // Using any for Json for now
+  activeTime: number;
+  createdAt: string | Date;
+}
+
+export interface DiscussionAnalysis {
+  id: string;
+  userId: string;
+  content: string;
+  severity: number;
+  type: string;
+  createdAt: string | Date;
 }
 
 export type AnimeStatus = 'WATCHING' | 'COMPLETED' | 'ON_HOLD' | 'DROPPED' | 'PLAN_TO_WATCH';
@@ -226,11 +250,12 @@ export interface Post {
   animeData?: JikanAnime | null;
   createdAt: string | Date;
   updatedAt: string | Date;
+  upvoteCount: number;
+  downvoteCount: number;
+  userVote?: 'UP' | 'DOWN' | null;
   _count?: {
-    likes: number;
     comments: number;
   };
-  isLiked?: boolean;
   pollId?: string | null;
   poll?: Poll | null;
   videoUrl?: string | null;

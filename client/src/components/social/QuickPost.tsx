@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Image, Film, Hash } from 'lucide-react';
+import { Avatar } from '../common/Avatar';
 
 interface QuickPostProps {
   onOpenModal: () => void;
@@ -12,10 +13,11 @@ const QuickPost: React.FC<QuickPostProps> = ({ onOpenModal }) => {
   return (
     <div className="bg-zinc-900 border border-[var(--border-color)] rounded-2xl p-4 mb-6 transition-all hover:border-zinc-700">
       <div className="flex gap-4 items-center">
-        <img 
-          src={user?.avatar || '/default-avatar.png'} 
-          alt={user?.username} 
-          className="w-10 h-10 rounded-full border border-[var(--border-color)] object-cover"
+        <Avatar 
+          src={user?.avatar} 
+          username={user?.username || ''} 
+          size="md"
+          className="w-10 h-10 rounded-full border border-[var(--border-color)]"
         />
         <button 
           onClick={onOpenModal}

@@ -8,6 +8,7 @@ import {
 import { useSocket } from '../../hooks/useSocket';
 import { useAuth } from '../../context/AuthContext';
 import { UserSearchModal } from '../../components/common/UserSearchModal';
+import { Avatar } from '../../components/common/Avatar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -197,7 +198,12 @@ export const ArenaPage = () => {
                             <h3 className="text-xl font-bold uppercase mb-2">Grand Arbiter</h3>
                             {arena.judge ? (
                                 <div className="flex flex-col items-center gap-2">
-                                    <img src={arena.judge.avatar || '/default-avatar.png'} className="w-16 h-16 rounded-full border-4 border-red-900/30" alt="" />
+                                    <Avatar 
+                                        src={arena.judge.avatar} 
+                                        username={arena.judge.username}
+                                        size="lg"
+                                        className="w-16 h-16 rounded-full border-4 border-red-900/30"
+                                    />
                                     <span className="font-bold">{arena.judge.username}</span>
                                 </div>
                             ) : (
@@ -254,7 +260,13 @@ export const ArenaPage = () => {
                         </div>
                         <div className="flex -space-x-3">
                             {arena.participants.map((p: any) => (
-                                <img key={p.id} src={p.user.avatar || '/default-avatar.png'} className="w-10 h-10 rounded-full border-2 border-black" title={p.user.username} />
+                                <Avatar 
+                                    key={p.id} 
+                                    src={p.user.avatar} 
+                                    username={p.user.username}
+                                    size="sm"
+                                    className="w-10 h-10 rounded-full border-2 border-black" 
+                                />
                             ))}
                         </div>
                     </div>
@@ -437,7 +449,12 @@ const TeamColumn = ({ title, team, participants, onJoin, isMember }: any) => {
                         <div key={i} className={`h-20 rounded-2xl border-2 border-dashed flex items-center px-4 gap-4 transition-all ${p ? 'bg-black/40 border-transparent shadow-inner' : 'border-[var(--border-color)]'}`}>
                             {p ? (
                                 <>
-                                    <img src={p.user.avatar || '/default-avatar.png'} className="w-12 h-12 rounded-xl" alt="" />
+                                    <Avatar 
+                                        src={p.user.avatar} 
+                                        username={p.user.username}
+                                        size="sm"
+                                        className="w-12 h-12 rounded-xl"
+                                    />
                                     <div className="flex-1">
                                         <p className="font-bold text-sm truncate">{p.user.username}</p>
                                         <p className="text-[10px] text-[var(--text-secondary)] uppercase">CONTRIBUTOR</p>
@@ -475,7 +492,12 @@ const ArgumentColumn = ({ team, isActive, arguments: args }: any) => (
             {args.map((a: any) => (
                 <div key={a.id} className={`p-4 rounded-2xl ${team === 'TEAM_A' ? 'bg-blue-600/10 border border-blue-600/20 text-blue-100' : 'bg-red-600/10 border border-red-600/20 text-red-100'} animate-in fade-in slide-in-from-bottom-2`}>
                    <div className="flex items-center gap-2 mb-2">
-                        <img src={a.user.avatar || '/default-avatar.png'} className="w-5 h-5 rounded-full" />
+                        <Avatar 
+                            src={a.user.avatar} 
+                            username={a.user.username}
+                            size="sm"
+                            className="w-5 h-5 rounded-full"
+                        />
                         <span className="text-[10px] font-bold opacity-60 uppercase">{a.user.username}</span>
                    </div>
                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{a.content}</p>

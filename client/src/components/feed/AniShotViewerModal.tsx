@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
+import { SafeImage } from '../common/SafeImage';
+import { Avatar } from '../common/Avatar';
 
 interface Props {
   isOpen: boolean;
@@ -120,7 +122,7 @@ const AniShotViewerModal: React.FC<Props> = ({ isOpen, onClose, shots, initialIn
                 className="w-full h-full object-cover"
               />
             ) : (
-              <img 
+              <SafeImage 
                 src={currentShot.mediaUrl}
                 className="w-full h-full object-cover"
                 alt=""
@@ -133,8 +135,13 @@ const AniShotViewerModal: React.FC<Props> = ({ isOpen, onClose, shots, initialIn
             <div className="absolute bottom-0 left-0 right-0 p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full border-2 border-red-600 overflow-hidden shadow-lg p-0.5">
-                    <img src={currentShot.user?.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
+                  <div className="w-12 h-12 rounded-full border-2 border-red-600 shadow-lg p-0.5">
+                    <Avatar 
+                      src={currentShot.user?.avatar} 
+                      username={currentShot.user?.username || ''} 
+                      size="sm"
+                      className="w-full h-full"
+                    />
                   </div>
                   <div>
                     <div className="text-white font-black uppercase tracking-tighter italic text-lg leading-tight">{currentShot.user?.username}</div>

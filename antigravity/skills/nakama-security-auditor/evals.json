@@ -1,0 +1,44 @@
+[
+  {
+    "id": "case-01",
+    "query": "Review my Express auth middleware for security issues.",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Direct security audit request for core auth logic."
+  },
+  {
+    "id": "case-02",
+    "query": "Is this Prisma query vulnerable to injection: prisma.user.findMany({ where: { name: input } })",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Query safety check involving the specific Prisma domain."
+  },
+  {
+    "id": "case-03",
+    "query": "Check if my Zod schema is strict enough.",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Specific validation hardening request."
+  },
+  {
+    "id": "case-04",
+    "query": "How do I center a div in Tailwind?",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "UI task that should not trigger security auditing."
+  },
+  {
+    "id": "case-05",
+    "query": "Fix the alignment of the login modal.",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "Modal alignment is a layout task, even if it's the login modal."
+  },
+  {
+    "id": "case-06",
+    "query": "I need help with my login page.",
+    "should_trigger": true,
+    "label": "edge_case",
+    "notes": "Ambiguous — could be UI or Auth. Should trigger to be safe."
+  }
+]

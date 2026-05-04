@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sanitizeInput } from '../utils/sanitizer.js';
 
 export const startQuizSchema = z.object({
   body: z.object({
@@ -13,7 +14,9 @@ export const submitAnswerSchema = z.object({
   }),
   body: z.object({
     questionId: z.string().cuid('Invalid question ID'),
-    answer: z.string().min(1, 'Answer is required'),
+    answer: z.string()
+      .min(1, 'Answer is required')
+      .transform(val => sanitizeInput(val)),
     timeSpent: z.number().min(0).max(300),
   }),
 });
@@ -22,12 +25,21 @@ export const submitQuestionSchema = z.object({
   body: z.object({
     type: z.enum(['QA', 'SCREENSHOT', 'AUDIO', 'QUOTE', 'VOICE']),
     difficulty: z.enum(['GENIN', 'CHUNIN', 'JONIN', 'KAGE', 'LEGENDARY']),
-    questionText: z.string().min(1, 'Question text is required').max(500),
+    questionText: z.string()
+      .min(1, 'Question text is required')
+      .max(500, 'Question text cannot exceed 500 characters')
+      .transform(val => sanitizeInput(val)),
     mediaUrl: z.string().url('Invalid media URL').optional().or(z.literal('')),
     mediaType: z.enum(['IMAGE', 'AUDIO', 'VIDEO']).optional(),
-    options: z.array(z.string().min(1).max(200)).min(1, 'At least one option is required'),
-    correctAnswer: z.string().min(1, 'Correct answer is required'),
-    animeReference: z.string().min(1, 'Anime reference is required').max(100),
+    options: z.array(z.string().min(1).max(200).transform(val => sanitizeInput(val)))
+      .min(1, 'At least one option is required'),
+    correctAnswer: z.string()
+      .min(1, 'Correct answer is required')
+      .transform(val => sanitizeInput(val)),
+    animeReference: z.string()
+      .min(1, 'Anime reference is required')
+      .max(100, 'Anime reference cannot exceed 100 characters')
+      .transform(val => sanitizeInput(val)),
     timeLimitSeconds: z.number().int().min(5).max(60).default(15),
     communityId: z.string().cuid().optional(),
   }),

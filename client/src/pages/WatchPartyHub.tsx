@@ -5,6 +5,8 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/common/Spinner';
 import { useNavigate } from 'react-router-dom';
+import { SafeImage } from '../components/common/SafeImage';
+import { Avatar } from '../components/common/Avatar';
 
 const WatchPartyHub: React.FC = () => {
     useAuth(); // Keeping the hook call if it provides context side effects (though safer to remove if unused)
@@ -142,7 +144,7 @@ const WatchPartyHub: React.FC = () => {
                                 >
                                     <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black via-black/80 to-transparent z-10 opacity-60 group-hover:opacity-100 transition-opacity" />
                                     
-                                    <img 
+                                    <SafeImage 
                                         src={party.animeCover} 
                                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0"
                                         alt="" 
@@ -181,9 +183,12 @@ const WatchPartyHub: React.FC = () => {
                                             </div>
                                             
                                             <div className="flex items-center gap-3 pt-6 border-t border-white/10">
-                                                <div className="w-8 h-8 rounded-full border border-red-600/30 overflow-hidden bg-black flex items-center justify-center p-0.5 shadow-lg shadow-red-600/10">
-                                                    <img src={party.host.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
-                                                </div>
+                                                <Avatar 
+                                                    src={party.host.avatar} 
+                                                    username={party.host.username}
+                                                    size="sm"
+                                                    className="w-8 h-8 rounded-full"
+                                                />
                                                 <div className="flex flex-col">
                                                     <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">Conductor</span>
                                                     <span className="text-[10px] font-black text-white uppercase tracking-widest">{party.host.username}</span>

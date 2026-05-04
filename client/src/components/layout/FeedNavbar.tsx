@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
+import { Avatar } from '../common/Avatar';
 
 interface FeedNavbarProps {
   activeTab: 'trending' | 'following' | 'playlists';
@@ -64,11 +65,12 @@ export const FeedNavbar: React.FC<FeedNavbarProps> = ({ activeTab, onTabChange }
             3
           </div>
         </button>
-        <div className="w-9 h-9 rounded-full overflow-hidden border border-[#232329] bg-[var(--bg-secondary)114]">
-          <img 
-            src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nakama'} 
-            alt={user?.username} 
-            className="w-full h-full object-cover"
+        <div className="w-9 h-9 rounded-full border border-[#232329] bg-[var(--bg-secondary)114]">
+          <Avatar 
+            src={user?.avatar} 
+            username={user?.username || ''} 
+            size="sm"
+            className="w-full h-full"
           />
         </div>
       </div>

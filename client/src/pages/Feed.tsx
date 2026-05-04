@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FollowingTab from '../components/feed/FollowingTab';
 import TrendingTab from '../components/feed/TrendingTab';
+import CommunitiesTab from '../components/feed/CommunitiesTab';
 import { PlaylistsTab } from '../components/feed/PlaylistsTab';
+import { RightSidebar } from '../components/feed/RightSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Bell, Search, PlusSquare } from 'lucide-react';
 import AniShotRow from '../components/feed/AniShotRow';
 
 export const FeedPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'playlists'>('following');
+  const [activeTab, setActiveTab] = useState<'trending' | 'following' | 'communities' | 'playlists'>('following');
   const navigate = useNavigate();
 
   const tabs = [
     { id: 'trending', label: 'Trending' },
     { id: 'following', label: 'Following' },
+    { id: 'communities', label: 'Communities' },
     { id: 'playlists', label: 'Playlists' }
   ] as const;
 
@@ -23,6 +26,8 @@ export const FeedPage: React.FC = () => {
         return <FollowingTab />;
       case 'trending':
         return <TrendingTab />;
+      case 'communities':
+        return <CommunitiesTab />;
       case 'playlists':
         return <PlaylistsTab />;
       default:
@@ -31,81 +36,126 @@ export const FeedPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-[#f4f4f5] font-dm-sans selection:bg-white/10 relative">
+    <div className="min-h-screen bg-[#0a0a0c] text-[#efeff1] font-dm-sans selection:bg-red-500/20 relative">
       
-      {/* Fixed Top Bar */}
-      <header className="fixed top-0 left-0 right-0 h-[52px] bg-[#0a0a0c] border-b border-[#1a1a1a] z-50 flex items-center px-6">
-        {/* Back Arrow */}
-        <button 
-          onClick={() => navigate('/home')}
-          className="absolute left-6 text-[#f4f4f5] hover:text-white transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={22} />
-        </button>
+      {/* Premium Top Bar */}
+      <header className="fixed top-0 left-0 right-0 h-[64px] bg-[#0a0a0c]/80 backdrop-blur-xl border-b border-[#1a1a1c] z-50">
+        <div className="max-w-[1440px] h-full mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => navigate('/home')}
+              className="p-2 hover:bg-white/5 rounded-full transition-all text-[#71717a] hover:text-white"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black text-red-600 tracking-tighter select-none">仲間</span>
+              <span className="hidden sm:block text-[0.7rem] font-black uppercase tracking-[0.3em] text-[#444] mt-1 ml-2">Feed</span>
+            </div>
+          </div>
 
-        {/* Tabs */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-8">
+          {/* Desktop Tabs */}
+          <nav className="hidden md:flex items-center gap-1 bg-[#121214] p-1 rounded-xl border border-[#1f1f23]">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-5 py-2 text-[0.8rem] font-bold rounded-lg transition-all ${
+                    isActive 
+                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' 
+                      : 'text-[#71717a] hover:text-[#efeff1] hover:bg-white/5'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button className="p-2 text-[#71717a] hover:text-white transition-colors">
+              <Search size={20} />
+            </button>
+            <button className="p-2 text-[#71717a] hover:text-white transition-colors relative">
+              <Bell size={20} />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-[#0a0a0c]" />
+            </button>
+            <button className="hidden sm:flex items-center gap-2 bg-[#efeff1] text-black px-4 py-2 rounded-lg text-[0.8rem] font-black uppercase tracking-wider hover:bg-white transition-all ml-2">
+              <PlusSquare size={16} /> Post
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Tabs */}
+      <div className="md:hidden fixed top-[64px] left-0 right-0 bg-[#0a0a0c] border-b border-[#1a1a1c] z-40 overflow-x-auto scrollbar-hide">
+        <div className="flex px-4 min-w-max">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative py-4 text-[0.82rem] font-semibold uppercase tracking-[0.08em] transition-colors ${
-                  isActive ? 'text-white' : 'text-[#71717a] hover:text-[#a1a1aa]'
+                className={`px-5 py-4 text-[0.8rem] font-bold transition-all relative ${
+                  isActive ? 'text-red-500' : 'text-[#71717a]'
                 }`}
               >
                 {tab.label}
                 {isActive && (
-                  <motion.div
-                    layoutId="activeTabUnderline"
-                    className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
+                  <motion.div layoutId="mobileTabIn" className="absolute bottom-0 left-0 right-0 h-[3px] bg-red-600" />
                 )}
               </button>
             );
           })}
         </div>
-      </header>
+      </div>
 
-      {/* AniShots Section - Edge to Edge */}
-      <AnimatePresence>
-        {activeTab === 'following' && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="pt-[52px] bg-[#0a0a0c]"
-          >
-            <AniShotRow />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Grid Layout */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 pt-[84px] md:pt-[100px] pb-32">
+        <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-12 lg:items-start">
+          
+          {/* Main Feed Column */}
+          <div className="space-y-0">
+            {/* AniShots (Only on Following/Communities) */}
+            <AnimatePresence>
+              {(activeTab === 'following' || activeTab === 'communities') && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="mb-8 rounded-2xl overflow-hidden border border-[#1a1a1c]"
+                >
+                  <AniShotRow />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-      {/* Main Container */}
-      <main className={`max-w-[680px] mx-auto ${activeTab !== 'following' ? 'pt-[52px]' : ''}`}>
-        
-        {/* Tab Content Area */}
-        <div className="px-4 sm:px-0 pt-2 pb-32 min-h-screen relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {renderTabContent()}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Bottom Watermark */}
-          <div className="py-8 pt-16 text-center text-[#2a2a2a] font-medium text-[0.75rem] uppercase tracking-[0.25em] select-none">
-            — NAKAMA —
+            <div className="max-w-[680px] mx-auto">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {renderTabContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
+
+          {/* Right Sidebar */}
+          <RightSidebar />
         </div>
-      </main>
+      </div>
+
+      {/* Decorative Watermark */}
+      <div className="fixed bottom-12 right-12 opacity-5 pointer-events-none hidden xl:block select-none">
+        <span className="text-[8rem] font-black text-white leading-none">仲間</span>
+      </div>
     </div>
   );
 };

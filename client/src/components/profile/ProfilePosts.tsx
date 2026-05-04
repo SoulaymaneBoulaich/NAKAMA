@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { SafeImage } from '../common/SafeImage';
 import type { Post } from '../../../../shared/types/index.js';
 
 interface ProfilePostsProps {
@@ -53,7 +54,7 @@ const ProfilePosts: React.FC<ProfilePostsProps> = ({ posts }) => {
           {/* Post Image */}
           {post.imageUrl && (
             <div className="mt-4 rounded-xl overflow-hidden border border-gray-800/40">
-              <img 
+              <SafeImage 
                 src={post.imageUrl} 
                 alt="" 
                 className="w-full max-h-80 object-cover group-hover:scale-[1.01] transition-transform duration-500" 

@@ -19,9 +19,12 @@ import {
   Tv,
   Brain
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '../social/SearchBar';
 import NotificationsDropdown from '../social/NotificationsDropdown';
+import { Avatar } from '../common/Avatar';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -30,6 +33,17 @@ export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await api.get('/notifications');
+      return Array.isArray(res.data) ? res.data : [];
+    },
+    refetchInterval: 30000 // Refetch every 30s
+  });
+
+  const unreadCount = notifications?.filter((n: any) => !n.isRead).length || 0;
 
   const handleLogout = async () => {
     await logout();
@@ -99,7 +113,11 @@ export const Navbar: React.FC = () => {
                 className={`text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all relative p-2.5 rounded-xl hover:bg-[var(--accent-primary)]/5 border border-transparent hover:border-[var(--border-color)] ${isNotificationsOpen ? 'text-[var(--text-primary)] bg-[var(--accent-primary)]/10' : ''}`}
               >
                 <Bell size={20} />
-                <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-[var(--accent-primary)] rounded-full border-2 border-[var(--bg-primary)]" />
+                {unreadCount > 0 && (
+                  <div className="absolute top-1.5 right-1.5 bg-[#cc0000] text-white text-[9px] font-black min-w-[16px] h-4 flex items-center justify-center rounded-full border-2 border-[var(--bg-primary)] px-1">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </div>
+                )}
               </button>
               
               <AnimatePresence>
@@ -124,15 +142,12 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className={`flex items-center gap-2 p-1 pl-1 pr-3 rounded-full border transition-all ${isProfileOpen ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10' : 'border-[var(--border-color)] bg-white/5 hover:border-white/20'}`}
               >
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-[var(--border-color)] shadow-lg">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
-                      <UserIcon size={16} />
-                    </div>
-                  )}
-                </div>
+                <Avatar 
+                  src={user?.avatar} 
+                  username={user?.username} 
+                  size="sm"
+                  className="!shadow-none"
+                />
                 <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hidden sm:block">
                   {user?.username}
                 </span>

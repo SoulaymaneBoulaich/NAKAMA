@@ -14,9 +14,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'test_user' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'test_password' }}
-          POSTGRES_DB: NAKAMA_TEST
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nakama
         ports:
           - 5432:5432
         options: >-
@@ -46,7 +46,7 @@ jobs:
         run: npx prisma db push --skip-generate
         working-directory: server
         env:
-          DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER || 'test_user' }}:${{ secrets.POSTGRES_PASSWORD || 'test_password' }}@localhost:5432/NAKAMA_TEST
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nakama
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test-access-secret-hardening-123' }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test-refresh-secret-hardening-123' }}
 
@@ -54,7 +54,7 @@ jobs:
         run: npm run test:integration -- run
         working-directory: server
         env:
-          DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER || 'test_user' }}:${{ secrets.POSTGRES_PASSWORD || 'test_password' }}@localhost:5432/NAKAMA_TEST
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nakama
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test-access-secret-hardening-123' }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test-refresh-secret-hardening-123' }}
           NODE_ENV: test

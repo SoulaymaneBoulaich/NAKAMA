@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
     Trophy, 
     Crown, 
@@ -66,10 +66,10 @@ export default function CommunityTournamentsPage() {
         setJoiningId(id);
         try {
             await api.post('/quiz/tournaments/join', { tournamentId: id });
-            addToast('Synchronized!', 'You are registered for this event. Prepare your mind.', 'success');
+            addToast('success', 'Synchronized! You are registered for this event. Prepare your mind.');
             fetchData();
         } catch (err: any) {
-            addToast('Error', err.response?.data?.message || 'Failed to join tournament', 'error');
+            addToast('error', err.response?.data?.message || 'Failed to join tournament');
         } finally {
             setJoiningId(null);
         }

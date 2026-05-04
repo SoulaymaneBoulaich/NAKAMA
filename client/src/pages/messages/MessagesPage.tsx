@@ -9,6 +9,7 @@ import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { NewConversationModal } from '../../components/messages/NewConversationModal';
+import { Avatar } from '../../components/common/Avatar';
 
 
 export const MessagesPage = () => {
@@ -156,7 +157,11 @@ export const MessagesPage = () => {
                             className={`p-4 flex items-center gap-4 cursor-pointer transition-colors relative border-b border-[var(--border-subtle)] ${c.id === conversationId ? 'bg-red-600/10 border-r-2 border-r-red-500' : 'hover:bg-white/5'}`}
                         >
                             <div className="relative">
-                                <img src={c.otherUser?.avatar || '/default-avatar.png'} className="w-12 h-12 rounded-full object-cover border border-[var(--border-color)]" alt="" />
+                                <Avatar 
+                                    src={c.otherUser?.avatar} 
+                                    username={c.otherUser?.username} 
+                                    size="lg"
+                                />
                                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[var(--bg-secondary)] rounded-full" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -188,7 +193,11 @@ export const MessagesPage = () => {
                                 <button onClick={() => navigate('/messages')} className="md:hidden p-2 -ml-2 hover:bg-white/5 rounded-full">
                                     <ChevronLeft size={20} />
                                 </button>
-                                <img src={activeConversation.otherUser?.avatar || '/default-avatar.png'} className="w-10 h-10 rounded-full border border-[var(--border-color)]" alt="" />
+                                <Avatar 
+                                    src={activeConversation.otherUser?.avatar} 
+                                    username={activeConversation.otherUser?.username} 
+                                    size="md"
+                                />
                                 <div>
                                     <h3 className="font-bold text-sm leading-none">{activeConversation.otherUser?.username}</h3>
                                     <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest mt-1">Online</p>
@@ -214,7 +223,12 @@ export const MessagesPage = () => {
                                 return (
                                     <div key={m.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 group animate-in fade-in slide-in-from-bottom-1`}>
                                         {!isOwn && (
-                                            <img src={m.sender.avatar || '/default-avatar.png'} className="w-8 h-8 rounded-full mr-2 mt-auto" alt="" />
+                                            <Avatar 
+                                                src={m.sender.avatar} 
+                                                username={m.sender.username} 
+                                                size="sm"
+                                                className="mr-2 mt-auto"
+                                            />
                                         )}
                                         <div className="max-w-[70%] space-y-1">
                                             <div className={`px-4 py-2 rounded-2xl relative ${

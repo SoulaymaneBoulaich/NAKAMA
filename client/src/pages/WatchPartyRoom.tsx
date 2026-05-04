@@ -5,10 +5,12 @@ import {
   Play, Pause, Users, MessageSquare, Send, 
   Settings, Volume2, Maximize, ChevronRight
 } from 'lucide-react';
-import { watchPartySocket as socket } from '../api/socket';
+import { useSocket, useSocketEvent } from '../hooks/useSocket';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/common/Spinner';
+import { SafeImage } from '../components/common/SafeImage';
+import { Avatar } from '../components/common/Avatar';
 
 interface FloatingReaction {
     id: string;
@@ -39,8 +41,10 @@ const WatchPartyRoom: React.FC = () => {
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
+    const socket = useSocket();
+
     useEffect(() => {
-        if (!user || !code) return;
+        if (!user || !code || !socket) return;
 
         const initRoom = async () => {
             try {
@@ -49,45 +53,7 @@ const WatchPartyRoom: React.FC = () => {
                 if (data.messages) setChat(data.messages);
                 
                 // Socket connection
-                socket.connect();
                 socket.emit('join-party', { code, userId: user.id });
-
-                socket.on('sync-state', ({ participants, status, currentTimestamp }) => {
-                    if (participants) setParticipants(participants);
-                    setStatus(status);
-                    setCurrentTimestamp(currentTimestamp);
-                });
-
-                socket.on('participants-updated', (updatedParticipants) => {
-                    setParticipants(updatedParticipants);
-                });
-
-                socket.on('message-received', (payload) => {
-                    setChat(prev => [...prev, payload]);
-                });
-
-                socket.on('reaction-received', ({ userId, reaction }) => {
-                    const newReaction: FloatingReaction = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        emoji: reaction,
-                        userId,
-                        x: Math.random() * 80 + 10 // random horizontal position
-                    };
-                    setReactions(prev => [...prev, newReaction]);
-                    setTimeout(() => {
-                        setReactions(prev => prev.filter(r => r.id !== newReaction.id));
-                    }, 3000);
-                });
-
-                socket.on('member-left', ({ userId }) => {
-                    setParticipants(prev => prev.filter(p => p.userId !== userId));
-                });
-
-                socket.on('party-error', ({ message }) => {
-                    alert(message);
-                    navigate('/watchparty');
-                });
-
                 setLoading(false);
             } catch (error) {
                 console.error('Room init error:', error);
@@ -99,14 +65,60 @@ const WatchPartyRoom: React.FC = () => {
 
         return () => {
             socket.emit('leave-party', { code, userId: user.id });
-            socket.off('sync-state');
-            socket.off('participants-updated');
-            socket.off('message-received');
-            socket.off('reaction-received');
-            socket.off('member-left');
-            socket.off('party-error');
         };
-    }, [code, user, navigate]);
+    }, [code, user, navigate, socket]);
+
+    // Safe Listeners using useSocketEvent
+    useSocketEvent('sync-state', ({ status, currentTimestamp }) => {
+        setStatus(status);
+        setCurrentTimestamp(currentTimestamp);
+    });
+
+    useSocketEvent('participants-list', (updatedParticipants: any[]) => {
+        setParticipants(updatedParticipants);
+    });
+
+    useSocketEvent('new-message', (payload) => {
+        setChat(prev => [...prev, payload]);
+    });
+
+    useSocketEvent('reaction-event', ({ userId, reaction }: { userId: string, reaction: string }) => {
+        const newReaction: FloatingReaction = {
+            id: Math.random().toString(36).substr(2, 9),
+            emoji: reaction,
+            userId,
+            x: Math.random() * 80 + 10
+        };
+        setReactions(prev => [...prev, newReaction]);
+        setTimeout(() => {
+            setReactions(prev => prev.filter(r => r.id !== newReaction.id));
+        }, 3000);
+    });
+
+    useSocketEvent('member-quit', ({ userId }: { userId: string }) => {
+        setParticipants(prev => prev.filter(p => p.userId !== userId));
+    });
+
+    useSocketEvent('party-error', ({ message }: { message: string }) => {
+        alert(message);
+        navigate('/watchparty');
+    });
+
+    // Host Sync Heartbeat
+    useEffect(() => {
+        if (!socket || !party || party.hostId !== user?.id || status !== 'WATCHING') return;
+
+        const heartbeat = setInterval(() => {
+            socket.emit('sync-playback', {
+                code,
+                status,
+                currentTimestamp,
+                episodeNumber: party.episodeNumber
+            });
+        }, 5000); // Sync every 5 seconds
+
+        return () => clearInterval(heartbeat);
+    }, [socket, party, user, status, currentTimestamp, code]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -115,13 +127,13 @@ const WatchPartyRoom: React.FC = () => {
     const handleToggleReady = () => {
         const nextReady = !isReady;
         setIsReady(nextReady);
-        socket.emit('ready-up', { code, userId: user?.id, isReady: nextReady });
+        socket?.emit('ready-up', { code, userId: user?.id, isReady: nextReady });
     };
 
     const handleTogglePlay = () => {
         const nextStatus = status === 'WATCHING' ? 'PAUSED' : 'WATCHING';
         setStatus(nextStatus);
-        socket.emit('sync-playback', { 
+        socket?.emit('sync-playback', { 
             code, 
             status: nextStatus, 
             currentTimestamp,
@@ -130,13 +142,13 @@ const WatchPartyRoom: React.FC = () => {
     };
 
     const handleSendReaction = (reaction: string) => {
-        socket.emit('floating-reaction', { code, userId: user?.id, reaction });
+        socket?.emit('floating-reaction', { code, userId: user?.id, reaction });
     };
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim()) return;
-        socket.emit('broadcast-message', { code, userId: user?.id, content: message });
+        socket?.emit('broadcast-message', { code, userId: user?.id, content: message });
         setMessage('');
     };
 
@@ -176,7 +188,7 @@ const WatchPartyRoom: React.FC = () => {
 
                     {/* The Canvas (Metadata Sync Panel) */}
                 <div className="flex-1 bg-[#050505] flex items-center justify-center relative overflow-hidden">
-                    <img 
+                    <SafeImage 
                       src={party?.animeCover || "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=2000&auto=format&fit=crop"} 
                       className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale"
                       alt=""
@@ -206,7 +218,7 @@ const WatchPartyRoom: React.FC = () => {
                       className="absolute flex flex-col items-center gap-8 text-center px-10 z-10"
                     >
                          <div className="relative group/poster">
-                             <img 
+                             <SafeImage 
                                 src={party?.animeCover} 
                                 className={`w-64 h-96 object-cover rounded-3xl shadow-2xl border transition-all duration-700 ${status === 'WATCHING' ? 'border-[var(--accent-primary)] scale-105 shadow-[var(--accent-primary)]/20 shadow-[-20px_20px_60px_rgba(220,38,38,0.2)]' : 'border-white/10 grayscale'}`} 
                                 alt="" 
@@ -314,10 +326,11 @@ const WatchPartyRoom: React.FC = () => {
                                  <div className="flex -space-x-3">
                                       {participants.slice(0, 5).map((p) => (
                                           <div key={p.id} className="relative group/p">
-                                              <img 
-                                                src={p.user.avatar || '/default-avatar.png'} 
-                                                className={`w-10 h-10 rounded-full border-2 border-[#0A0A0A] object-cover transition-all duration-500 ${p.isReady ? 'ring-2 ring-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'opacity-40 grayscale group-hover/p:opacity-100 group-hover/p:grayscale-0'}`}
-                                                alt="" 
+                                              <Avatar 
+                                                src={p.user.avatar} 
+                                                username={p.user.username}
+                                                size="md"
+                                                className={`transition-all duration-500 ${p.isReady ? 'ring-2 ring-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'opacity-40 grayscale group-hover/p:opacity-100 group-hover/p:grayscale-0'}`}
                                               />
                                               {p.isReady && (
                                                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-black flex items-center justify-center">
@@ -350,7 +363,12 @@ const WatchPartyRoom: React.FC = () => {
                                     >
                                         <div className="flex items-start gap-4">
                                             {msg.messageType !== 'SYSTEM' && (
-                                                <img src={msg.user.avatar || '/default-avatar.png'} className="w-8 h-8 rounded-lg border border-white/10 mt-1 object-cover" alt="" />
+                                                <Avatar 
+                                                  src={msg.user.avatar} 
+                                                  username={msg.user.username}
+                                                  size="sm"
+                                                  className="mt-1"
+                                                />
                                             )}
                                             <div className="space-y-1 flex-1">
                                                 {msg.messageType !== 'SYSTEM' ? (

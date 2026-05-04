@@ -67,7 +67,12 @@ export const AuthModal: React.FC = () => {
       addToast('success', 'Welcome to the crew!');
       closeAuthModal();
     } catch (error: any) {
-      addToast('error', error.response?.data?.message || 'Signup failed');
+      const data = error.response?.data;
+      if (data?.errors && Array.isArray(data.errors)) {
+        addToast('error', data.errors[0].message);
+      } else {
+        addToast('error', data?.message || 'Signup failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +95,7 @@ export const AuthModal: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-[440px] bg-[var(--bg-secondary)114] border border-[#1e1e24] shadow-2xl rounded-[24px] overflow-hidden"
+          className="relative w-full max-w-[440px] bg-[#0A0A0B] border border-[#1e1e24] shadow-2xl rounded-[24px] overflow-hidden"
         >
           {/* Close Button */}
           <button 
@@ -167,6 +172,7 @@ export const AuthModal: React.FC = () => {
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
+                        helperText="Min 8 chars, 1 uppercase, 1 number"
                       />
                     </div>
                     <Input 
@@ -184,7 +190,7 @@ export const AuthModal: React.FC = () => {
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full py-4 bg-[var(--accent-primary)] text-white font-outfit font-bold rounded-xl hover:bg-red-700 hover:shadow-[0_8px_20px_rgba(220,38,38,0.3)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-4"
+                className="w-full py-4 bg-white text-black font-outfit font-bold rounded-xl hover:bg-white/90 hover:shadow-[0_8px_20px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-4"
               >
                 {loading ? <Spinner size="sm" /> : (view === 'login' ? 'Sign In' : 'Create Account')}
               </button>

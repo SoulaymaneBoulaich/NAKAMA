@@ -2,6 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X, MessageSquare } from 'lucide-react';
+import { SafeImage } from '../common/SafeImage';
 
 interface EntryProps {
   entry: {
@@ -53,7 +54,7 @@ export const PlaylistEntryItem: React.FC<EntryProps> = ({ entry, isOwner, onDele
       )}
 
       <div className="w-12 h-16 rounded overflow-hidden bg-zinc-800 flex-shrink-0">
-        <img src={entry.animeCover} alt={entry.animeTitle} className="w-full h-full object-cover" />
+        <SafeImage src={entry.animeCover} alt={entry.animeTitle} className="w-full h-full object-cover" />
       </div>
 
       <div className="flex-grow min-w-0">

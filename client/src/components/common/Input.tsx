@@ -12,7 +12,7 @@ export const Input: React.FC<InputProps> = ({ label, error, helperText, ...props
       <label className="text-sm font-medium text-white/70">{label}</label>
       <input
         {...props}
-        className={`w-full px-4 py-3 bg-[var(--bg-secondary)111] border rounded-md outline-none transition-all duration-200
+        className={`w-full px-4 py-3 bg-[#0A0A0B] border rounded-md outline-none transition-all duration-200
           ${error ? 'border-red-500 text-red-500' : 'border-[var(--border-color)] text-white focus:border-white/40'}`}
       />
       {error && <span className="text-xs text-red-500 mt-1">{error}</span>}

@@ -195,3 +195,85 @@ export const getRecommendations = async (userId: string) => {
 
   return generateRecommendations(userId);
 };
+
+/**
+ * Match a viewer's taste with a profile owner's "Loves"
+ */
+export const matchViewerTaste = async (ownerId: string, viewerId: string) => {
+  try {
+    // 1. Fetch Owner's "Loves"
+    // Criteria: Rating >= 9 OR heavy interaction weight
+    const heavyInteractions = await prisma.userAnimeInteraction.findMany({
+      where: { 
+        userId: ownerId,
+        weight: { gte: INTERACTION_WEIGHTS.COMPLETED } // High weight
+      },
+      select: { animeId: true }
+    });
+
+    const highRatings = await prisma.rating.findMany({
+      where: {
+        userId: ownerId,
+        rating: { gte: 9 }
+      },
+      select: { animeId: true }
+    });
+
+    const lovedAnimeIds = Array.from(new Set([
+      ...heavyInteractions.map(i => i.animeId),
+      ...highRatings.map(r => r.animeId)
+    ]));
+
+    if (lovedAnimeIds.length === 0) return [];
+
+    // 2. Fetch Viewer's Tag Affinities
+    const viewerAffinities = await prisma.userTagAffinity.findMany({
+      where: { userId: viewerId },
+      orderBy: { affinityScore: 'desc' },
+      take: 20
+    });
+
+    if (viewerAffinities.length === 0) {
+      // If viewer has no profile, just return owner's loves (limited)
+      return lovedAnimeIds.slice(0, 10).map(id => ({ animeId: id, score: 0 }));
+    }
+
+    // 3. Score Owner's loves based on Viewer's affinities
+    const matches: any[] = [];
+    
+    for (const animeId of lovedAnimeIds) {
+      // Get tags for this loved anime
+      const animeTags = await prisma.animeTag.findMany({
+        where: { animeId }
+      });
+
+      let matchScore = 0;
+      const matchedTags: string[] = [];
+
+      for (const tagObj of animeTags) {
+        const viewerAffinity = viewerAffinities.find(a => a.tag === tagObj.tag);
+        if (viewerAffinity) {
+          matchScore += viewerAffinity.affinityScore;
+          matchedTags.push(tagObj.tag);
+        }
+      }
+
+      if (matchScore > 0) {
+        matches.push({
+          animeId,
+          score: matchScore,
+          matchedTags
+        });
+      }
+    }
+
+    // 4. Return top 10 matches
+    return matches
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+  } catch (error) {
+    // @ts-ignore
+    logger.error(`[RecEngine] Error matching viewer taste`, { error, ownerId, viewerId });
+    return [];
+  }
+};

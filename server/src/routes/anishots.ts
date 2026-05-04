@@ -1,6 +1,8 @@
 import express, { type Request, type Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { createAniShotSchema } from '../schemas/aniShotSchema.js';
 
 const router = express.Router();
 
@@ -51,7 +53,7 @@ router.get('/', authenticateToken, async (req: any, res: Response) => {
  * POST /api/anishots
  * Create a new anishot
  */
-router.post('/', authenticateToken, async (req: any, res: Response) => {
+router.post('/', authenticateToken, validate(createAniShotSchema), async (req: any, res: Response) => {
   try {
     const userId = req.userId;
     const { content, mediaUrl, animeId, animeTitle, animeCover, type } = req.body;
