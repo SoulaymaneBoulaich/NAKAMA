@@ -25,8 +25,7 @@ const filterUser = (user: any) => {
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const validatedData = signupSchema.parse(req.body);
-    const { username, email, password } = validatedData;
+    const { username, email, password } = req.body;
 
 
     const existingUser = await prisma.user.findFirst({
@@ -39,7 +38,7 @@ export const signup = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -67,8 +66,7 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const validatedData = loginSchema.parse(req.body);
-    const { emailOrUsername, password } = validatedData;
+    const { emailOrUsername, password } = req.body;
 
 
     const user = await prisma.user.findFirst({
@@ -81,7 +79,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // Reactivate if soft deleted
@@ -131,8 +129,7 @@ export const refresh = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
-    const validatedData = forgotPasswordSchema.parse(req.body);
-    const { email } = validatedData;
+    const { email } = req.body;
 
 
     const user = await prisma.user.findUnique({ where: { email } });
