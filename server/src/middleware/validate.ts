@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ZodError } from 'zod'; import type { AnyZodObject } from 'zod';
+import { ZodError, type ZodSchema } from 'zod';
 import { logger } from '../utils/logger.js';
 
-export const validate = (schema: AnyZodObject) => {
+export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = await schema.parseAsync({
@@ -19,15 +19,16 @@ export const validate = (schema: AnyZodObject) => {
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        logger.warn(`Validation failed for ${req.method} ${req.originalUrl}: ${JSON.stringify(error.issues)}`, {
-          body: req.body,
-        });
+        const errors = error.issues.map(err => ({
+          path: err.path.join('.'),
+          msg: err.message,
+        }));
+
+        logger.warn(`Validation failed for ${req.method} ${req.originalUrl}:`, { errors });
+
         return res.status(400).json({
           message: 'Validation failed',
-          errors: (error.issues || []).map(err => ({
-            path: err.path.join('.'),
-            msg: err.message,
-          })),
+          errors,
         });
       }
       return next(error);
