@@ -1,11 +1,16 @@
 import { z } from 'zod';
 
+// Basic field schemas to be reused
+const usernameSchema = z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+const emailSchema = z.string().email();
+const passwordSchema = z.string().min(8).max(100);
+
 export const signupSchema = z.object({
   body: z.object({
-    username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-    email: z.string().email(),
-    password: z.string().min(8).max(100),
-    confirmPassword: z.string().min(8).max(100),
+    username: usernameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: passwordSchema,
   }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
@@ -21,7 +26,7 @@ export const loginSchema = z.object({
 
 export const forgotPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email(),
+    email: emailSchema,
   }),
 });
 
@@ -30,6 +35,6 @@ export const resetPasswordSchema = z.object({
     token: z.string().min(1),
   }),
   body: z.object({
-    password: z.string().min(8).max(100),
+    password: passwordSchema,
   }),
 });
