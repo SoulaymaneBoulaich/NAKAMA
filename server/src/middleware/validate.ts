@@ -5,12 +5,13 @@ import { logger } from '../utils/logger.js';
 export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // We parse the full request structure
-      const parsed = await schema.parseAsync({
+      const input = {
         body: req.body,
         query: req.query,
         params: req.params,
-      });
+      };
+
+      const parsed = await schema.parseAsync(input);
 
       // Update request with sanitized data
       if (parsed.body) req.body = parsed.body;
@@ -20,25 +21,14 @@ export const validate = (schema: ZodSchema) => {
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errors = error.issues.map(err => {
-          // Normalize path: If it doesn't start with body/query/params, 
-          // it likely came from an unwrapped schema, but our tests expect 'body.field'
-          let path = err.path.join('.');
-          if (!path.startsWith('body.') && !path.startsWith('query.') && !path.startsWith('params.')) {
-            // Check if this issue belongs to the 'body' branch of the input
-            if (err.path[0] === 'body') {
-              path = err.path.join('.');
-            } else {
-              // Fallback for flat schemas: prepend 'body.' if we think it's a body error
-              path = `body.${path}`;
-            }
-          }
-          
-          return {
-            path,
-            msg: err.message,
-          };
-        });
+        // Debug: log raw issues to diagnose CI path mismatches
+        console.error('[VALIDATE DEBUG] Raw Zod issues:', JSON.stringify(error.issues.map(i => ({ path: i.path, msg: i.message, code: i.code }))));
+        console.error('[VALIDATE DEBUG] Request body keys:', Object.keys(req.body || {}));
+
+        const errors = error.issues.map(err => ({
+          path: err.path.join('.'),
+          msg: err.message,
+        }));
 
         logger.warn(`Validation failed for ${req.method} ${req.originalUrl}:`, { errors });
 

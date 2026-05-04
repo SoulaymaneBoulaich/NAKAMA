@@ -16,6 +16,7 @@ describe('Auth Integration Tests', () => {
       .post('/api/auth/signup')
       .send(testUser);
 
+    console.error('[DEBUG] Signup response:', response.status, JSON.stringify(response.body));
     expect(response.status).toBe(201);
     expect(response.body.user).toBeDefined();
     expect(response.body.user.username).toBe(testUser.username);
@@ -85,6 +86,7 @@ describe('Auth Integration Tests', () => {
         email: 'not-an-email'
       });
 
+    console.error('[DEBUG] Invalid email response:', response.status, JSON.stringify(response.body));
     expect(response.status).toBe(400);
     expect(response.body.errors).toBeDefined();
     expect(response.body.errors[0].path).toBe('body.email');
