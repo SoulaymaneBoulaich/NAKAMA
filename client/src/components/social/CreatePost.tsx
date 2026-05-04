@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../../api/axios';
 import { Send, Image as ImageIcon, BarChart2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { Avatar } from '../common/Avatar';
 
 interface Props {
   communityId?: string;
@@ -44,10 +45,11 @@ const CreatePost: React.FC<Props> = ({ communityId, onPostCreated }) => {
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-900 border border-[var(--border-color)] rounded-2xl p-4 mb-6 shadow-xl shadow-black/20 overflow-hidden">
       <div className="flex gap-4">
-        <img 
-          src={user?.avatar || '/default-avatar.png'} 
-          alt="" 
-          className="w-10 h-10 rounded-full border border-[var(--border-color)] object-cover"
+        <Avatar 
+          src={user?.avatar} 
+          username={user?.username || ''} 
+          size="sm" 
+          className="w-10 h-10 rounded-full border border-[var(--border-color)]"
         />
         <div className="flex-1 space-y-4">
           <textarea

@@ -103,8 +103,10 @@ export const getTopAnime = async (req: Request, res: Response) => {
     const { filter, limit } = req.query;
     const results = await jikan.getTopAnime(filter as string, limit ? Number(limit) : 20);
     res.status(200).json(results);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching top anime' });
+  } catch (error: any) {
+    const status = error.response?.status || 500;
+    console.error(`[TopAnime] Error (Status: ${status}):`, error.message);
+    res.status(status).json({ message: 'Error fetching top anime' });
   }
 };
 
@@ -113,8 +115,10 @@ export const getSeasonalAnime = async (req: Request, res: Response) => {
     const { limit } = req.query;
     const results = await jikan.getSeasonalAnime(limit ? Number(limit) : 20);
     res.status(200).json(results);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching seasonal anime' });
+  } catch (error: any) {
+    const status = error.response?.status || 500;
+    console.error(`[SeasonalAnime] Error (Status: ${status}):`, error.message);
+    res.status(status).json({ message: 'Error fetching seasonal anime' });
   }
 };
 
@@ -122,8 +126,10 @@ export const getGenres = async (req: Request, res: Response) => {
   try {
     const results = await jikan.getGenres();
     res.status(200).json(results);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching genres' });
+  } catch (error: any) {
+    const status = error.response?.status || 500;
+    console.error(`[Genres] Error (Status: ${status}):`, error.message);
+    res.status(status).json({ message: 'Error fetching genres' });
   }
 };
 
@@ -138,8 +144,11 @@ export const discoverAnime = async (req: Request, res: Response) => {
       limit: limit ? Number(limit) : 20
     });
     res.status(200).json(results);
-  } catch (error) {
-    res.status(500).json({ message: 'Error discovering anime' });
+  } catch (error: any) {
+    const status = error.response?.status || 500;
+    const message = status === 429 ? 'Anime signal congested (Rate limit). Please try again in a moment.' : 'Error discovering anime';
+    console.error(`[DiscoverAnime] Error (Status: ${status}):`, error.message);
+    res.status(status).json({ message });
   }
 };
 
@@ -156,3 +165,14 @@ export const getRecommendations = async (req: Request, res: Response) => {
   }
 };
 
+export const getStudioDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const studio = await jikan.getProducerDetails(id);
+    const works = await jikan.discoverAnime({ producers: id, order_by: 'score', sort: 'desc', limit: 15 });
+    
+    res.status(200).json({ studio, works });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error fetching studio details' });
+  }
+};

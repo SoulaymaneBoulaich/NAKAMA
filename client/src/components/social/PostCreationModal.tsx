@@ -3,6 +3,7 @@ import { X, Image as ImageIcon, Film, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
+import { SafeImage } from '../common/SafeImage';
 
 interface PostCreationModalProps {
   isOpen: boolean;
@@ -92,7 +93,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
 
           {imagePreview && (
             <div className="relative rounded-xl overflow-hidden border border-[var(--border-color)] bg-black/20">
-              <img src={imagePreview} alt="Preview" className="w-full object-contain max-h-[300px]" />
+              <SafeImage src={imagePreview || ''} alt="Preview" className="w-full object-contain max-h-[300px]" />
               <button 
                 type="button"
                 onClick={() => { setImage(null); setImagePreview(null); }}

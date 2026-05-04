@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { Users, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Avatar } from '../common/Avatar';
 
 const TopCommunitiesWidget: React.FC = () => {
   const { data: communities, isLoading } = useQuery({
@@ -38,10 +39,11 @@ const TopCommunitiesWidget: React.FC = () => {
               className="p-3 flex items-center justify-between hover:bg-zinc-800/50 rounded-xl transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <img 
-                  src={community.avatarUrl || '/default-community.png'} 
-                  alt={community.name} 
-                  className="w-8 h-8 rounded-lg border border-[var(--border-color)] object-cover"
+                <Avatar 
+                  src={community.avatarUrl} 
+                  username={community.name} 
+                  size="sm"
+                  className="w-8 h-8 rounded-lg border border-[var(--border-color)]"
                 />
                 <div>
                   <h4 className="text-sm font-bold text-white group-hover:text-red-500 transition-colors">

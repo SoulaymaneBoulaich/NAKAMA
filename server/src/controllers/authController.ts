@@ -9,6 +9,12 @@ import {
   clearRefreshTokenCookie,
   verifyRefreshToken,
 } from '../utils/tokens.js';
+import { 
+  signupSchema, 
+  loginSchema, 
+  forgotPasswordSchema, 
+  resetPasswordSchema 
+} from '../schemas/authSchema.js';
 import { logger } from '../utils/logger.js';
 
 
@@ -19,11 +25,17 @@ const filterUser = (user: any) => {
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const validatedData = signupSchema.parse(req.body);
+    const { username, email, password } = validatedData;
 
 
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: {
+        OR: [
+          { email: { equals: email, mode: 'insensitive' } },
+          { username: { equals: username, mode: 'insensitive' } }
+        ]
+      },
     });
 
     if (existingUser) {
@@ -55,11 +67,17 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { emailOrUsername, password } = req.body;
+    const validatedData = loginSchema.parse(req.body);
+    const { emailOrUsername, password } = validatedData;
 
 
     const user = await prisma.user.findFirst({
-      where: { OR: [{ email: emailOrUsername }, { username: emailOrUsername }] },
+      where: {
+        OR: [
+          { email: { equals: emailOrUsername, mode: 'insensitive' } },
+          { username: { equals: emailOrUsername, mode: 'insensitive' } }
+        ]
+      },
     });
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -113,7 +131,8 @@ export const refresh = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const validatedData = forgotPasswordSchema.parse(req.body);
+    const { email } = validatedData;
 
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -136,7 +155,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     // I'll update the schema in an ephemeral step if needed, but let's assume User has them for now
     // and I'll add them to the User model in a moment.
 
-    await (prisma.user as any).update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         resetToken: resetTokenHash,
@@ -165,7 +184,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await (prisma.user as any).findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         resetToken: resetTokenHash,
         resetTokenExpiry: { gt: new Date() },
@@ -178,7 +197,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    await (prisma.user as any).update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash,

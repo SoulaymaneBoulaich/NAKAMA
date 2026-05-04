@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Sword, Trophy, Play, Search, Hash } from 'lucide-react';
+import { Sword, Trophy, Play, Search, Hash, History, Medal, Target } from 'lucide-react';
 import { CreateArenaModal } from '../../components/anijudge/CreateArenaModal';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,10 +13,13 @@ export const AniJudgeHome = () => {
   const [joinCode, setJoinCode] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hallOfFame, setHallOfFame] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [activeTab, setActiveTab] = useState<'fame' | 'record'>('fame');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHallOfFame();
+    fetchHistory();
   }, []);
 
   const fetchHallOfFame = async () => {
@@ -27,6 +30,17 @@ export const AniJudgeHome = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/anijudge/my-history`, {
+        withCredentials: true
+      });
+      setHistory(res.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -88,58 +102,125 @@ export const AniJudgeHome = () => {
           </div>
         </div>
 
-        {/* Right Panel: Hall of Fame */}
+        {/* Right Panel: Content Tabs */}
         <div className="lg:col-span-7">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-[var(--font-syne)] font-bold flex items-center gap-3">
-              <Trophy className="text-yellow-500" />
-              Hall of Fame
-            </h2>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex bg-[var(--bg-secondary)] p-1 rounded-xl border border-[var(--border-color)]">
+              <button 
+                onClick={() => setActiveTab('fame')}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'fame' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-[var(--text-secondary)] hover:text-white'}`}
+              >
+                <Trophy size={16} />
+                HALL OF FAME
+              </button>
+              <button 
+                onClick={() => setActiveTab('record')}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'record' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-[var(--text-secondary)] hover:text-white'}`}
+              >
+                <History size={16} />
+                MY RECORD
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
             {loading ? (
               [1, 2, 3].map(i => <div key={i} className="h-32 bg-[var(--bg-secondary)] animate-pulse rounded-2xl" />)
-            ) : hallOfFame.length === 0 ? (
-              <div className="text-center py-20 glass-card rounded-2xl border border-dashed border-[var(--border-color)]">
-                <p className="text-[var(--text-secondary)]">No legendary debates recorded yet.</p>
-              </div>
-            ) : (
-              hallOfFame.map((arena: any) => (
-                <div key={arena.id} className="glass-card p-6 rounded-2xl border border-[var(--border-color)] hover:border-red-500/30 transition-all group">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold group-hover:text-red-500 transition-colors line-clamp-1">{arena.topic}</h3>
-                      <p className="text-sm text-[var(--text-secondary)]">Judged by {arena.judge?.username || 'the community'}</p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-red-950/30 px-3 py-1 rounded-full border border-red-900/30">
-                      <Trophy size={14} className="text-yellow-500" />
-                      <span className="text-xs font-bold text-red-500">{arena._count.fameVotes}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                    <div className="p-2 rounded-lg bg-blue-900/10 border border-blue-900/20 text-center">
-                      <p className="text-[var(--text-secondary)] text-xs mb-1">TEAM A</p>
-                      <p className="font-bold truncate">{arena.participants.filter((p: any) => p.team === 'TEAM_A').map((p: any) => p.user.username).join(', ')}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-red-900/10 border border-red-900/20 text-center">
-                      <p className="text-[var(--text-secondary)] text-xs mb-1">TEAM B</p>
-                      <p className="font-bold truncate">{arena.participants.filter((p: any) => p.team === 'TEAM_B').map((p: any) => p.user.username).join(', ')}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm italic text-[var(--text-secondary)] opacity-80 line-clamp-1">"{arena.verdictText}"</p>
-                    <button 
-                      onClick={() => navigate(`/anijudge/hall-of-fame/${arena.id}`)}
-                      className="text-xs font-bold text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors ml-4 whitespace-nowrap"
-                    >
-                      VIEW FULL DEBATE <Play size={10} fill="currentColor" />
-                    </button>
-                  </div>
+            ) : activeTab === 'fame' ? (
+              hallOfFame.length === 0 ? (
+                <div className="text-center py-20 glass-card rounded-2xl border border-dashed border-[var(--border-color)]">
+                  <p className="text-[var(--text-secondary)]">No legendary debates recorded yet.</p>
                 </div>
-              ))
+              ) : (
+                hallOfFame.map((arena: any) => (
+                  <div key={arena.id} className="glass-card p-6 rounded-2xl border border-[var(--border-color)] hover:border-red-500/30 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold group-hover:text-red-500 transition-colors line-clamp-1">{arena.topic}</h3>
+                        <p className="text-sm text-[var(--text-secondary)]">Judged by {arena.judge?.username || 'the community'}</p>
+                      </div>
+                      <div className="flex items-center gap-2 bg-red-950/30 px-3 py-1 rounded-full border border-red-900/30">
+                        <Trophy size={14} className="text-yellow-500" />
+                        <span className="text-xs font-bold text-red-500">{arena._count.fameVotes}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                      <div className="p-2 rounded-lg bg-blue-900/10 border border-blue-900/20 text-center">
+                        <p className="text-[var(--text-secondary)] text-xs mb-1">TEAM A</p>
+                        <p className="font-bold truncate">{arena.participants.filter((p: any) => p.team === 'TEAM_A').map((p: any) => p.user.username).join(', ')}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-red-900/10 border border-red-900/20 text-center">
+                        <p className="text-[var(--text-secondary)] text-xs mb-1">TEAM B</p>
+                        <p className="font-bold truncate">{arena.participants.filter((p: any) => p.team === 'TEAM_B').map((p: any) => p.user.username).join(', ')}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm italic text-[var(--text-secondary)] opacity-80 line-clamp-1">"{arena.verdictText}"</p>
+                      <button 
+                        onClick={() => navigate(`/anijudge/arena/${arena.code}`)}
+                        className="text-xs font-bold text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors ml-4 whitespace-nowrap"
+                      >
+                        VIEW FULL DEBATE <Play size={10} fill="currentColor" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : (
+              history.length === 0 ? (
+                <div className="text-center py-20 glass-card rounded-2xl border border-dashed border-[var(--border-color)]">
+                  <p className="text-[var(--text-secondary)] mb-4 uppercase text-xs font-black tracking-widest">No Battle Scars Yet</p>
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-red-500 text-xs font-bold border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-all"
+                  >
+                    ENTER THE ARENA
+                  </button>
+                </div>
+              ) : (
+                history.map((arena: any) => (
+                  <div key={arena.id} className="glass-card p-6 rounded-2xl border border-[var(--border-color)] group relative overflow-hidden">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          arena.myResult === 'won' ? 'bg-green-500/10' : 
+                          arena.myResult === 'lost' ? 'bg-red-500/10' : 'bg-gray-500/10'
+                        }`}>
+                          {arena.myResult === 'won' ? <Medal size={16} className="text-green-500" /> : 
+                           arena.myResult === 'lost' ? <Target size={16} className="text-red-500" /> : 
+                           <History size={16} className="text-gray-500" />}
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold uppercase tracking-tight line-clamp-1">{arena.topic}</h3>
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${
+                            arena.myResult === 'won' ? 'text-green-500' : 
+                            arena.myResult === 'lost' ? 'text-red-500' : 'text-[var(--text-secondary)]'
+                          }`}>
+                            {arena.myResult}
+                          </span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => navigate(`/anijudge/arena/${arena.code}`)}
+                        className="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] px-4 py-2 rounded-lg text-xs font-bold transition-all"
+                      >
+                        REPLAY
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+                      <div className="flex items-center gap-1">
+                        <Hash size={12} />
+                        <span className="font-mono">{arena.code}</span>
+                      </div>
+                      <div className="w-1 h-1 bg-[var(--border-color)] rounded-full" />
+                      <span>{new Date(arena.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))
+              )
             )}
           </div>
         </div>

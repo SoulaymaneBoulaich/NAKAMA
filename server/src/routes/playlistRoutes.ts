@@ -18,6 +18,13 @@ import {
   deleteComment
 } from '../controllers/playlistController.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { 
+  createPlaylistSchema, 
+  updatePlaylistSchema, 
+  addEntrySchema, 
+  addCommentSchema 
+} from '../schemas/playlistSchema.js';
 
 const router = Router();
 
@@ -26,12 +33,12 @@ router.get('/', authenticateToken, getMyPlaylists);
 router.get('/public', authenticateToken, getPublicPlaylists);
 router.get('/featured', authenticateToken, getFeaturedPlaylists);
 router.get('/:id', authenticateToken, getPlaylistById);
-router.post('/', authenticateToken, createPlaylist);
-router.put('/:id', authenticateToken, updatePlaylist);
+router.post('/', authenticateToken, validate(createPlaylistSchema), createPlaylist);
+router.put('/:id', authenticateToken, validate(updatePlaylistSchema), updatePlaylist);
 router.delete('/:id', authenticateToken, deletePlaylist);
 
 // Entries
-router.post('/:id/entries', authenticateToken, addEntry);
+router.post('/:id/entries', authenticateToken, validate(addEntrySchema), addEntry);
 router.delete('/:id/entries/:entryId', authenticateToken, removeEntry);
 router.put('/:id/entries/reorder', authenticateToken, reorderEntries);
 
@@ -44,7 +51,7 @@ router.post('/:id/follow', authenticateToken, toggleFollow);
 
 // Comments
 router.get('/:id/comments', authenticateToken, getComments);
-router.post('/:id/comments', authenticateToken, addComment);
+router.post('/:id/comments', authenticateToken, validate(addCommentSchema), addComment);
 router.delete('/comments/:commentId', authenticateToken, deleteComment);
 
 export default router;

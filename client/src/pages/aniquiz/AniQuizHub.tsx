@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { Spinner } from '../../components/common/Spinner';
 import DailyQuizWidget from '../../components/aniquiz/DailyQuizWidget';
+import { Avatar } from '../../components/common/Avatar';
 
 interface Quiz {
     id: string;
@@ -213,9 +214,12 @@ const AniQuizHub: React.FC = () => {
                                     className="flex-shrink-0 w-80 bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] flex items-center gap-6 hover:bg-zinc-900 transition-all group backdrop-blur-xl"
                                 >
                                     <div className="relative">
-                                        <div className="w-16 h-16 rounded-full border-2 border-yellow-500/50 overflow-hidden bg-zinc-800">
-                                            {entry.user.avatar ? <img src={entry.user.avatar} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full bg-red-600/10" />}
-                                        </div>
+                                        <Avatar 
+                                            src={entry.user.avatar} 
+                                            username={entry.user.username}
+                                            size="md"
+                                            className="w-full h-full"
+                                        />
                                         <div className="absolute -top-2 -right-2 w-7 h-7 bg-yellow-500 rounded-full flex items-center justify-center text-[14px] font-black shadow-lg">
                                             <Star className="w-4 h-4 text-black fill-black" />
                                         </div>

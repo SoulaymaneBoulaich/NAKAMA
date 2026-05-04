@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
+import { encrypt, decrypt } from '../utils/encryption.js';
 
 // Removed local prisma = new PrismaClient()
 
@@ -277,6 +278,9 @@ export const updateMe = async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.userId!;
     const { bio, avatar, banner, fullName, phoneNumber, location } = req.body;
 
+    // Encrypt phone number if provided
+    const encryptedPhone = phoneNumber ? encrypt(phoneNumber) : undefined;
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { 
@@ -284,7 +288,7 @@ export const updateMe = async (req: AuthenticatedRequest, res: Response) => {
         avatar, 
         banner,
         fullName,
-        phoneNumber,
+        phoneNumber: encryptedPhone,
         location,
       },
       select: {
@@ -300,6 +304,11 @@ export const updateMe = async (req: AuthenticatedRequest, res: Response) => {
         createdAt: true,
       }
     });
+
+    // Decrypt phone number for the response
+    if (updatedUser.phoneNumber) {
+      updatedUser.phoneNumber = decrypt(updatedUser.phoneNumber);
+    }
 
     res.status(200).json(updatedUser);
   } catch (error) {
@@ -333,7 +342,7 @@ export const getFullSettings = async (req: AuthenticatedRequest, res: Response) 
       notifications: user.notificationSettings,
       identity: {
         fullName: user.fullName,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: user.phoneNumber ? decrypt(user.phoneNumber) : null,
         location: user.location,
         searchIndexable: user.searchIndexable,
         showOnlineStatus: user.showOnlineStatus,

@@ -4,6 +4,7 @@ import { X, Camera, Sparkles, MessageSquare, Flame, Play, Plus } from 'lucide-re
 import api from '../../api/axios';
 import type { AniShot, AniShotType } from '../../../../shared/types';
 import { Spinner } from '../common/Spinner';
+import { SafeImage } from '../common/SafeImage';
 
 interface Props {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
                   {mediaType === 'video' ? (
                     <video src={mediaPreview} className="w-full h-full object-cover" autoPlay loop muted />
                   ) : (
-                    <img src={mediaPreview} className="w-full h-full object-cover" alt="" />
+                    <SafeImage src={mediaPreview} className="w-full h-full object-cover" alt="" />
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Sparkles className="text-white" size={32} />

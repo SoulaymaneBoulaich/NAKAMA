@@ -1,0 +1,44 @@
+[
+  {
+    "id": "case-01",
+    "query": "How do I sync the video player across all users in a Watch Party?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Direct request for real-time synchronization logic."
+  },
+  {
+    "id": "case-02",
+    "query": "My socket listeners are firing multiple times in React.",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Classic React-Socket memory leak issue."
+  },
+  {
+    "id": "case-03",
+    "query": "I want to add a real-time notification when someone likes a post.",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "New real-time feature implementation."
+  },
+  {
+    "id": "case-04",
+    "query": "How do I create a new POST route in Express?",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "Standard REST API task, not socket-related."
+  },
+  {
+    "id": "case-05",
+    "query": "Center this image using Tailwind.",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "UI styling is completely unrelated."
+  },
+  {
+    "id": "case-06",
+    "query": "Is the socket connection stable?",
+    "should_trigger": true,
+    "label": "edge_case",
+    "notes": "Vague but involves the core domain of connectivity."
+  }
+]

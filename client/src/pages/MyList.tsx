@@ -7,6 +7,7 @@ import { StatusBadge } from '../components/common/StatusBadge.js';
 import { ListSkeleton, GridSkeleton } from '../components/common/LoadingSkeleton.js';
 import { AnimeSearchModal } from '../components/anime/AnimeSearchModal.js';
 import { EntryDetailDrawer } from '../components/anime/EntryDetailDrawer.js';
+import { SafeImage } from '../components/common/SafeImage';
 
 export const MyListPage: React.FC = () => {
   const [entries, setEntries] = useState<AnimeEntry[]>([]);
@@ -67,12 +68,12 @@ export const MyListPage: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search your list..."
-                className="w-full bg-[var(--bg-secondary)111] border border-[var(--border-color)] pl-10 pr-4 py-2 rounded-lg text-sm outline-none focus:border-white/20 transition-all"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] pl-10 pr-4 py-2 rounded-lg text-sm outline-none focus:border-white/20 transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex bg-[var(--bg-secondary)111] p-1 rounded-lg border border-[var(--border-color)]">
+            <div className="flex bg-[var(--bg-secondary)] p-1 rounded-lg border border-[var(--border-color)]">
               <button 
                 onClick={() => setViewMode('LIST')} 
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'LIST' ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}
@@ -132,7 +133,9 @@ export const MyListPage: React.FC = () => {
                     <td className="py-4 px-4 text-sm text-white/20 font-mono">{idx + 1}</td>
                     <td className="py-4">
                       <div className="flex items-center gap-4">
-                        <img src={e.animeData?.images.jpg.image_url} className="w-10 h-14 object-cover rounded shadow" />
+                        <div className="w-10 h-14 relative flex-shrink-0">
+                          <SafeImage src={e.animeData?.images.jpg.image_url} className="w-full h-full object-cover rounded shadow" />
+                        </div>
                         <span className="font-bold group-hover:text-white">{e.animeData?.title}</span>
                       </div>
                     </td>
@@ -154,7 +157,7 @@ export const MyListPage: React.FC = () => {
             {filteredEntries.map((e) => (
               <div key={e.id} onClick={() => setSelectedAnimeId(e.animeId)} className="group cursor-pointer space-y-3">
                 <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-[var(--border-color)] group-hover:border-white/20 transition-all shadow-lg">
-                  <img src={e.animeData?.images.jpg.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" />
+                  <SafeImage src={e.animeData?.images.jpg.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all" />
                   <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-all">
                     <StatusBadge status={e.status} />

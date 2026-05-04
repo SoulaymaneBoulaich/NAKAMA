@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
+import { encrypt } from '../utils/encryption.js';
 
 export const setupMessagingSocket = (io: Server, socket: Socket) => {
     socket.on('join-conversation', async ({ conversationId, userId }) => {
@@ -19,11 +20,14 @@ export const setupMessagingSocket = (io: Server, socket: Socket) => {
 
     socket.on('send-message', async ({ conversationId, senderId, content }) => {
         try {
+            // Encrypt content before storage
+            const encryptedContent = encrypt(content);
+
             const message = await prisma.message.create({
                 data: {
                     conversationId,
                     senderId,
-                    content
+                    content: encryptedContent
                 },
                 include: {
                     sender: { select: { id: true, username: true, avatar: true } }
@@ -36,7 +40,11 @@ export const setupMessagingSocket = (io: Server, socket: Socket) => {
                 data: { updatedAt: new Date() }
             });
 
-            io.to(conversationId).emit('new-message', message);
+            // Emit original content to recipients
+            io.to(conversationId).emit('new-message', {
+                ...message,
+                content // Use original content for immediate display
+            });
         } catch (error) {}
     });
 

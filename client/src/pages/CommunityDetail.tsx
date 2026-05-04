@@ -5,6 +5,8 @@ import { Users, Shield, Calendar, Info, MessageSquare } from 'lucide-react';
 import PostCard from '../components/social/PostCard';
 import CreatePost from '../components/social/CreatePost';
 import { useAuth } from '../context/AuthContext';
+import { SafeImage } from '../components/common/SafeImage';
+import { Avatar } from '../components/common/Avatar';
 
 interface Community {
   id: string;
@@ -86,7 +88,7 @@ const CommunityDetail: React.FC = () => {
       <div className="relative rounded-3xl overflow-hidden bg-zinc-900 border border-[var(--border-color)] mb-6 group">
         <div className="h-48 md:h-64 bg-zinc-800 relative">
           {community.bannerUrl ? (
-            <img src={community.bannerUrl} alt="" className="w-full h-full object-cover" />
+            <SafeImage src={community.bannerUrl} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-red-900/20 to-zinc-900"></div>
           )}
@@ -95,13 +97,12 @@ const CommunityDetail: React.FC = () => {
         
         <div className="px-6 md:px-10 pb-8 -mt-12 relative z-10 flex flex-col md:flex-row md:items-end gap-6">
           <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-zinc-950 border-4 border-black overflow-hidden shadow-2xl shadow-black/50">
-            {community.avatarUrl ? (
-              <img src={community.avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-zinc-700 bg-zinc-800">
-                <Users size={48} />
-              </div>
-            )}
+            <Avatar 
+              src={community.avatarUrl} 
+              name={community.name}
+              size="xl"
+              className="w-full h-full"
+            />
           </div>
           
           <div className="flex-1">
@@ -242,7 +243,12 @@ const CommunityDetail: React.FC = () => {
                   className="flex items-center gap-3 p-2 bg-zinc-950/50 border border-[var(--border-color)] rounded-xl hover:border-red-900/30 transition-all cursor-pointer group"
                   onClick={() => navigate(`/profile/${admin.user.username}`)}
                 >
-                  <img src={admin.user.avatar || 'https://via.placeholder.com/40'} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                   <Avatar 
+                    src={admin.user.avatar} 
+                    name={admin.user.username}
+                    size="md"
+                    className="w-10 h-10"
+                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-zinc-100 font-bold truncate group-hover:text-red-500 transition-colors uppercase italic">{admin.user.username}</p>
                     <p className="text-[10px] text-zinc-500 font-black tracking-widest uppercase">Admin</p>

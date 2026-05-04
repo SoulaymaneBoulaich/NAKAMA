@@ -1,18 +1,20 @@
 import { Router } from 'express';
 import * as userController from '../controllers/userController.js';
 import { authenticateToken, optionalAuthenticateToken } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { updateMeSchema, searchUsersSchema, changePasswordSchema } from '../schemas/userSchema.js';
 
 const router = Router();
 
-router.get('/search', authenticateToken, userController.searchUsers);
+router.get('/search', authenticateToken, validate(searchUsersSchema), userController.searchUsers);
 
 // Protected routes (self) — must be before /:username to avoid matching "me" as a username
-router.put('/me', authenticateToken, userController.updateMe);
+router.put('/me', authenticateToken, validate(updateMeSchema), userController.updateMe);
 router.get('/me/full-settings', authenticateToken, userController.getFullSettings);
 router.put('/me/privacy', authenticateToken, userController.updatePrivacy);
 router.put('/me/personalization', authenticateToken, userController.updatePersonalization);
 router.put('/me/notifications', authenticateToken, userController.updateNotificationSettings);
-router.post('/me/change-password', authenticateToken, userController.changePassword);
+router.post('/me/change-password', authenticateToken, validate(changePasswordSchema), userController.changePassword);
 router.delete('/me/deactivate', authenticateToken, userController.deactivateAccount);
 router.get('/me/export', authenticateToken, userController.exportUserData);
 

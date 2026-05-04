@@ -9,9 +9,9 @@ export const HomeHeroSection: React.FC = () => {
   useEffect(() => {
     const fetchPosters = async () => {
       try {
-        const response = await api.get('/public/hero');
+        const response = await api.get('/anime/top', { params: { limit: 15 } }); // Capped for performance
         const urls = response.data
-          ?.map((anime: any) => anime.images.jpg.large_image_url)
+          ?.map((anime: any) => anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url)
           .filter(Boolean) || [];
         setPosters(urls);
       } catch (error) {
@@ -21,15 +21,11 @@ export const HomeHeroSection: React.FC = () => {
     fetchPosters();
   }, []);
 
-  // Performance Optimization: Reduce DOM nodes and duplication
-  // 5 columns is enough for the effect without killing performance
   const columns = [1, 2, 3, 4, 5];
-  
-  // 2x duplication is enough for a seamless loop if the duration and offset match
-  const optimizedPosters = useMemo(() => [...posters, ...posters], [posters]);
+  const optimizedPosters = useMemo(() => [...posters], [posters]); // No need to duplicate 250 images
 
   return (
-    <div className="relative w-full h-[100vh] overflow-hidden bg-[var(--bg-primary)] flex items-center justify-center">
+    <div className="relative w-full h-[100vh] overflow-hidden bg-black flex items-center justify-center">
       
       {/* 3D INFINITE POSTER WALL */}
       <div className="absolute inset-0 z-0 perspective-2000 overflow-hidden pointer-events-none">
@@ -58,6 +54,7 @@ export const HomeHeroSection: React.FC = () => {
                       src={url} 
                       alt="" 
                       loading="lazy"
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover grayscale transition-opacity duration-1000" 
                       onLoad={(e) => (e.currentTarget.style.opacity = '1')}
                       style={{ opacity: 0 }}
@@ -71,9 +68,9 @@ export const HomeHeroSection: React.FC = () => {
       </div>
 
       {/* OVERLAYS */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]" />
-      <div className="absolute inset-0 z-10 bg-gradient-to-r from-[var(--bg-primary)] via-transparent to-transparent opacity-90" />
-      <div className="absolute inset-0 z-10 bg-[var(--bg-primary)]/60 backdrop-blur-[1px]" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-b from-black via-transparent to-black" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-r from-black via-transparent to-transparent opacity-90" />
+      <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-[1px]" />
 
       {/* CONTENT */}
       <div className="relative z-20 text-center px-8 flex flex-col items-center">

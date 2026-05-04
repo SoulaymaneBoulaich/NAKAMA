@@ -2,37 +2,21 @@ import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
 import { calculateElo } from '../utils/elo.js';
 import { updateQuestionStats } from '../controllers/quizController.js';
+import { sanitizeInput } from '../utils/sanitizer.js';
 
-interface BattleQueueItem {
-    socketId: string;
-    userId: string;
-    username: string;
-    avatar?: string;
-}
-
-interface BattleState {
-    battleId: string;
-    questions: any[];
-    currentQuestionIndex: number;
-    participants: {
-        userId: string;
-        socketId: string;
-        score: number;
-        answers: any[];
-    }[];
-    timer: NodeJS.Timeout | null;
-}
-
-const queue: BattleQueueItem[] = [];
-const activeBattles = new Map<string, BattleState>();
+// ... (existing interfaces)
 
 export const setupBattleSocket = (io: Server, socket: Socket) => {
     socket.on('join-battle-queue', async ({ userId, username, avatar }) => {
+        // Sanitize inputs
+        const safeUsername = sanitizeInput(username);
+        const safeAvatar = avatar ? sanitizeInput(avatar) : undefined;
+
         // Prevent duplicate queue entries
         if (queue.find(item => item.userId === userId)) return;
 
-        queue.push({ socketId: socket.id, userId, username, avatar });
-        console.log(`[Queue] User ${username} joined. Queue size: ${queue.length}`);
+        queue.push({ socketId: socket.id, userId, username: safeUsername, avatar: safeAvatar });
+        console.log(`[Queue] User ${safeUsername} joined. Queue size: ${queue.length}`);
 
         // Try to match
         if (queue.length >= 2) {
@@ -54,12 +38,16 @@ export const setupBattleSocket = (io: Server, socket: Socket) => {
         const participant = battle.participants.find(p => p.userId === userId);
         if (!participant) return;
 
+        // Sanitize answer
+        const safeAnswer = sanitizeInput(answer);
+
         // Prevent double submissions for same question
         if (participant.answers.find(a => a.questionId === questionId)) return;
 
         const currentQuestion = battle.questions[battle.currentQuestionIndex];
-        const isCorrect = currentQuestion.correctAnswer === answer;
+        const isCorrect = currentQuestion.correctAnswer === safeAnswer;
         const points = isCorrect ? Math.max(10, Math.floor(100 - (responseTime * 5))) : 0;
+// ...
 
         participant.score += points;
         participant.answers.push({ questionId, isCorrect, responseTime, points });

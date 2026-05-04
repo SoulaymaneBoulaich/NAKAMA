@@ -40,7 +40,72 @@ import { AppearanceProvider } from './context/AppearanceContext';
 import { ToastProvider } from './components/common/Toast';
 import { Navbar } from './components/layout/Navbar';
 import { NewsArticlePage } from './pages/NewsArticlePage';
+import { MainLayout } from './components/layout/MainLayout';
 import { AuthModal } from './components/auth/AuthModal';
+
+import { useActivityTracker } from './hooks/useActivityTracker';
+
+function AppInner() {
+  useActivityTracker();
+  return (
+    <Routes>
+      {/* Public/Auth Routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      
+      {/* Navigation and Main Application Flow */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/news/article" element={<NewsArticlePage />} />
+          <Route path="/anime/:id" element={<AnimeDetailPage />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
+          <Route path="/mylist" element={<MyListPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/communities" element={<CommunitiesBrowse />} />
+          <Route path="/communities/:slug" element={<CommunityDetail />} />
+          <Route path="/playlists" element={<MyPlaylistsPage />} />
+          <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
+          <Route path="/chronicles" element={<ChroniclesExplorePage />} />
+          <Route path="/chronicles/write" element={<MyChroniclesPage />} />
+          <Route path="/chronicles/:id" element={<ChronicleDetailPage />} />
+          <Route path="/chronicles/:id/manage" element={<ChronicleManagePage />} />
+          <Route path="/chronicles/:id/chapters/:chapterId" element={<ChronicleChapterReaderPage />} />
+          <Route path="/chronicles/:id/chapters/:chapterId/edit" element={<ChronicleChapterEditorPage />} />
+          
+          {/* AniJudge Routes */}
+          <Route path="/anijudge" element={<AniJudgeHome />} />
+          <Route path="/anijudge/arena/:code" element={<ArenaPage />} />
+
+          {/* Messaging Routes */}
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/messages/:id" element={<MessagesPage />} />
+
+          {/* Watch Party Routes */}
+          <Route path="/watchparty" element={<WatchPartyHub />} />
+          <Route path="/watchparty/:code" element={<WatchPartyRoom />} />
+
+          {/* AniQuiz Routes */}
+          <Route path="/aniquiz" element={<AniQuizHub />} />
+          <Route path="/aniquiz/play/:id" element={<AniQuizSession />} />
+          <Route path="/aniquiz/contribute" element={<ContributePage />} />
+          <Route path="/aniquiz/review" element={<ReviewSubmissionsPage />} />
+          <Route path="/aniquiz/shame" element={<HallOfShamePage />} />
+          <Route path="/aniquiz/rooms" element={<QuizRoomsPage />} />
+          <Route path="/aniquiz/tournaments" element={<CommunityTournamentsPage />} />
+          <Route path="/aniquiz/battle" element={<BattleArenaPage />} />
+        </Route>
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/home" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -49,65 +114,7 @@ function App() {
         <AuthProvider>
           <AppearanceProvider>
             <AuthModal />
-            <Routes>
-            {/* Public/Auth Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            
-            {/* Navigable Routes with Navbar */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/feed" element={<FeedPage />} />
-            </Route>
-            <Route element={<><Navbar /><div className="min-h-screen bg-[var(--bg-primary)]"><HomePage /></div></>} path="/home" />
-            <Route path="/explore" element={<ExplorePage />} />
-            <Route element={<><Navbar /><NewsArticlePage /></>} path="/news/article" />
-            <Route element={<><Navbar /><AnimeDetailPage /></>} path="/anime/:id" />
-            
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/search" element={<><Navbar /><SearchResults /></>} />
-              <Route path="/profile/:username" element={<><Navbar /><ProfilePage /></>} />
-              <Route path="/mylist" element={<><Navbar /><MyListPage /></>} />
-              <Route path="/settings" element={<><Navbar /><SettingsPage /></>} />
-              <Route path="/communities" element={<><Navbar /><CommunitiesBrowse /></>} />
-              <Route path="/communities/:slug" element={<><Navbar /><CommunityDetail /></>} />
-              <Route path="/playlists" element={<><Navbar /><MyPlaylistsPage /></>} />
-               <Route path="/playlists/:id" element={<><Navbar /><PlaylistDetailPage /></>} />
-              <Route path="/chronicles" element={<><Navbar /><ChroniclesExplorePage /></>} />
-              <Route path="/chronicles/write" element={<><Navbar /><MyChroniclesPage /></>} />
-              <Route path="/chronicles/:id" element={<><Navbar /><ChronicleDetailPage /></>} />
-              <Route path="/chronicles/:id/manage" element={<><Navbar /><ChronicleManagePage /></>} />
-              <Route path="/chronicles/:id/chapters/:chapterId" element={<ChronicleChapterReaderPage />} />
-              <Route path="/chronicles/:id/chapters/:chapterId/edit" element={<ChronicleChapterEditorPage />} />
-              
-              {/* AniJudge Routes */}
-              <Route path="/anijudge" element={<><Navbar /><AniJudgeHome /></>} />
-              <Route path="/anijudge/arena/:code" element={<ArenaPage />} />
-
-              {/* Messaging Routes */}
-              <Route path="/messages" element={<><Navbar /><MessagesPage /></>} />
-              <Route path="/messages/:id" element={<><Navbar /><MessagesPage /></>} />
-
-              {/* Watch Party Routes */}
-              <Route path="/watchparty" element={<><Navbar /><WatchPartyHub /></>} />
-              <Route path="/watchparty/:code" element={<WatchPartyRoom />} />
-
-              {/* AniQuiz Routes */}
-              <Route path="/aniquiz" element={<><Navbar /><AniQuizHub /></>} />
-              <Route path="/aniquiz/play/:id" element={<AniQuizSession />} />
-              <Route path="/aniquiz/contribute" element={<><Navbar /><ContributePage /></>} />
-              <Route path="/aniquiz/review" element={<><Navbar /><ReviewSubmissionsPage /></>} />
-              <Route path="/aniquiz/shame" element={<><Navbar /><HallOfShamePage /></>} />
-              <Route path="/aniquiz/rooms" element={<><Navbar /><QuizRoomsPage /></>} />
-              <Route path="/aniquiz/tournaments" element={<><Navbar /><CommunityTournamentsPage /></>} />
-              <Route path="/aniquiz/battle" element={<BattleArenaPage />} />
-            </Route>
-
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
+            <AppInner />
           </AppearanceProvider>
         </AuthProvider>
       </ToastProvider>

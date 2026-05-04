@@ -15,6 +15,8 @@ import api from '../../api/axios';
 import { useQuery } from '@tanstack/react-query';
 import { RateChronicleModal } from '../../components/chronicles/RateChronicleModal';
 import { Spinner } from '../../components/common/Spinner';
+import { SafeImage } from '../../components/common/SafeImage';
+import { Avatar } from '../../components/common/Avatar';
 
 const ChronicleDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +49,7 @@ const ChronicleDetail: React.FC = () => {
       {/* Dynamic Header */}
       <div className="relative h-[60vh] w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/40 to-[var(--bg-primary)] z-10" />
-        <img 
+        <SafeImage 
           src={chronicle.coverImage || 'https://images.unsplash.com/photo-1541560052-3744e409ec86?q=80&w=1976&auto=format&fit=crop'} 
           className="w-full h-full object-cover opacity-60 scale-105"
           alt=""
@@ -92,7 +94,7 @@ const ChronicleDetail: React.FC = () => {
             <div className="flex flex-wrap items-center gap-6">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full border-2 border-[var(--accent-primary)] p-0.5">
-                    <img src={chronicle.user?.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
+                    <Avatar src={chronicle.user?.avatar} username={chronicle.user?.username || ''} size="md" className="w-full h-full rounded-full" />
                   </div>
                   <span className="text-sm font-black text-white uppercase italic">{chronicle.user?.username}</span>
                </div>
@@ -198,7 +200,7 @@ const ChronicleDetail: React.FC = () => {
                <div className="space-y-4">
                   {chronicle.ratings?.slice(0, 3).map((r: any) => (
                     <div key={r.id} className="bg-white/5 rounded-2xl p-4 flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-full bg-zinc-800" />
+                       <Avatar src={r.user?.avatar} username={r.user?.username || 'ARCHIVE_USER'} size="sm" className="w-10 h-10 rounded-full" />
                        <div>
                           <p className="text-[10px] font-black text-white uppercase italic tracking-widest">{r.user?.username || 'ARCHIVE_USER'}</p>
                           <div className="flex items-center gap-1 mt-1 text-[var(--accent-primary)]">

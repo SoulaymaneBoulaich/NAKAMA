@@ -124,4 +124,40 @@ router.post('/feedback', authenticateToken, async (req: any, res) => {
   }
 });
 
+/**
+ * GET /api/recommendations/match-taste/:ownerId
+ * Matches current user (viewer) taste with profile owner's loves
+ */
+router.get('/match-taste/:ownerId', authenticateToken, async (req: any, res) => {
+  try {
+    const viewerId = req.user.id;
+    const { ownerId } = req.params;
+    
+    const matches = await recEngine.matchViewerTaste(ownerId, viewerId);
+    
+    // Fetch basic metadata for these matches
+    const results = [];
+    for (const match of matches) {
+      try {
+        const response = await axios.get(`https://api.jikan.moe/v4/anime/${match.animeId}`);
+        const data = response.data.data;
+        results.push({
+          ...match,
+          title: data.title,
+          cover: data.images.webp.large_image_url,
+          score: data.score
+        });
+        await new Promise(r => setTimeout(r, 500));
+      } catch (err) {
+        console.error(`Failed to fetch metadata for matched anime ${match.animeId}:`, err);
+      }
+    }
+    
+    res.json(results);
+  } catch (error) {
+    console.error('Match Taste API Error:', error);
+    res.status(500).json({ error: 'Failed to match taste' });
+  }
+});
+
 export default router;

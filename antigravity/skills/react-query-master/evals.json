@@ -1,0 +1,44 @@
+[
+  {
+    "id": "case-01",
+    "query": "How do I implement an optimistic update for the 'Like' button in Nakama?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Direct request for advanced React Query mutation logic."
+  },
+  {
+    "id": "case-02",
+    "query": "What should the staleTime be for the anime details page?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Caching configuration question."
+  },
+  {
+    "id": "case-03",
+    "query": "How do I invalidate the user feed query after a new post?",
+    "should_trigger": true,
+    "label": "true_positive",
+    "notes": "Query invalidation request."
+  },
+  {
+    "id": "case-04",
+    "query": "How do I setup a Prisma migration?",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "Backend/DB task, not related to frontend caching."
+  },
+  {
+    "id": "case-05",
+    "query": "Center this button using Tailwind.",
+    "should_trigger": false,
+    "label": "true_negative",
+    "notes": "UI styling is out of scope."
+  },
+  {
+    "id": "case-06",
+    "query": "My data isn't updating on the screen.",
+    "should_trigger": true,
+    "label": "edge_case",
+    "notes": "Vague but likely a caching/invalidation issue in the target domain."
+  }
+]

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Video, Globe, Sparkles } from 'lucide-react';
+import { X, Image as ImageIcon, Video, Globe, Sparkles, Link as LinkIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../common/Toast';
+import { SafeImage } from '../common/SafeImage';
+import { Avatar } from '../common/Avatar';
 
 interface Props {
   isOpen: boolean;
@@ -22,10 +24,10 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAnime, setSelectedAnime] = useState<any>(null);
   const [animeQuery, setAnimeQuery] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [youtubeUrl] = useState('');
-
 
   if (!isOpen) return null;
 
@@ -43,12 +45,12 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
   };
 
   const handleSubmit = async () => {
-    if (!content && !mediaFile && !youtubeUrl) return;
+    if (!content && !mediaFile && !linkUrl) return;
     setIsSubmitting(true);
 
     try {
       let imageUrl = '';
-      let videoUrl = youtubeUrl;
+      let videoUrl = linkUrl;
 
       // Upload if local file
       if (mediaFile) {
@@ -82,6 +84,8 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
       setMediaPreview(null);
       setShowPoll(false);
       setSelectedAnime(null);
+      setLinkUrl('');
+      setShowLinkInput(false);
     } catch (err) {
       addToast('error', 'Failed to share post');
     } finally {
@@ -91,7 +95,7 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 sm:p-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -104,18 +108,21 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-2xl bg-[#0a0a0c] border border-[#1a1a1a] rounded-[24px] shadow-2xl overflow-hidden"
+          className="relative w-full max-w-2xl bg-[#0a0a0c] border border-[#1a1a1a] rounded-[32px] shadow-2xl overflow-hidden"
         >
           {/* Header */}
           <div className="px-8 py-6 border-b border-[#1a1a1a] flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full border border-[var(--border-color)] overflow-hidden">
-                <img src={user?.avatar || '/default-avatar.png'} className="w-full h-full rounded-full object-cover" alt="" />
-              </div>
+              <Avatar 
+                src={user?.avatar} 
+                username={user?.username || ''} 
+                size="md" 
+                className="w-10 h-10"
+              />
               <div>
-                <div className="text-[#f4f4f5] font-semibold text-[0.95rem] font-dm-sans">{user?.username}</div>
-                <div className="flex items-center gap-2 text-[0.65rem] font-bold text-[#71717a] uppercase tracking-[0.08em] font-dm-sans">
-                  <Globe size={11} className="text-white" /> Public Post
+                <div className="text-[#f4f4f5] font-bold text-[0.95rem] font-dm-sans">{user?.username}</div>
+                <div className="flex items-center gap-2 text-[0.65rem] font-bold text-[#71717a] uppercase tracking-[0.15em] font-dm-sans">
+                  <Globe size={11} className="text-[#71717a]" /> Public Post
                 </div>
               </div>
             </div>
@@ -124,20 +131,41 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
             </button>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto p-1 px-8 py-8 custom-scrollbar">
+          <div className="max-h-[70vh] overflow-y-auto px-8 py-8 custom-scrollbar">
             {/* Input Surface */}
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What's on your mind?"
-              className="w-full h-32 bg-transparent text-[1.1rem] font-medium text-[#f4f4f5] placeholder:text-[#2a2a2a] outline-none resize-none font-dm-sans leading-relaxed tracking-tight"
+              className="w-full h-32 bg-transparent text-[1.1rem] font-medium text-[#f4f4f5] placeholder:text-[#3a3a3c] outline-none resize-none font-dm-sans leading-relaxed tracking-tight"
             />
+
+            {/* Link Input Section */}
+            {showLinkInput && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-6 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3"
+              >
+                <LinkIcon size={18} className="text-blue-500" />
+                <input 
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="Paste a link or clip URL..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-blue-400 placeholder:text-zinc-700 font-medium"
+                />
+                <button onClick={() => setShowLinkInput(false)} className="text-zinc-500 hover:text-white">
+                  <X size={16} />
+                </button>
+              </motion.div>
+            )}
 
             {/* Media Blocks */}
             {mediaPreview && (
-              <div className="relative mt-4 rounded-xl overflow-hidden group border border-[#1a1a1a] bg-[#000]">
+              <div className="relative mt-4 rounded-3xl overflow-hidden group border border-[#1a1a1a] bg-[#000]">
                 {mediaType === 'image' ? (
-                  <img src={mediaPreview} className="w-full max-h-96 object-cover" alt="" />
+                  <SafeImage src={mediaPreview} className="w-full max-h-96 object-cover" alt="" />
                 ) : (
                   <video src={mediaPreview} className="w-full max-h-96 object-cover" controls />
                 )}
@@ -152,9 +180,9 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
 
             {/* Anime Reference Section */}
             {selectedAnime ? (
-              <div className="mt-6 flex items-center gap-4 p-3.5 bg-white/5 rounded-xl border border-[#1a1a1a] group">
-                <div className="w-10 h-14 rounded-md overflow-hidden border border-[#2a2a2a]">
-                  <img src={selectedAnime.images?.jpg?.large_image_url} className="w-full h-full object-cover" alt="" />
+              <div className="mt-6 flex items-center gap-4 p-3.5 bg-white/5 rounded-2xl border border-[#1a1a1a] group">
+                <div className="w-10 h-14 rounded-xl overflow-hidden border border-[#2a2a2a]">
+                  <SafeImage src={selectedAnime.images?.jpg?.large_image_url} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div className="flex-1">
                   <div className="text-[0.82rem] font-bold text-[#f4f4f5] font-dm-sans truncate tracking-tight">{selectedAnime.title}</div>
@@ -171,7 +199,7 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
                     value={animeQuery}
                     onChange={(e) => setAnimeQuery(e.target.value)}
                     placeholder="Tag an anime..."
-                    className="w-full bg-transparent border-none text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[#3a3a3a] outline-none placeholder:text-[#2a2a2a] font-dm-sans"
+                    className="w-full bg-transparent border-none text-[0.7rem] font-bold uppercase tracking-[0.2em] text-[#3a3a3a] outline-none placeholder:text-[#2a2a2a] font-dm-sans"
                   />
                </div>
             )}
@@ -226,6 +254,12 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
                 <input type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaSelect(e, 'video')} />
                 <Video size={18} className="group-hover:scale-110 transition-transform" />
               </label>
+              <button 
+                onClick={() => setShowLinkInput(!showLinkInput)}
+                className={`p-3 rounded-xl transition-all group ${showLinkInput ? 'bg-white/10 text-white' : 'bg-white/5 text-[#71717a] hover:text-[#f4f4f5] hover:bg-white/10'}`}
+              >
+                <LinkIcon size={18} className="group-hover:rotate-12 transition-transform" />
+              </button>
               <button 
                 onClick={() => setShowPoll(!showPoll)}
                 className={`p-3 rounded-xl transition-all group ${showPoll ? 'bg-white/10 text-white' : 'bg-white/5 text-[#71717a] hover:text-[#f4f4f5] hover:bg-white/10'}`}

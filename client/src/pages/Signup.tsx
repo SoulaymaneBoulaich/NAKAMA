@@ -20,19 +20,35 @@ export const SignupPage: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [tosChecked, setTosChecked] = useState(false);
 
+  const getFieldError = (name: string, value: string): string => {
+    if (name === 'username') {
+      if (value.length < 3) return 'Username must be at least 3 characters';
+      if (!/^[a-zA-Z0-9_]+$/.test(value)) return 'Only letters, numbers, and underscores allowed';
+    }
+    if (name === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email address';
+    if (name === 'password') {
+      if (value.length < 8) return 'Password must be at least 8 characters';
+      if (!/[A-Z]/.test(value)) return 'Must contain at least one uppercase letter';
+      if (!/[0-9]/.test(value)) return 'Must contain at least one number';
+    }
+    if (name === 'confirmPassword' && value !== formData.password) return 'Passwords do not match';
+    return '';
+  };
+
   const validateField = (name: string, value: string) => {
-    let error = '';
-    if (name === 'username' && value.length < 3) error = 'Username must be at least 3 characters';
-    if (name === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email address';
-    if (name === 'password' && value.length < 8) error = 'Password must be at least 8 characters';
-    if (name === 'confirmPassword' && value !== formData.password) error = 'Passwords do not match';
-    
+    const error = getFieldError(name, value);
     setErrors(prev => ({ ...prev, [name]: error }));
+    return error;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error immediately if now valid
+    if (errors[name]) {
+      const error = getFieldError(name, value);
+      setErrors(prev => ({ ...prev, [name]: error }));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -42,6 +58,22 @@ export const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final synchronous validation check
+    const currentErrors: Record<string, string> = {
+      username: getFieldError('username', formData.username),
+      email: getFieldError('email', formData.email),
+      password: getFieldError('password', formData.password),
+      confirmPassword: getFieldError('confirmPassword', formData.confirmPassword),
+    };
+
+    setErrors(currentErrors);
+
+    if (Object.values(currentErrors).some(err => err)) {
+      addToast('error', 'Please fix the errors in the form');
+      return;
+    }
+
     if (!tosChecked) {
       addToast('error', 'Please accept the Terms of Service');
       return;
@@ -53,7 +85,12 @@ export const SignupPage: React.FC = () => {
       addToast('success', 'Account created! Welcome to NAKAMA.');
       navigate('/home');
     } catch (error: any) {
-      addToast('error', error.response?.data?.message || 'Signup failed', '/tropical-icon.png');
+      const data = error.response?.data;
+      if (data?.errors && Array.isArray(data.errors)) {
+        addToast('error', data.errors[0].message);
+      } else {
+        addToast('error', data?.message || 'Signup failed');
+      }
     } finally {
       setLoading(false);
     }

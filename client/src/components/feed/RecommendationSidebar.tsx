@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { UserStats, JikanAnime } from '../../../../shared/types';
 import { TrendingUp, Sparkles, ChevronRight, User } from 'lucide-react';
+import { Avatar } from '../common/Avatar';
+import { SafeImage } from '../common/SafeImage';
 
 export const RecommendationSidebar: React.FC = () => {
   const { user } = useAuth();
@@ -51,14 +53,13 @@ export const RecommendationSidebar: React.FC = () => {
       {user && (
         <div className="bg-[#111114] border border-[#232329] rounded-2xl p-5 shadow-xl">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full border-2 border-[#232329] p-0.5 overflow-hidden bg-[#1c1c21]">
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <div className="w-full h-full rounded-full flex items-center justify-center">
-                  <User size={24} className="text-gray-600" />
-                </div>
-              )}
+            <div className="w-14 h-14 rounded-full border-2 border-[#232329] p-0.5 bg-[#1c1c21]">
+              <Avatar 
+                src={user.avatar} 
+                username={user.username} 
+                size="md"
+                className="w-full h-full rounded-full"
+              />
             </div>
             <div>
               <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">@{user.username}</h3>
@@ -92,7 +93,7 @@ export const RecommendationSidebar: React.FC = () => {
           {!loading && recommendations.slice(0, 3).map((rec: any) => (
             <div key={rec.id} className="flex gap-3 group cursor-pointer">
               <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-[#232329]">
-                <img 
+                <SafeImage 
                   src={rec.images?.jpg?.large_image_url || rec.animeCover} 
                   alt={rec.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
@@ -140,7 +141,7 @@ export const RecommendationSidebar: React.FC = () => {
             <div key={anime.mal_id} className="flex gap-3 items-center group cursor-pointer">
               <span className="text-xl font-black text-[#232329] italic w-4 group-hover:text-green-500/20 transition-colors">{index + 1}</span>
               <div className="w-10 h-10 rounded-full overflow-hidden border border-[#232329] flex-shrink-0 bg-[#1c1c21]">
-                <img src={anime.images.jpg.image_url} alt={anime.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <SafeImage src={anime.images.jpg.image_url} alt={anime.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-[11px] font-black text-white tracking-widest uppercase truncate group-hover:text-green-500 transition-colors">

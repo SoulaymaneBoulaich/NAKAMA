@@ -18,6 +18,7 @@ export const useProfile = (username: string) => {
       return data;
     },
     enabled: !!username,
+    staleTime: 1000 * 60 * 5, // 5 mins
   });
 };
 
@@ -29,6 +30,7 @@ export const useProfileStats = (username: string, enabled: boolean = true) => {
       return data;
     },
     enabled: !!username && enabled,
+    staleTime: 1000 * 60 * 5, // 5 mins
   });
 };
 
@@ -40,6 +42,7 @@ export const useProfileFingerprint = (username: string, enabled: boolean = true)
       return data;
     },
     enabled: !!username && enabled,
+    staleTime: 1000 * 60 * 5, // 5 mins
   });
 };
 
@@ -76,7 +79,33 @@ export const useFollowMutation = () => {
         await api.post(`/follow/${username}`);
       }
     },
-    onSuccess: (_, variables) => {
+    onMutate: async ({ username, isFollowing }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['profile', username] });
+
+      // Snapshot the previous value
+      const previousProfile = queryClient.getQueryData<UserProfile>(['profile', username]);
+
+      // Optimistically update to the new value
+      if (previousProfile) {
+        queryClient.setQueryData(['profile', username], {
+          ...previousProfile,
+          isFollowing: !isFollowing,
+          _count: {
+            ...previousProfile._count,
+            followers: previousProfile._count.followers + (isFollowing ? -1 : 1),
+          },
+        });
+      }
+
+      return { previousProfile };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousProfile) {
+        queryClient.setQueryData(['profile', variables.username], context.previousProfile);
+      }
+    },
+    onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: ['profile', variables.username] });
     },
   });

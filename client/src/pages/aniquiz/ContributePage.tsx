@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Send, 
@@ -11,11 +11,11 @@ import {
     Mic,
     CheckCircle2,
     AlertTriangle,
-    Plus,
-    X
+    Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { SafeImage } from '../../components/common/SafeImage';
 
 const STEPS = [
     { title: 'TYPE', icon: MessageSquare },
@@ -208,7 +208,7 @@ export default function ContributePage() {
                                             />
                                             {formData.mediaUrl && formData.type === 'SCREENSHOT' && (
                                                 <div className="mt-6 aspect-video rounded-xl overflow-hidden border border-zinc-800">
-                                                    <img src={formData.mediaUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                    <SafeImage src={formData.mediaUrl} alt="Preview" className="w-full h-full object-cover" />
                                                 </div>
                                             )}
                                             {formData.mediaUrl && (formData.type === 'AUDIO' || formData.type === 'VOICE') && (

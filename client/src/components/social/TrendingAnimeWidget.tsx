@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { TrendingUp, Star } from 'lucide-react';
+import { SafeImage } from '../common/SafeImage';
 
 const TrendingAnimeWidget: React.FC = () => {
   const { data: trending, isLoading } = useQuery({
@@ -42,7 +43,7 @@ const TrendingAnimeWidget: React.FC = () => {
               rel="noopener noreferrer"
               className="p-4 flex gap-3 hover:bg-zinc-800/50 transition-colors group"
             >
-              <img 
+              <SafeImage 
                 src={anime.images.jpg.small_image_url} 
                 alt={anime.title} 
                 className="w-12 h-16 object-cover rounded-md border border-[var(--border-color)]"

@@ -5,6 +5,7 @@ import { Send, Trash2, MessageSquare } from 'lucide-react';
 import type { Comment } from '../../../../shared/types';
 import { Spinner } from '../common/Spinner';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar } from '../common/Avatar';
 
 interface CommentSectionProps {
   postId: string;
@@ -52,14 +53,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Add to the stream..."
-          className="w-full bg-[var(--bg-secondary)114] border border-[#232329] rounded-2xl px-5 py-3.5 pr-14 text-sm font-dm-sans text-[#f4f4f5] placeholder-[#3f3f46] focus:outline-none focus:border-white transition-all transition-all"
+          className="w-full bg-[var(--bg-secondary)] border border-[#232329] rounded-2xl px-5 py-3.5 pr-14 text-sm font-dm-sans text-[#f4f4f5] placeholder-[#3f3f46] focus:outline-none focus:border-white transition-all"
         />
         <button 
           type="submit"
           disabled={!content.trim() || commentMutation.isPending}
           className="absolute right-3 top-1/2 -translate-y-1/2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black p-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-white/5"
         >
-          {commentMutation.isPending ? <Spinner size="sm" /> : <Send size={18} />}
           {commentMutation.isPending ? <Spinner size="sm" /> : <Send size={18} />}
         </button>
       </form>
@@ -79,13 +79,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
           <div className="space-y-4">
             {comments?.map((comment) => (
               <div key={comment.id} className="flex gap-4 group/item">
-                <div className="w-9 h-9 rounded-full overflow-hidden border border-[#232329] flex-shrink-0">
-                  <img 
-                    src={comment.user.avatar || '/default-avatar.png'} 
-                    className="w-full h-full object-cover" 
-                    alt="" 
-                  />
-                </div>
+                <Avatar 
+                  src={comment.user.avatar} 
+                  username={comment.user.username} 
+                  size="sm"
+                />
                 <div className="flex-1 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

@@ -3,6 +3,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import { Search, User, Users, Film, Star, ChevronRight, Loader2 } from 'lucide-react';
+import { Avatar } from '../components/common/Avatar';
+import { SafeImage } from '../components/common/SafeImage';
 
 
 const SearchResults: React.FC = () => {
@@ -90,7 +92,11 @@ const SearchResults: React.FC = () => {
                       className="group block bg-zinc-900 border border-[var(--border-color)] rounded-2xl overflow-hidden hover:border-red-600 transition-all transform hover:-translate-y-1"
                     >
                       <div className="aspect-[2/3] relative overflow-hidden">
-                        <img src={anime.image} alt={anime.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <SafeImage 
+                          src={anime.image} 
+                          alt={anime.title} 
+                          className="w-full h-full" 
+                        />
                         <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1 border border-[var(--border-color)]">
                           <Star size={10} className="text-yellow-500 fill-yellow-500" />
                           <span className="text-[10px] font-bold">{anime.score || 'N/A'}</span>
@@ -126,7 +132,11 @@ const SearchResults: React.FC = () => {
                       className="bg-zinc-900 border border-[var(--border-color)] p-4 rounded-2xl flex items-center justify-between hover:border-zinc-500 transition-colors group"
                     >
                       <div className="flex items-center gap-4">
-                        <img src={user.avatar || '/default-avatar.png'} alt={user.username} className="w-14 h-14 rounded-full border-2 border-[var(--border-color)] object-cover" />
+                        <Avatar 
+                          src={user.avatar} 
+                          username={user.username} 
+                          size="lg"
+                        />
                         <div>
                           <h4 className="font-bold text-white uppercase italic tracking-tighter group-hover:text-red-500 transition-colors flex items-center gap-2">
                             {user.username}
@@ -160,7 +170,11 @@ const SearchResults: React.FC = () => {
                       className="bg-zinc-900 border border-[var(--border-color)] p-4 rounded-2xl flex items-center justify-between hover:border-zinc-500 transition-colors group"
                     >
                       <div className="flex items-center gap-4">
-                        <img src={community.icon || '/default-community.png'} alt={community.name} className="w-14 h-14 rounded-2xl border-2 border-[var(--border-color)] object-cover" />
+                        <Avatar 
+                          src={community.icon} 
+                          name={community.name} 
+                          size="lg"
+                        />
                         <div>
                           <h4 className="font-bold text-white uppercase italic tracking-tighter group-hover:text-red-500 transition-colors flex items-center gap-2">
                             n/{community.name}

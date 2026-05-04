@@ -2,6 +2,15 @@ import { Router } from 'express';
 import * as storyController from '../controllers/storyController.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
+import { validate } from '../middleware/validate.js';
+import { 
+  createStorySchema, 
+  updateStorySchema, 
+  createChapterSchema, 
+  updateChapterSchema, 
+  rateStorySchema, 
+  addChapterCommentSchema 
+} from '../schemas/storySchema.js';
 
 const router = Router();
 
@@ -16,8 +25,8 @@ router.get('/:id/ratings', storyController.getRatings);
 router.use(authenticateToken);
 
 router.get('/mine', storyController.getMyStories);
-router.post('/', upload.single('cover'), storyController.createStory);
-router.put('/:id', upload.single('cover'), storyController.updateStory);
+router.post('/', upload.single('cover'), validate(createStorySchema), storyController.createStory);
+router.put('/:id', upload.single('cover'), validate(updateStorySchema), storyController.updateStory);
 router.delete('/:id', storyController.deleteStory);
 
 // Collaborators
@@ -25,13 +34,13 @@ router.post('/:id/collaborators', storyController.addCollaborator);
 router.delete('/:id/collaborators/:userId', storyController.removeCollaborator);
 
 // Chapters
-router.post('/:id/chapters', storyController.createChapter);
-router.put('/:id/chapters/:chapterId', storyController.updateChapter);
+router.post('/:id/chapters', validate(createChapterSchema), storyController.createChapter);
+router.put('/:id/chapters/:chapterId', validate(updateChapterSchema), storyController.updateChapter);
 router.delete('/:id/chapters/:chapterId', storyController.deleteChapter);
 
 // Ratings, Comments, Follows
-router.post('/:id/rate', storyController.rateStory);
-router.post('/:id/chapters/:chapterId/comments', storyController.addChapterComment);
+router.post('/:id/rate', validate(rateStorySchema), storyController.rateStory);
+router.post('/:id/chapters/:chapterId/comments', validate(addChapterCommentSchema), storyController.addChapterComment);
 router.delete('/chapters/comments/:commentId', storyController.deleteChapterComment);
 router.post('/:id/follow', storyController.toggleFollow);
 

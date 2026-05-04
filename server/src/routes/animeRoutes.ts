@@ -6,7 +6,8 @@ import {
   getSeasonalAnime,
   getGenres,
   discoverAnime,
-  getRecommendations
+  getRecommendations,
+  getStudioDetails
 } from '../controllers/animeController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -18,6 +19,7 @@ router.get('/seasonal', getSeasonalAnime);
 router.get('/genres', getGenres);
 router.get('/discover', discoverAnime);
 router.get('/recommendations', authenticateToken, getRecommendations);
+router.get('/studios/:id', getStudioDetails);
 router.get('/:id', getAnimeDetails);
 
 

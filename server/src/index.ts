@@ -29,6 +29,8 @@ import messageRoutes from './routes/messages.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import watchPartyRoutes from './routes/watchPartyRoutes.js';
 import quizRoutes from './routes/quiz.js';
+import voteRoutes from './routes/voteRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
 import * as recs from './services/recommendationEngine.js';
 import { prisma } from './lib/prisma.js';
 import { authenticateToken } from './middleware/auth.js';
@@ -131,20 +133,12 @@ app.use(hpp()); // Prevent HTTP parameter pollution
 // Global Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  max: 500, // Increased for development to prevent loops blocking UI
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later.' }
 });
 app.use('/api', limiter);
-
-// Auth Specific Rate Limiting
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20, // Strict limit for auth
-  message: { message: 'Excessive login attempts, please try again in 15 minutes.' }
-});
-app.use('/api/auth', authLimiter);
 
 app.use(express.json({ limit: '10kb' })); // Body limit to prevent large payload attacks
 app.use(cookieParser());
@@ -175,6 +169,8 @@ app.use('/api/messages', authenticateToken, messageRoutes);
 app.use('/api/watchparty', watchPartyRoutes); // Removed forced auth middleware here as handled inside for public/private
 app.use('/api/quiz', quizRoutes);
 app.use('/api/recommendations', authenticateToken, recommendationsRoutes);
+app.use('/api/votes', voteRoutes);
+app.use('/api/activity', activityRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

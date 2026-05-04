@@ -1,17 +1,19 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
-import { Bell, Check, Heart, MessageSquare, UserPlus } from 'lucide-react';
+import { Bell, Check, Heart, MessageSquare, UserPlus, Settings, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
 import type { Notification } from '../../../../shared/types';
 import { Spinner } from '../common/Spinner';
+import { Avatar } from '../common/Avatar';
 
 interface NotificationsDropdownProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, onClose }) => {
+export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
 
   const { data: notifications, isLoading } = useQuery<Notification[]>({
@@ -39,10 +41,10 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, o
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'LIKE': return <Heart size={14} className="text-red-500 fill-red-500" />;
-      case 'COMMENT': return <MessageSquare size={14} className="text-blue-500" />;
-      case 'FOLLOW': return <UserPlus size={14} className="text-green-500" />;
-      default: return <Bell size={14} className="text-zinc-400" />;
+      case 'LIKE': return <Heart size={12} className="text-red-500 fill-red-500" />;
+      case 'COMMENT': return <MessageSquare size={12} className="text-blue-500" />;
+      case 'FOLLOW': return <UserPlus size={12} className="text-green-500" />;
+      default: return <Bell size={12} className="text-zinc-400" />;
     }
   };
 
@@ -55,32 +57,37 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, o
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-zinc-900 border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden z-50">
-      <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between bg-zinc-900/50 backdrop-blur-md">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Notifications</h3>
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            markAllReadMutation.mutate();
-          }}
-          className="text-[10px] font-bold text-zinc-500 hover:text-red-500 transition-colors uppercase tracking-widest flex items-center gap-1"
-        >
-          <Check size={12} /> Mark all read
-        </button>
+    <div className="absolute top-full right-0 mt-3 w-[400px] bg-[#1a1a1c] border border-white/5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+      <div className="p-4 px-6 border-b border-white/5 flex items-center justify-between bg-[#1a1a1c]">
+        <h3 className="text-base font-bold text-white font-dm-sans">Notifications</h3>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              markAllReadMutation.mutate();
+            }}
+            className="text-[11px] font-bold text-[#3ea6ff] hover:text-[#65b8ff] transition-colors uppercase tracking-widest"
+          >
+            Mark all read
+          </button>
+          <button className="text-zinc-500 hover:text-white transition-colors">
+            <Settings size={18} />
+          </button>
+        </div>
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+      <div className="max-h-[500px] overflow-y-auto custom-scrollbar bg-[#1a1a1c]">
         {isLoading ? (
-          <div className="flex justify-center p-8">
+          <div className="flex justify-center p-12">
             <Spinner />
           </div>
         ) : notifications?.length === 0 ? (
-          <div className="p-8 text-center text-white">
-            <Bell size={40} className="mx-auto text-zinc-800 mb-2" />
-            <p className="text-zinc-500 text-sm">No notifications yet</p>
+          <div className="p-16 text-center">
+            <Bell size={48} className="mx-auto text-[#272727] mb-4" />
+            <p className="text-zinc-500 text-sm font-medium">Your notifications will live here</p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-800/50">
+          <div className="flex flex-col">
             {notifications?.map((n) => (
               <Link 
                 key={n.id} 
@@ -89,29 +96,37 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, o
                   if (!n.isRead) markReadMutation.mutate(n.id);
                   onClose();
                 }}
-                className={`flex gap-3 p-4 hover:bg-zinc-800/50 transition-colors relative group ${!n.isRead ? 'bg-red-500/5' : ''}`}
+                className="flex gap-4 p-4 px-6 hover:bg-white/5 transition-all relative items-start group"
               >
-                <div className="relative flex-shrink-0">
-                  <img 
-                    src={n.actor?.avatar || '/default-avatar.png'} 
-                    alt={n.actor?.username}
-                    className="w-10 h-10 rounded-full border border-[var(--border-color)] object-cover bg-zinc-800"
+                <div className="flex-shrink-0 pt-1">
+                  {!n.isRead && (
+                    <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-[#3ea6ff] rounded-full" />
+                  )}
+                  <Avatar 
+                    src={n.actor?.avatar} 
+                    username={n.actor?.username || ''}
+                    size="md"
+                    className="w-12 h-12"
                   />
-                  <div className="absolute -bottom-1 -right-1 bg-zinc-900 p-1 rounded-full border border-[var(--border-color)] shadow-sm">
-                    {getIcon(n.type)}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] leading-snug">
+                    <span className="font-bold text-white">{n.actor?.username}</span>
+                    <span className="text-zinc-400"> {n.message}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[11px] text-[#71717a] font-medium">
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                    </span>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0 text-white">
-                  <p className="text-sm text-zinc-300 leading-tight">
-                    <span className="font-bold text-white">{n.actor?.username}</span> {n.message}
-                  </p>
-                  <span className="text-[10px] text-zinc-500 mt-1 block">
-                    {new Date(n.createdAt).toLocaleDateString()}
-                  </span>
+
+                <div className="flex-shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-zinc-500">
+                    <MoreHorizontal size={18} />
+                  </div>
                 </div>
-                {!n.isRead && (
-                  <div className="w-2 h-2 bg-red-600 rounded-full self-center flex-shrink-0" />
-                )}
               </Link>
             ))}
           </div>
@@ -121,9 +136,9 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ isOpen, o
       <Link 
         to="/notifications" 
         onClick={onClose}
-        className="block p-3 text-center text-xs font-bold text-zinc-500 hover:text-white bg-zinc-800/30 hover:bg-zinc-800 transition-all border-t border-[var(--border-color)] uppercase tracking-widest"
+        className="block p-3.5 text-center text-[11px] font-bold text-[#3ea6ff] hover:bg-[#262626] transition-all border-t border-white/5 uppercase tracking-[0.2em]"
       >
-        View All Notifications
+        View All activity
       </Link>
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Compass, Users, Bookmark, Settings, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { Avatar } from '../common/Avatar';
 
 const HomeSidebar: React.FC = () => {
   const { user } = useAuth();
@@ -21,10 +22,11 @@ const HomeSidebar: React.FC = () => {
       <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col items-center text-center">
           <div className="relative mb-4">
-            <img 
-              src={user?.avatar || '/default-avatar.png'} 
-              alt={user?.username} 
-              className="w-20 h-20 rounded-full border-2 border-[var(--accent-primary)] p-0.5 object-cover"
+            <Avatar 
+              src={user?.avatar} 
+              username={user?.username || ''} 
+              size="lg"
+              className="w-20 h-20 rounded-full border-2 border-[var(--accent-primary)] p-0.5"
             />
             {user?.isPremium && (
               <div className="absolute -bottom-1 -right-1 bg-[var(--accent-primary)] text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-[var(--bg-primary)] uppercase tracking-widest text-white">

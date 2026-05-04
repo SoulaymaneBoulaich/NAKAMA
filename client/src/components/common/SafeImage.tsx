@@ -57,6 +57,7 @@ export const SafeImage: React.FC<SafeImageProps> = ({
       <motion.img
         src={src}
         alt={alt}
+        referrerPolicy="no-referrer"
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
         initial={{ opacity: 0, scale: 1.05 }}

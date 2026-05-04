@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { getStringParam, getStringQuery } from '../utils/params.js';
+import { decrypt } from '../utils/encryption.js';
 
 export const getConversations = async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -40,7 +41,7 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
                 id: p.conversation.id,
                 otherUser: otherParticipant,
                 lastMessage: lastMessage ? {
-                    content: lastMessage.content,
+                    content: decrypt(lastMessage.content),
                     createdAt: lastMessage.createdAt,
                     senderUsername: lastMessage.sender.username
                 } : null,
@@ -56,6 +57,7 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
 };
 
 export const startConversation = async (req: AuthenticatedRequest, res: Response) => {
+    // ... no changes needed for content decryption here
     try {
         const userId = req.userId!;
         const { username } = req.body;
@@ -142,7 +144,13 @@ export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
             data: { lastReadAt: new Date() }
         });
 
-        res.status(200).json(messages);
+        // Decrypt messages
+        const decryptedMessages = messages.map(m => ({
+            ...m,
+            content: decrypt(m.content)
+        }));
+
+        res.status(200).json(decryptedMessages);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching messages' });
     }
