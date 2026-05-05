@@ -18,19 +18,18 @@ beforeAll(async () => {
 beforeEach(async () => {
   // Ordered primarily for performance, but session_replication_role ensures safety
   const tables = [
-    'dailyAnswer',
-    'dailyQuestion',
-    'quizAnswer', 
-    'quizAttempt', 
-    'questionStats', 
-    'question',
-    'quiz',
-    'gauntletHallOfFame',
-    'submissionVote',
-    'questionSubmission',
-    'user'
-  ];
-
+  'dailyAnswer',
+  'dailyQuestion',   // ← must be before 'question'
+  'quizAnswer',
+  'quizAttempt',
+  'questionStats',
+  'question',        // ← after dailyQuestion
+  'quiz',
+  'gauntletHallOfFame',
+  'submissionVote',
+  'questionSubmission',
+  'user',
+];
   // Temporarily disable foreign key checks for the session
   await prisma.$executeRaw`SET session_replication_role = 'replica';`;
 
