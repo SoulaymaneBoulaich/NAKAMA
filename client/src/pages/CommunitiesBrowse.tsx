@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api/axios';
-import { Search, Plus, Users, Filter, Sparkles } from 'lucide-react';
-import CreateCommunityModal from '../components/communities/CreateCommunityModal';
-import { useNavigate } from 'react-router-dom';
-import TopCommunitiesWidget from '../components/social/TopCommunitiesWidget';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search, Plus, Users, Flame, Clock, TrendingUp,
+  ChevronRight, ArrowRight, Shield, Hash
+} from 'lucide-react';
+import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 import { SafeImage } from '../components/common/SafeImage';
-import { Avatar } from '../components/common/Avatar';
+import CreateCommunityModal from '../components/communities/CreateCommunityModal';
 
 interface Community {
   id: string;
@@ -16,222 +17,283 @@ interface Community {
   category: string;
   bannerUrl?: string;
   avatarUrl?: string;
-  memberCount: number;
   isValidated: boolean;
-  _count: {
-    members: number;
-    posts: number;
-  };
+  _count: { members: number; posts: number };
 }
 
+const CATEGORIES = ['All', 'Action', 'Romance', 'Fantasy', 'Sci-Fi', 'Slice of Life', 'Shonen', 'Seinen'];
+
+const SORT_OPTIONS = [
+  { id: 'members',  label: 'Top',     icon: TrendingUp },
+  { id: 'newest',   label: 'New',     icon: Clock },
+  { id: 'activity', label: 'Active',  icon: Flame },
+] as const;
+
+type SortOption = typeof SORT_OPTIONS[number]['id'];
+
+// ─── Community card ────────────────────────────────────────────────────────────
+const CommunityCard: React.FC<{ community: Community; index: number }> = ({ community, index }) => {
+  const navigate = useNavigate();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
+      onClick={() => navigate(`/communities/${community.slug}`)}
+      className="group relative bg-[#0d0d10] border border-[#1a1a1c] rounded-2xl overflow-hidden cursor-pointer hover:border-[#2a2a2e] transition-all duration-300 hover:shadow-xl hover:shadow-black/40"
+    >
+      {/* Banner */}
+      <div className="relative h-28 bg-[#111] overflow-hidden">
+        {community.bannerUrl ? (
+          <SafeImage
+            src={community.bannerUrl}
+            alt={community.name}
+            className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500 group-hover:scale-105 transform"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#1a1a1c] to-[#111]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d10] via-transparent to-transparent" />
+
+        {/* Category badge */}
+        <div className="absolute top-3 right-3 px-2.5 py-1 bg-black/60 backdrop-blur-sm border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/60">
+          {community.category}
+        </div>
+      </div>
+
+      {/* Avatar */}
+      <div className="px-5 -mt-6 relative z-10">
+        <div className="w-12 h-12 rounded-xl border-2 border-[#0d0d10] bg-[#1a1a1c] overflow-hidden shadow-lg">
+          {community.avatarUrl
+            ? <SafeImage src={community.avatarUrl} alt={community.name} className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-red-600 font-black text-lg">
+                {community.name.charAt(0).toUpperCase()}
+              </div>
+          }
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="px-5 pt-3 pb-5">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="font-outfit font-black text-base text-white group-hover:text-red-400 transition-colors tracking-tight truncate">
+              {community.name}
+            </h3>
+            <p className="text-[#555] text-xs mt-1 line-clamp-2 leading-relaxed">
+              {community.description || 'No description.'}
+            </p>
+          </div>
+          <ChevronRight size={16} className="text-[#333] group-hover:text-red-600 transition-colors flex-shrink-0 mt-1" />
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center gap-1.5 text-[#555]">
+            <Users size={13} />
+            <span className="text-xs font-bold">{community._count.members.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[#555]">
+            <Hash size={13} />
+            <span className="text-xs font-bold">{community._count.posts.toLocaleString()} posts</span>
+          </div>
+          {community.isValidated && (
+            <div className="ml-auto flex items-center gap-1 text-teal-500">
+              <Shield size={11} />
+              <span className="text-[10px] font-black uppercase tracking-wider">Verified</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hover shimmer */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl ring-1 ring-red-500/10" />
+    </motion.div>
+  );
+};
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+const CommunitySkeleton = () => (
+  <div className="bg-[#0d0d10] border border-[#1a1a1c] rounded-2xl overflow-hidden animate-pulse">
+    <div className="h-28 bg-[#111]" />
+    <div className="px-5 -mt-5 pb-5 space-y-3">
+      <div className="w-12 h-12 rounded-xl bg-[#1a1a1c]" />
+      <div className="h-4 bg-[#1a1a1c] rounded w-2/3 mt-3" />
+      <div className="h-3 bg-[#1a1a1c] rounded w-full" />
+      <div className="h-3 bg-[#1a1a1c] rounded w-1/2" />
+    </div>
+  </div>
+);
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 const CommunitiesBrowse: React.FC = () => {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
-  const [sort, setSort] = useState('members');
+  const [sort, setSort] = useState<SortOption>('members');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  const categories = ['All', 'Action', 'Romance', 'Fantasy', 'Sci-Fi', 'Slice of Life', 'Shonen', 'Seinen'];
-
-  const fetchCommunities = async () => {
+  const fetchCommunities = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/communities', {
-        params: { 
-          search: search || undefined, 
+        params: {
+          search: search || undefined,
           category: category === 'All' ? undefined : category,
-          sort 
+          sort
         }
       });
       setCommunities(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
-      console.error('Error fetching communities:', error);
+    } catch {
+      setCommunities([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCommunities();
-    }, 300);
-    return () => clearTimeout(timer);
   }, [search, category, sort]);
 
+  useEffect(() => {
+    const t = setTimeout(fetchCommunities, 280);
+    return () => clearTimeout(t);
+  }, [fetchCommunities]);
+
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-white pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Main Content */}
-          <div className="lg:col-span-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-[var(--accent-primary)]/10 rounded-lg">
-                    <Sparkles className="text-[var(--accent-primary)]" size={24} />
-                  </div>
-                  <span className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-[0.3em]">Niche Collectives</span>
-                </div>
-                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">
-                  Communities
-                </h1>
-              </div>
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-3 bg-[var(--accent-primary)] text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:scale-105 active:scale-95 transition-all"
-              >
-                <Plus size={18} />
-                Create Community
-              </button>
-            </div>
+    <div className="min-h-screen bg-[#0a0a0c] text-white selection:bg-red-500/20 pb-20">
 
-            {/* Filters & Search */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[var(--accent-primary)] transition-colors" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Search collectives..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-white/5 border border-[var(--border-color)] rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--accent-primary)]/50 transition-all text-sm"
-                />
+      {/* ── Hero header ── */}
+      <div className="relative overflow-hidden border-b border-[#161618]">
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/10 to-transparent pointer-events-none" />
+        <div className="max-w-[1360px] mx-auto px-6 py-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">Explore</span>
+                <div className="h-[1px] w-8 bg-red-600/40" />
               </div>
-              
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                  <select 
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-white/5 border border-[var(--border-color)] rounded-2xl py-4 pl-12 pr-4 text-white appearance-none focus:outline-none focus:border-[var(--accent-primary)]/50 transition-all font-black text-[10px] uppercase tracking-widest cursor-pointer"
-                  >
-                    {categories.map(c => <option key={c} value={c} className="bg-zinc-900">{c}</option>)}
-                  </select>
-                </div>
-                <div className="flex bg-white/5 border border-[var(--border-color)] rounded-2xl p-1">
-                  <button 
-                    onClick={() => setSort('members')}
-                    className={`px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sort === 'members' ? 'bg-[var(--accent-primary)] text-white shadow-lg shadow-red-900/20' : 'text-zinc-500 hover:text-white'}`}
-                  >
-                    Popular
-                  </button>
-                  <button 
-                    onClick={() => setSort('new')}
-                    className={`px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sort === 'new' ? 'bg-[var(--accent-primary)] text-white shadow-lg shadow-red-900/20' : 'text-zinc-500 hover:text-white'}`}
-                  >
-                    New
-                  </button>
-                </div>
-              </div>
+              <h1 className="font-outfit font-black text-4xl tracking-tight text-white">
+                Communities
+              </h1>
+              <p className="text-[#555] text-sm mt-2 max-w-md">
+                Find your people. Join communities built around your favourite anime genres, studios, and series.
+              </p>
             </div>
-
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white/5 border border-[var(--border-color)] rounded-[2rem] h-64 animate-pulse"></div>
-                ))}
-              </div>
-            ) : communities.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {communities.map((community) => (
-                  <motion.div 
-                    key={community.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => navigate(`/communities/${community.slug}`)}
-                    className="group relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[2rem] overflow-hidden cursor-pointer hover:border-[var(--accent-primary)]/40 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/50"
-                  >
-                    <div className="h-28 bg-zinc-900 relative">
-                      {community.bannerUrl ? (
-                        <SafeImage src={community.bannerUrl} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950"></div>
-                      )}
-                      {!community.isValidated && (
-                        <div className="absolute top-4 right-4 bg-yellow-500/20 text-yellow-500 text-[8px] font-black px-3 py-1 rounded-full border border-yellow-500/20 backdrop-blur-md tracking-widest">
-                          PENDING VALIDATION
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="px-8 pb-8 -mt-10 relative z-10">
-                      <div className="w-20 h-20 rounded-2xl bg-zinc-900 border-4 border-[var(--bg-secondary)] overflow-hidden shadow-2xl mb-4 group-hover:scale-105 transition-transform">
-                        <Avatar 
-                          src={community.avatarUrl} 
-                          name={community.name}
-                          size="lg"
-                          className="w-full h-full"
-                        />
-                      </div>
-                      
-                      <h3 className="text-2xl font-black text-white group-hover:text-[var(--accent-primary)] transition-colors mb-2 italic uppercase tracking-tighter truncate">
-                        {community.name}
-                      </h3>
-                      <p className="text-zinc-500 text-xs font-medium line-clamp-2 mb-6 h-8 leading-relaxed">
-                        {community.description || 'No description provided.'}
-                      </p>
-                      
-                      <div className="flex items-center justify-between pt-6 border-t border-[var(--border-color)]">
-                        <div className="flex items-center gap-2 text-white font-black text-sm uppercase italic">
-                          <Users size={16} className="text-[var(--accent-primary)]" />
-                          {community.memberCount.toLocaleString()}
-                        </div>
-                        <div className="text-[10px] text-zinc-600 font-black tracking-[0.2em] uppercase">
-                          {community.category || 'General'}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-32 bg-white/5 border border-dashed border-[var(--border-color)] rounded-[3rem]">
-                <Users size={64} className="mx-auto text-zinc-800 mb-6" />
-                <h2 className="text-2xl font-black text-zinc-500 uppercase italic tracking-tighter mb-2">No collectives discovered</h2>
-                <p className="text-zinc-600 text-sm font-medium">Be the first to architect a community for this Niche!</p>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-8">
-            <TopCommunitiesWidget />
-            
-            <div className="p-8 bg-[var(--accent-primary)] rounded-[2.5rem] shadow-[0_20px_50px_rgba(220,38,38,0.2)] group relative overflow-hidden">
-               <div className="relative z-10">
-                 <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-4">Unite Your<br/>Nakama</h2>
-                 <p className="text-white/80 text-xs font-medium leading-relaxed mb-8">Create a space for your crew, host events, and lead the conversation in your favorite niche.</p>
-                 <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="w-full py-4 bg-white text-[var(--accent-primary)] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95"
-                 >
-                   Establish Collective
-                 </button>
-               </div>
-               <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-black/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2.5 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-red-900/30 active:scale-95 self-start md:self-auto"
+            >
+              <Plus size={16} strokeWidth={3} />
+              Create Community
+            </button>
           </div>
         </div>
       </div>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <CreateCommunityModal 
-            onClose={() => setIsModalOpen(false)} 
-            onSuccess={() => {
-              setIsModalOpen(false);
-              fetchCommunities();
-            }}
-          />
-        )}
-      </AnimatePresence>
+      <div className="max-w-[1360px] mx-auto px-6 pt-6">
+
+        {/* ── Filters ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8">
+
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]" />
+            <input
+              type="text"
+              placeholder="Search communities…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-[#0d0d10] border border-[#1a1a1c] text-white placeholder-[#444] text-sm rounded-xl focus:outline-none focus:border-[#333] transition-colors"
+            />
+          </div>
+
+          {/* Sort pills */}
+          <div className="flex items-center gap-1 bg-[#0d0d10] border border-[#1a1a1c] rounded-xl p-1">
+            {SORT_OPTIONS.map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setSort(opt.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                  sort === opt.id
+                    ? 'bg-red-600 text-white'
+                    : 'text-[#555] hover:text-white'
+                }`}
+              >
+                <opt.icon size={12} />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Category chips ── */}
+        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border transition-all ${
+                category === cat
+                  ? 'bg-white text-black border-white'
+                  : 'bg-transparent text-[#555] border-[#1e1e24] hover:border-[#333] hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Grid ── */}
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            >
+              {Array.from({ length: 8 }).map((_, i) => <CommunitySkeleton key={i} />)}
+            </motion.div>
+          ) : communities.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-32 text-center"
+            >
+              <div className="w-16 h-16 bg-[#111] border border-[#222] rounded-2xl flex items-center justify-center mb-5 text-red-600">
+                <Users size={26} />
+              </div>
+              <p className="text-white/30 text-sm font-bold uppercase tracking-widest mb-4">No communities found</p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-bold transition-colors"
+              >
+                Be the first to create one <ArrowRight size={14} />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            >
+              {communities.map((c, i) => (
+                <CommunityCard key={c.id} community={c} index={i} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <CreateCommunityModal
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => { setIsModalOpen(false); fetchCommunities(); }}
+      />
     </div>
   );
 };
 
 export default CommunitiesBrowse;
+
