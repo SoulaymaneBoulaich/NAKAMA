@@ -1,217 +1,248 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Loader2, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus, Search, Play, Lock, Globe, Share2,
+  ListMusic, Info, Loader2, Sparkles
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { PlaylistCard } from '../../components/playlists/PlaylistCard';
+import { CreatePlaylistModal } from '../../components/social/CreatePlaylistModal';
 
-export const MyPlaylistsPage: React.FC = () => {
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
+const MAX_PLAYLISTS = 3;
 
-  useEffect(() => {
-    fetchPlaylists();
-  }, []);
-
-  const fetchPlaylists = async () => {
-    try {
-      const { data } = await api.get('/playlists');
-      setPlaylists(data);
-    } catch (error) {
-      console.error('Failed to fetch playlists', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredPlaylists = playlists.filter(p => 
-    p.title.toLowerCase().includes(search.toLowerCase()) ||
-    p.description?.toLowerCase().includes(search.toLowerCase())
-  );
+// ─── Limit banner ──────────────────────────────────────────────────────────────
+const LimitBanner: React.FC<{ count: number }> = ({ count }) => {
+  const remaining = MAX_PLAYLISTS - count;
+  const full = remaining === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-100 tracking-tight flex items-center gap-3">
-            <Play className="text-red-500 fill-red-500" size={32} />
-            MY PLAYLISTS
-          </h1>
-          <p className="text-zinc-500 text-sm mt-1">Manage and curate your favorite anime collections.</p>
-        </div>
-
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-red-900/20"
-        >
-          <Plus size={20} />
-          CREATE PLAYLIST
-        </button>
-      </div>
-
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
-        <div className="relative flex-grow">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-          <input
-            type="text"
-            placeholder="Search your playlists..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-[var(--border-color)] rounded-xl py-3 pl-12 pr-4 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-red-500/50 transition-colors"
+    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-bold transition-all ${
+      full
+        ? 'bg-red-500/5 border-red-500/20 text-red-400'
+        : 'bg-[#0d0d10] border-[#1a1a1c] text-[#555]'
+    }`}>
+      <Info size={15} className={full ? 'text-red-500' : 'text-[#444]'} />
+      {full
+        ? 'You\'ve reached the 3-playlist limit. Remove one to create another.'
+        : `${remaining} playlist slot${remaining > 1 ? 's' : ''} remaining`
+      }
+      {/* Slot dots */}
+      <div className="ml-auto flex items-center gap-1.5">
+        {Array.from({ length: MAX_PLAYLISTS }).map((_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full transition-all ${
+              i < count ? 'bg-red-600' : 'bg-[#1e1e24]'
+            }`}
           />
-        </div>
-        <button className="flex items-center gap-2 px-4 py-3 bg-zinc-900 border border-[var(--border-color)] rounded-xl text-zinc-400 hover:text-zinc-100 transition-colors">
-          <Filter size={18} />
-          <span className="text-sm font-medium">Filter</span>
-        </button>
+        ))}
       </div>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-32">
-          <Loader2 className="text-red-500 animate-spin" size={48} />
-          <p className="text-zinc-500 mt-4 font-medium italic">Loading your masterpieces...</p>
-        </div>
-      ) : filteredPlaylists.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredPlaylists.map((playlist) => (
-            <PlaylistCard key={playlist.id} playlist={playlist} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-[var(--border-color)] rounded-3xl bg-zinc-900/20">
-          <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-700 mb-6">
-            <Search size={40} />
-          </div>
-          <h2 className="text-xl font-bold text-zinc-400">No playlists found</h2>
-          <p className="text-zinc-600 mt-2">Try adjusting your search or create a new one!</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-6 text-red-500 font-bold hover:underline"
-          >
-            Create your first playlist
-          </button>
-        </div>
-      )}
-
-      <AnimatePresence>
-        {showCreateModal && (
-          <CreatePlaylistModal 
-            onClose={() => setShowCreateModal(false)} 
-            onCreated={() => {
-              setShowCreateModal(false);
-              fetchPlaylists();
-            }} 
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
 
-// Quick sub-component for Modal
-const CreatePlaylistModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: () => void }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [visibility, setVisibility] = useState<'PRIVATE' | 'SHARED' | 'PUBLIC'>('PRIVATE');
-  const [loading, setLoading] = useState(false);
+// ─── Empty state ──────────────────────────────────────────────────────────────
+const EmptyState: React.FC<{ onCreate: () => void }> = ({ onCreate }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="flex flex-col items-center justify-center py-36 text-center"
+  >
+    <div className="relative mb-8">
+      {/* Fanned empty cards */}
+      {[-6, -2, 4].map((deg, i) => (
+        <div
+          key={i}
+          className="absolute w-24 h-32 bg-[#111114] border border-[#1e1e24] rounded-xl"
+          style={{ transform: `rotate(${deg}deg) translateX(${(i-1)*12}px)`, zIndex: i, left: '-48px', top: 0 }}
+        />
+      ))}
+      <div className="relative w-24 h-32 bg-[#111114] border border-[#222] rounded-xl flex items-center justify-center" style={{ zIndex: 3, marginLeft: '0px' }}>
+        <ListMusic size={28} className="text-[#333]" />
+      </div>
+    </div>
+    <h3 className="font-outfit font-black text-xl text-white/80 tracking-tight mb-2">No playlists yet</h3>
+    <p className="text-[#555] text-sm max-w-xs mb-8 leading-relaxed">
+      Curate your first anime collection. You can publish up to 3 playlists.
+    </p>
+    <button
+      onClick={onCreate}
+      className="flex items-center gap-2.5 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-red-900/30 active:scale-95"
+    >
+      <Plus size={16} strokeWidth={3} />
+      Create first playlist
+    </button>
+  </motion.div>
+);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+// ─── Main page ─────────────────────────────────────────────────────────────────
+export const MyPlaylistsPage: React.FC = () => {
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'PUBLIC' | 'PRIVATE' | 'SHARED'>('all');
+
+  const fetchPlaylists = async () => {
     try {
-      await api.post('/playlists', { title, description, visibility });
-      onCreated();
-    } catch (error) {
-      console.error('Failed to create playlist', error);
-      alert('Failed to create playlist');
-    } finally {
-      setLoading(false);
-    }
+      const { data } = await api.get('/playlists');
+      setPlaylists(Array.isArray(data) ? data : []);
+    } catch { setPlaylists([]); }
+    finally { setLoading(false); }
   };
 
+  useEffect(() => { fetchPlaylists(); }, []);
+
+  const filtered = playlists.filter(p => {
+    const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
+      (p.description || '').toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'all' || p.visibility === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const canCreate = playlists.length < MAX_PLAYLISTS;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-lg bg-zinc-900 border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden"
-      >
-        <div className="p-6 border-b border-[var(--border-color)]">
-          <h2 className="text-xl font-black text-white tracking-tight">CREATE NEW PLAYLIST</h2>
-          <p className="text-zinc-500 text-xs mt-1">Start curating your legend.</p>
+    <div className="min-h-screen bg-[#0a0a0c] text-white selection:bg-red-500/20 pb-20">
+
+      {/* ── Header ── */}
+      <div className="relative overflow-hidden border-b border-[#161618]">
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/8 to-transparent pointer-events-none" />
+        <div className="max-w-[1100px] mx-auto px-6 py-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">My Library</span>
+                <div className="h-[1px] w-8 bg-red-600/40" />
+              </div>
+              <h1 className="font-outfit font-black text-4xl tracking-tight text-white flex items-center gap-3">
+                Playlists
+                <Sparkles size={22} className="text-red-600/60" />
+              </h1>
+              <p className="text-[#555] text-sm mt-2">
+                Curate and publish up to 3 anime playlists.
+              </p>
+            </div>
+
+            <button
+              onClick={() => canCreate && setShowCreate(true)}
+              disabled={!canCreate}
+              title={!canCreate ? 'Remove a playlist to create a new one' : ''}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all self-start md:self-auto ${
+                canCreate
+                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/30 active:scale-95'
+                  : 'bg-[#1a1a1c] text-[#555] cursor-not-allowed'
+              }`}
+            >
+              <Plus size={16} strokeWidth={3} />
+              New Playlist
+            </button>
+          </div>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Title</label>
-            <input
-              autoFocus
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Epic Battle Shonen Anthems..."
-              className="w-full bg-zinc-950 border border-[var(--border-color)] rounded-xl py-3 px-4 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-red-500/50 transition-colors"
-            />
-          </div>
+      <div className="max-w-[1100px] mx-auto px-6 pt-6 space-y-6">
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Description (Optional)</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What makes this playlist special?"
-              rows={3}
-              className="w-full bg-zinc-950 border border-[var(--border-color)] rounded-xl py-3 px-4 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-red-500/50 transition-colors resize-none"
-            />
-          </div>
+        {/* Limit indicator */}
+        {!loading && playlists.length > 0 && <LimitBanner count={playlists.length} />}
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Visibility</label>
-            <div className="grid grid-cols-3 gap-3">
-              {(['PRIVATE', 'SHARED', 'PUBLIC'] as const).map((v) => (
+        {/* Search + filter */}
+        {!loading && playlists.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#444]" />
+              <input
+                type="text"
+                placeholder="Search playlists…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[#0d0d10] border border-[#1a1a1c] text-white placeholder-[#444] text-sm rounded-xl focus:outline-none focus:border-[#333] transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 bg-[#0d0d10] border border-[#1a1a1c] rounded-xl p-1">
+              {([
+                { id: 'all',     label: 'All',     icon: Play },
+                { id: 'PUBLIC',  label: 'Public',  icon: Globe },
+                { id: 'PRIVATE', label: 'Private', icon: Lock },
+                { id: 'SHARED',  label: 'Shared',  icon: Share2 },
+              ] as const).map(opt => (
                 <button
-                  key={v}
-                  type="button"
-                  onClick={() => setVisibility(v)}
-                  className={`py-2.5 rounded-xl border text-[10px] font-bold transition-all ${
-                    visibility === v 
-                      ? 'bg-red-500/10 border-red-500/50 text-red-500' 
-                      : 'bg-zinc-950 border-[var(--border-color)] text-zinc-500 hover:border-zinc-700'
+                  key={opt.id}
+                  onClick={() => setFilter(opt.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                    filter === opt.id
+                      ? 'bg-white text-black'
+                      : 'text-[#555] hover:text-white'
                   }`}
                 >
-                  {v}
+                  <opt.icon size={11} />
+                  <span className="hidden sm:block">{opt.label}</span>
                 </button>
               ))}
             </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl border border-[var(--border-color)] text-zinc-400 font-bold hover:bg-zinc-800/50 transition-colors"
-            >
-              CANCEL
-            </button>
-            <button
-              disabled={loading}
-              className="flex-[2] py-3 px-4 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 size={16} className="animate-spin" />}
-              CREATE PLAYLIST
-            </button>
+        {/* Content */}
+        {loading ? (
+          <div className="flex items-center justify-center py-32">
+            <Loader2 className="animate-spin text-red-600" size={28} />
           </div>
-        </form>
-      </motion.div>
+        ) : playlists.length === 0 ? (
+          <EmptyState onCreate={() => setShowCreate(true)} />
+        ) : (
+          <AnimatePresence>
+            {filtered.length === 0 ? (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-20 text-[#444] text-sm font-bold uppercase tracking-widest"
+              >
+                No playlists match your search
+              </motion.p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-2">
+                {filtered.map((playlist, i) => (
+                  <motion.div
+                    key={playlist.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: i * 0.05, duration: 0.3 }}
+                  >
+                    <PlaylistCard playlist={playlist} />
+                  </motion.div>
+                ))}
+
+                {/* Empty slot cards */}
+                {playlists.length < MAX_PLAYLISTS && filter === 'all' && !search && (
+                  Array.from({ length: MAX_PLAYLISTS - playlists.length }).map((_, i) => (
+                    <motion.button
+                      key={`empty-${i}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (playlists.length + i) * 0.05 }}
+                      onClick={() => setShowCreate(true)}
+                      className="group relative flex flex-col items-center justify-center aspect-[3/4] bg-[#0d0d10] border border-dashed border-[#1e1e24] rounded-2xl hover:border-red-600/40 hover:bg-red-600/5 transition-all duration-300 cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-full border border-[#222] group-hover:border-red-600/40 flex items-center justify-center mb-3 transition-colors">
+                        <Plus size={18} className="text-[#333] group-hover:text-red-600 transition-colors" strokeWidth={2.5} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#333] group-hover:text-red-600/70 transition-colors">
+                        Add playlist
+                      </span>
+                    </motion.button>
+                  ))
+                )}
+              </div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
+
+      <CreatePlaylistModal isOpen={showCreate} onClose={() => { setShowCreate(false); fetchPlaylists(); }} />
     </div>
   );
 };
