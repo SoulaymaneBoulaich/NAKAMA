@@ -6,7 +6,6 @@ import { prisma } from '../lib/prisma.js';
 import { execSync } from 'child_process';
 
 beforeAll(async () => {
-  // Ensure we are using the test database
   if (!process.env.DATABASE_URL?.includes('nakama')) {
     throw new Error('INTEGRATION TESTS MUST USE NAKAMA DATABASE');
   }
@@ -16,30 +15,29 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Ordered primarily for performance, but session_replication_role ensures safety
-  const tables = [
-  'dailyAnswer',
-  'dailyQuestion',   // ← must be before 'question'
-  'quizAnswer',
-  'quizAttempt',
-  'questionStats',
-  'question',        // ← after dailyQuestion
-  'quiz',
-  'gauntletHallOfFame',
-  'submissionVote',
-  'questionSubmission',
-  'user',
-];
-  // Temporarily disable foreign key checks for the session
-  await prisma.$executeRaw`SET session_replication_role = 'replica';`;
+  // Disable ALL FK constraints + ALL triggers fully
+  await prisma.$executeRawUnsafe(`SET session_replication_role = 'replica';`);
 
   try {
-    for (const table of tables) {
-      await (prisma as any)[table].deleteMany();
-    }
+    // DELETE IN CORRECT ORDER → from leaf → root
+    await prisma.dailyAnswer.deleteMany();
+    await prisma.quizAnswer.deleteMany();
+    await prisma.quizAttempt.deleteMany();
+    await prisma.questionStats.deleteMany();
+
+    await prisma.dailyQuestion.deleteMany(); // depends on Question
+
+    await prisma.questionSubmission.deleteMany();
+    await prisma.submissionVote.deleteMany();
+    await prisma.gauntletHallOfFame.deleteMany();
+
+    await prisma.question.deleteMany(); // parent of dailyQuestion
+    await prisma.quiz.deleteMany();
+
+    await prisma.user.deleteMany();
   } finally {
-    // Re-enable foreign key checks
-    await prisma.$executeRaw`SET session_replication_role = 'origin';`;
+    // Re-enable constraints
+    await prisma.$executeRawUnsafe(`SET session_replication_role = 'origin';`);
   }
 });
 
