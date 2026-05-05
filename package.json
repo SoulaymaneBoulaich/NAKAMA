@@ -12,8 +12,13 @@
     "install:all": "npm install",
     "client": "npm run dev --workspace=@nakama/client",
     "server": "npm run dev --workspace=@nakama/server",
-    "db:up": "docker-compose up -d",
-    "db:down": "docker-compose down"
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "db:logs": "docker compose logs -f postgres",
+    "prisma:push": "npm run prisma:generate --workspace=@nakama/server && npx --prefix server prisma db push",
+    "prisma:seed": "npx --prefix server tsx prisma/seed.ts",
+    "setup": "powershell -ExecutionPolicy Bypass -File infra/scripts/setup.ps1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
