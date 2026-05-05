@@ -287,10 +287,12 @@ const CommunitiesBrowse: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      <CreateCommunityModal
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => { setIsModalOpen(false); fetchCommunities(); }}
-      />
+      {isModalOpen && (
+        <CreateCommunityModal
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => { setIsModalOpen(false); fetchCommunities(); }}
+        />
+      )}
     </div>
   );
 };
