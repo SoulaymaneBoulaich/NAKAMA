@@ -45,22 +45,26 @@ model User {
   aniShots                 AniShot[]
   aniShotViews             AniShotView[]
   animeEntries             AnimeEntry[]
-  arenasHosted             Arena[]                   @relation("ArenaHost")
-  judgeArenas              Arena[]                   @relation("ArenaJudge")
-  arenasParticipated       ArenaParticipant[]
+
   writtenChapters          Chapter[]                 @relation("ChapterAuthor")
   chapterComments          ChapterComment[]
   comments                 Comment[]
   memberships              CommunityMember[]
   conversations            ConversationParticipant[]
   dailyAnswers             DailyAnswer[]
+  debateParticipants       DebateParticipant[]
   debateArguments          DebateArgument[]
-  discussionAnalyses       DiscussionAnalysis[]
+  debateViolations         DebateViolation[]
+  judgeRequests            JudgeRequest[]
+  debateRecords            DebateRecord[]
+  debateStats              UserDebateStats?
+  hallOfFameEntries        HallOfFameEntry[]
+  hallOfFameVotes          HallOfFameVote[]
+  gauntletFameEntries      GauntletHallOfFame[]
+  gauntletVotes            GauntletVote[]
   followers                Follow[]                  @relation("UserFollowers")
   following                Follow[]                  @relation("UserFollowing")
-  hallOfFameEntries        GauntletHallOfFame[]
-  gauntletVotes            GauntletVote[]
-  hallOfFameVotes          HallOfFameVote[]
+  discussionAnalyses       DiscussionAnalysis[]
   likes                    Like[]
   messagesSent             Message[]
   triggeredNotifications   Notification[]            @relation("NotificationActor")
@@ -513,70 +517,150 @@ model AniShotView {
   @@unique([aniShotId, userId])
 }
 
-model Arena {
-  id           String             @id @default(cuid())
-  code         String             @unique
-  hostId       String
-  topic        String
-  status       ArenaStatus        @default(WAITING)
-  roundCount   Int                @default(3)
-  currentRound Int                @default(0)
-  timerSeconds Int                @default(120)
-  judgeId      String?
-  winnerTeam   WinnerTeam?
-  verdictText  String?
-  isArchived   Boolean            @default(false)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  host         User               @relation("ArenaHost", fields: [hostId], references: [id])
-  judge        User?              @relation("ArenaJudge", fields: [judgeId], references: [id])
-  participants ArenaParticipant[]
-  rounds       DebateRound[]
-  fameVotes    HallOfFameVote[]
+
+
+model DebateArena {
+  id                String              @id @default(cuid())
+  code              String              @unique
+  title             String
+  topic             String
+  status            DebateArenaStatus   @default(LOBBY)
+  roundCount        Int                 @default(3)
+  timeLimitPerRound Int                 @default(120)
+  totalTimeLimit    Int                 @default(600)
+  maxDebaters       Int                 @default(6)
+  format            DebateFormat
+  strictRules       String[]
+  currentRound      Int                 @default(0)
+  currentTeamTurn   DebateTeamTurn      @default(NONE)
+  roundExtraTime    Int                 @default(0)
+  judgeId           String
+  adminId           String
+  winnerId          String?
+  winnerTeam        DebateWinnerTeam?
+  verdictText       String?
+  isPublic          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  participants      DebateParticipant[]
+  rounds            DebateRound[]
+  violations        DebateViolation[]
+  judgeRequests     JudgeRequest[]
+  records           DebateRecord[]
+  hallOfFame        HallOfFameEntry?
 }
 
-model ArenaParticipant {
-  id       String    @id @default(cuid())
+model DebateParticipant {
+  id       String                @id @default(cuid())
   arenaId  String
   userId   String
-  team     ArenaTeam
-  joinedAt DateTime  @default(now())
-  arena    Arena     @relation(fields: [arenaId], references: [id], onDelete: Cascade)
-  user     User      @relation(fields: [userId], references: [id])
+  role     DebateParticipantRole
+  isAdmin  Boolean               @default(false)
+  joinedAt DateTime              @default(now())
+  arena    DebateArena           @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([arenaId, userId])
 }
 
 model DebateRound {
-  id            String           @id @default(cuid())
-  arenaId       String
-  roundNumber   Int
-  judgeQuestion String?
-  createdAt     DateTime         @default(now())
-  arguments     DebateArgument[]
-  arena         Arena            @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  id              String           @id @default(cuid())
+  arenaId         String
+  roundNumber     Int
+  judgeQuestion   String?
+  startedAt       DateTime?
+  endedAt         DateTime?
+  extraTimeAdded  Int              @default(0)
+  arena           DebateArena      @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  arguments       DebateArgument[]
 }
 
 model DebateArgument {
-  id          String      @id @default(cuid())
-  roundId     String
-  userId      String
-  team        WinnerTeam
-  content     String
-  submittedAt DateTime    @default(now())
-  round       DebateRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id])
+  id           String           @id @default(cuid())
+  roundId      String
+  userId       String
+  team         DebateWinnerTeam
+  content      String
+  mediaUrls    String[]
+  mediaTypes   String[]
+  isValid      Boolean          @default(true)
+  pointPenalty Int              @default(0)
+  submittedAt  DateTime         @default(now())
+  round        DebateRound      @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DebateViolation {
+  id            String      @id @default(cuid())
+  arenaId       String
+  userId        String
+  reason        String
+  penaltyPoints Int         @default(5)
+  issuedAt      DateTime    @default(now())
+  arena         DebateArena @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JudgeRequest {
+  id          String             @id @default(cuid())
+  arenaId     String
+  requesterId String
+  status      JudgeRequestStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  arena       DebateArena        @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  requester   User               @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+}
+
+model DebateRecord {
+  id           String           @id @default(cuid())
+  userId       String
+  arenaId      String
+  result       DebateResult
+  role         DebateRecordRole
+  pointsEarned Int
+  pointsLost   Int
+  netPoints    Int
+  createdAt    DateTime         @default(now())
+  arena        DebateArena      @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserDebateStats {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  totalDebates   Int      @default(0)
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  draws          Int      @default(0)
+  totalPoints    Int      @default(0)
+  winStreak      Int      @default(0)
+  bestWinStreak  Int      @default(0)
+  rank           Int?
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HallOfFameEntry {
+  id         String           @id @default(cuid())
+  userId     String
+  arenaId    String           @unique
+  score      Int
+  upvotes    Int              @default(0)
+  featuredAt DateTime
+  createdAt  DateTime         @default(now())
+  arena      DebateArena      @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes      HallOfFameVote[]
 }
 
 model HallOfFameVote {
-  id        String   @id @default(cuid())
-  arenaId   String
+  id        String          @id @default(cuid())
+  entryId   String
   userId    String
-  createdAt DateTime @default(now())
-  arena     Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry     HallOfFameEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([arenaId, userId])
+  @@unique([entryId, userId])
 }
 
 model Conversation {
@@ -1079,22 +1163,55 @@ enum AniShotType {
   HYPE
 }
 
-enum ArenaStatus {
-  WAITING
+
+
+enum DebateArenaStatus {
+  LOBBY
   ACTIVE
+  PAUSED
   COMPLETED
+  CANCELLED
 }
 
-enum WinnerTeam {
+enum DebateFormat {
+  TEAMS
+  INDIVIDUALS
+}
+
+enum DebateTeamTurn {
+  TEAM_A
+  TEAM_B
+  NONE
+}
+
+enum DebateWinnerTeam {
   TEAM_A
   TEAM_B
   DRAW
 }
 
-enum ArenaTeam {
+enum DebateParticipantRole {
+  JUDGE
   TEAM_A
   TEAM_B
+  SPECTATOR
+}
+
+enum JudgeRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum DebateResult {
+  WIN
+  LOSS
+  DRAW
+}
+
+enum DebateRecordRole {
   JUDGE
+  DEBATER
 }
 
 enum InteractionType {

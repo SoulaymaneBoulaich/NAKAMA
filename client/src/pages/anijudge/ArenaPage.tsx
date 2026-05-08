@@ -2,507 +2,671 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  Trophy, Check, Clock, Send, 
-  UserPlus, ShieldCheck, ArrowLeft, Hash
+    Trophy, Check, Clock, Send, UserPlus, ShieldCheck, ArrowLeft, Hash, 
+    AlertTriangle, Zap, MessageSquare, Info, ShieldAlert, Award, 
+    Play, User, Crown, Ghost, Sparkles, X, Plus, Timer
 } from 'lucide-react';
-import { useSocket } from '../../hooks/useSocket';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useArenaSocket } from '../../hooks/useArenaSocket';
 import { useAuth } from '../../context/AuthContext';
 import { UserSearchModal } from '../../components/common/UserSearchModal';
 import { Avatar } from '../../components/common/Avatar';
+import './AniJudge.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const ArenaPage = () => {
-  const { code } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const socket = useSocket();
-  const [arena, setArena] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [argument, setArgument] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [timer, setTimer] = useState<any>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [verdict, setVerdict] = useState({ winnerTeam: 'TEAM_A', verdictText: '' });
-  const [judgeQuestion, setJudgeQuestion] = useState('');
+    const { code } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const socket = useArenaSocket();
+    
+    const [arena, setArena] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [argument, setArgument] = useState('');
+    const [copied, setCopied] = useState(false);
+    const [timer, setTimer] = useState<any>(null);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [verdict, setVerdict] = useState({ winnerTeam: 'TEAM_A', verdictText: '' });
+    const [judgeQuestion, setJudgeQuestion] = useState('');
+    const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
+    const [selectedDebaterForViolation, setSelectedDebaterForViolation] = useState<any>(null);
+    const [violationForm, setViolationForm] = useState({ type: 'LOGICAL_FALLACY', severity: 'MILD', comment: '' });
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchArena();
-  }, [code]);
+    useEffect(() => {
+        fetchArena();
+    }, [code]);
 
-  useEffect(() => {
-    if (socket && code && user) {
-      socket.emit('join-arena', { code, userId: user.id, team: 'TEAM_A' }); // Default join as Team A slot if just opening
+    useEffect(() => {
+        if (socket && code && user) {
+            socket.emit('join-arena', { code, userId: user.id });
 
-      socket.on('arena-updated', (updatedArena: any) => {
-        setArena(updatedArena);
-      });
+            socket.on('arena-updated', (updatedArena: any) => setArena(updatedArena));
+            socket.on('debate-started', (updatedArena: any) => setArena(updatedArena));
+            socket.on('timer-tick', (data: any) => setTimer(data));
+            socket.on('argument-submitted', (updatedArena: any) => {
+                setArena(updatedArena);
+                setArgument('');
+                scrollToBottom();
+            });
+            socket.on('new-round-started', (data: any) => {
+                setArena((prev: any) => ({
+                    ...prev,
+                    currentRound: data.roundNumber,
+                    rounds: [...prev.rounds, { ...data.round, arguments: [] }]
+                }));
+                setJudgeQuestion('');
+                scrollToBottom();
+            });
+            socket.on('violation-issued', (updatedArena: any) => setArena(updatedArena));
+            socket.on('time-granted', (updatedArena: any) => setArena(updatedArena));
+            socket.on('debate-ended', (updatedArena: any) => setArena(updatedArena));
 
-      socket.on('debate-started', (updatedArena: any) => {
-        setArena(updatedArena);
-      });
+            return () => {
+                socket.off('arena-updated');
+                socket.off('debate-started');
+                socket.off('timer-tick');
+                socket.off('argument-submitted');
+                socket.off('new-round-started');
+                socket.off('violation-issued');
+                socket.off('time-granted');
+                socket.off('debate-ended');
+            };
+        }
+    }, [socket, code, user]);
 
-      socket.on('timer-tick', (data: any) => {
-        setTimer(data);
-      });
+    const fetchArena = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/anijudge/${code}`, { withCredentials: true });
+            setArena(res.data);
+        } catch (err) {
+            console.error(err);
+            navigate('/anijudge');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      socket.on('argument-submitted', (updatedArena: any) => {
-          setArena(updatedArena);
-          setArgument('');
-          scrollToBottom();
-      });
+    const scrollToBottom = () => {
+        setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    };
 
-      socket.on('new-round-started', (data: any) => {
-          setArena((prev: any) => ({
-              ...prev,
-              currentRound: data.roundNumber,
-              rounds: [...prev.rounds, { ...data.round, arguments: [] }]
-          }));
-          setJudgeQuestion('');
-          scrollToBottom();
-      });
+    const handleJoinTeam = (team: string) => {
+        socket?.emit('join-team', { code, userId: user?.id, team });
+    };
 
-      socket.on('debate-ended', (updatedArena: any) => {
-          setArena(updatedArena);
-      });
+    const handleStartDebate = () => {
+        socket?.emit('start-debate', { arenaId: arena.id, hostId: user?.id });
+    };
 
-      return () => {
-        socket.off('arena-updated');
-        socket.off('debate-started');
-        socket.off('timer-tick');
-        socket.off('argument-submitted');
-        socket.off('new-round-started');
-        socket.off('debate-ended');
-      };
-    }
-  }, [socket, code, user]);
+    const handleSubmitArgument = () => {
+        if (!argument.trim()) return;
+        const myParticipant = arena.participants.find((p: any) => p.userId === user?.id);
+        socket?.emit('submit-argument', { 
+            arenaId: arena.id, 
+            content: argument, 
+            userId: user?.id, 
+            team: myParticipant.team 
+        });
+    };
 
-  const fetchArena = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/anijudge/${code}`, { withCredentials: true });
-      setArena(res.data);
-    } catch (err) {
-      console.error(err);
-      navigate('/anijudge');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleIssueViolation = () => {
+        if (!violationForm.comment.trim()) return;
+        socket?.emit('issue-violation', {
+            arenaId: arena.id,
+            judgeId: user?.id,
+            participantId: selectedDebaterForViolation.id,
+            ...violationForm
+        });
+        setIsViolationModalOpen(false);
+    };
 
-  const scrollToBottom = () => {
-      setTimeout(() => {
-          scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-  };
+    const handleGrantExtraTime = (team: string) => {
+        socket?.emit('grant-extra-time', { arenaId: arena.id, judgeId: user?.id, team, seconds: 60 });
+    };
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(code || '');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    const handleSubmitQuestion = () => {
+        if (!judgeQuestion.trim()) return;
+        socket?.emit('submit-judge-question', { arenaId: arena.id, question: judgeQuestion, userId: user?.id });
+    };
 
-  const handleJoinTeam = (team: string) => {
-      socket?.emit('join-arena', { code, userId: user?.id, team });
-  };
+    const handleSubmitVerdict = () => {
+        if (!verdict.verdictText.trim()) return;
+        socket?.emit('submit-verdict', { 
+            arenaId: arena.id, 
+            winnerTeam: verdict.winnerTeam, 
+            verdictText: verdict.verdictText, 
+            userId: user?.id 
+        });
+    };
 
-  const handleStartDebate = () => {
-      socket?.emit('start-debate', { arenaId: arena.id, hostId: user?.id });
-  };
-
-  const handleSubmitArgument = () => {
-      if (!argument.trim()) return;
-      const myParticipant = arena.participants.find((p: any) => p.userId === user?.id);
-      socket?.emit('submit-argument', { 
-        arenaId: arena.id, 
-        content: argument, 
-        userId: user?.id, 
-        team: myParticipant.team 
-      });
-  };
-
-  const handleSubmitQuestion = () => {
-      if (!judgeQuestion.trim()) return;
-      socket?.emit('submit-judge-question', { arenaId: arena.id, question: judgeQuestion, userId: user?.id });
-  };
-
-  const handleSubmitVerdict = () => {
-      if (!verdict.verdictText.trim()) return;
-      socket?.emit('submit-verdict', { 
-          arenaId: arena.id, 
-          winnerTeam: verdict.winnerTeam, 
-          verdictText: verdict.verdictText, 
-          userId: user?.id 
-      });
-  };
-
-  if (loading || !arena) return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-red-500">IGNITING ARENA...</div>;
-
-  const myParticipant = arena.participants.find((p: any) => p.userId === user?.id);
-  const isHost = arena.hostId === user?.id;
-  const isJudge = arena.judgeId === user?.id;
-  const currentRound = arena.rounds?.find((r: any) => r.roundNumber === arena.currentRound) || arena.rounds?.[arena.rounds.length - 1];
-  const isMyTurn = arena.status === 'ACTIVE' && timer?.activeTeam === myParticipant?.team;
-
-  return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col">
-      
-      {/* Top Navigation Bar */}
-      <div className="h-16 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] flex items-center justify-between px-6 sticky top-0 z-50">
-        <button onClick={() => navigate('/anijudge')} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-white transition-colors">
-          <ArrowLeft size={20} />
-          <span className="font-bold text-sm">BACK TO HUB</span>
-        </button>
-        <div className="flex flex-col items-center">
-          <h2 className="text-sm font-bold tracking-widest text-[var(--text-secondary)] opacity-50 uppercase">ARENA TOPIC</h2>
-          <p className="text-sm font-bold truncate max-w-[400px]">{arena.topic}</p>
-        </div>
-        <div className="flex items-center gap-4">
-           {arena.status === 'ACTIVE' && timer && (
-               <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full border transition-all ${timer.secondsRemaining < 10 ? 'bg-red-600/20 border-red-500 animate-pulse' : 'bg-black/20 border-[var(--border-color)]'}`}>
-                    <Clock size={16} className={timer.secondsRemaining < 10 ? 'text-red-500' : 'text-blue-400'} />
-                    <span className={`font-mono text-xl font-bold ${timer.secondsRemaining < 10 ? 'text-red-500' : 'text-white'}`}>
-                        {Math.floor(timer.secondsRemaining / 60)}:{(timer.secondsRemaining % 60).toString().padStart(2, '0')}
-                    </span>
-               </div>
-           )}
-           <button onClick={copyCode} className="flex items-center gap-2 bg-[var(--bg-tertiary)] px-3 py-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--border-secondary)] transition-all">
-             {copied ? <Check size={16} className="text-green-500" /> : <Hash size={16} className="text-red-500" />}
-             <span className="font-mono font-bold tracking-widest">{code}</span>
-           </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto p-6 md:p-8">
-        <div className="max-w-6xl mx-auto h-full">
-            
-            {/* LOBBY STATE */}
-            {arena.status === 'WAITING' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-12 glass-card rounded-3xl border border-[var(--border-color)] relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent" />
-                    
-                    {/* Team A */}
-                    <TeamColumn 
-                        title="Team Alpha" 
-                        team="TEAM_A" 
-                        participants={arena.participants.filter((p: any) => p.team === 'TEAM_A')}
-                        onJoin={() => handleJoinTeam('TEAM_A')}
-                        isMember={myParticipant?.team === 'TEAM_A'}
-                    />
-
-                    {/* Judge Center */}
-                    <div className="flex flex-col items-center justify-center p-8 bg-red-950/10 rounded-2xl border border-red-900/10 gap-6">
-                        <ShieldCheck size={48} className="text-red-500" />
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold uppercase mb-2">Grand Arbiter</h3>
-                            {arena.judge ? (
-                                <div className="flex flex-col items-center gap-2">
-                                    <Avatar 
-                                        src={arena.judge.avatar} 
-                                        username={arena.judge.username}
-                                        size="lg"
-                                        className="w-16 h-16 rounded-full border-4 border-red-900/30"
-                                    />
-                                    <span className="font-bold">{arena.judge.username}</span>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-[var(--text-secondary)] italic">Awaiting a judge...</p>
-                            )}
-                        </div>
-                        
-                        {isHost && !arena.judgeId && (
-                            <button 
-                                onClick={() => setIsSearchOpen(true)}
-                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-all"
-                            >
-                                ASSIGN JUDGE
-                            </button>
-                        )}
-
-                        <div className="mt-8 w-full space-y-4">
-                            <button 
-                                onClick={handleStartDebate}
-                                disabled={!isHost || !arena.judgeId || arena.participants.length < 3}
-                                className="w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-50 hover:bg-red-600 hover:text-white transition-all shadow-xl shadow-red-900/20"
-                            >
-                                BEGIN CONFLICT
-                            </button>
-                            {!isHost && (
-                                <p className="text-[10px] text-center uppercase tracking-widest opacity-50">Only the host can start the debate</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Team B */}
-                    <TeamColumn 
-                        title="Team Omega" 
-                        team="TEAM_B" 
-                        participants={arena.participants.filter((p: any) => p.team === 'TEAM_B')}
-                        onJoin={() => handleJoinTeam('TEAM_B')}
-                        isMember={myParticipant?.team === 'TEAM_B'}
-                    />
+    if (loading || !arena) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center font-syne">
+                <div className="flex flex-col items-center gap-6">
+                    <div className="w-20 h-20 border-4 border-white/5 border-t-red-500 rounded-full animate-spin" />
+                    <div className="text-xl font-black tracking-[0.4em] text-white animate-pulse">SYNCHRONIZING ARENA...</div>
                 </div>
-            )}
+            </div>
+        );
+    }
 
-            {/* ACTIVE STATE */}
-            {arena.status === 'ACTIVE' && (
-                <div className="flex flex-col h-full gap-6">
-                    {/* Round Header */}
-                    <div className="flex items-center justify-between bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border-color)]">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-red-600 text-white font-bold py-1 px-4 rounded-lg text-lg">
-                                ROUND {arena.currentRound} / {arena.roundCount}
+    const myParticipant = arena.participants.find((p: any) => p.userId === user?.id);
+    const isHost = arena.hostId === user?.id;
+    const isJudge = arena.judgeId === user?.id;
+    const isDebater = !!myParticipant && myParticipant.role === 'DEBATER';
+    const isMyTurn = arena.status === 'ACTIVE' && timer?.activeTeam === myParticipant?.team;
+
+    return (
+        <div className="anijudge-root min-h-screen bg-[#0a0a0c] text-[#e1e1e6] flex flex-col relative overflow-hidden">
+            
+            {/* Top Bar */}
+            <header className="h-20 bg-black/40 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-8 z-50">
+                <div className="flex items-center gap-6">
+                    <button onClick={() => navigate('/anijudge')} className="p-2 rounded-xl hover:bg-white/5 transition-all text-zinc-500 hover:text-white">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div className="h-8 w-[1px] bg-white/10" />
+                    <div>
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                            <Hash size={12} className="text-red-500" />
+                            {arena.code} · {arena.status}
+                        </div>
+                        <h1 className="text-lg font-bold font-syne truncate max-w-md">{arena.title}</h1>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                    {arena.status === 'ACTIVE' && timer && (
+                        <div className={`flex items-center gap-4 px-6 h-12 rounded-2xl border transition-all ${timer.secondsRemaining < 15 ? 'bg-red-500/20 border-red-500 animate-pulse' : 'bg-white/5 border-white/10'}`}>
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Time Remaining</span>
+                                <span className={`font-mono text-xl font-black leading-none ${timer.secondsRemaining < 15 ? 'text-red-500' : 'text-white'}`}>
+                                    {Math.floor(timer.secondsRemaining / 60)}:{(timer.secondsRemaining % 60).toString().padStart(2, '0')}
+                                </span>
                             </div>
-                            <h3 className="text-xl font-bold italic opacity-90">
-                                {currentRound?.judgeQuestion ? `"${currentRound.judgeQuestion}"` : "Awaiting judge's inquiry..."}
-                            </h3>
+                            <Clock size={24} className={timer.secondsRemaining < 15 ? 'text-red-500' : 'text-zinc-500'} />
                         </div>
-                        <div className="flex -space-x-3">
-                            {arena.participants.map((p: any) => (
-                                <Avatar 
-                                    key={p.id} 
-                                    src={p.user.avatar} 
-                                    username={p.user.username}
-                                    size="sm"
-                                    className="w-10 h-10 rounded-full border-2 border-black" 
-                                />
-                            ))}
-                        </div>
+                    )}
+                    <button 
+                        onClick={() => {
+                            navigator.clipboard.writeText(arena.code);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="h-12 px-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-3"
+                    >
+                        {copied ? <Check size={18} className="text-green-500" /> : <Plus size={18} className="text-red-500" />}
+                        <span className="font-mono font-bold tracking-widest">{arena.code}</span>
+                    </button>
+                    <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden">
+                        <img src={user?.avatar || '/default-avatar.png'} alt="" className="w-full h-full object-cover" />
                     </div>
+                </div>
+            </header>
 
-                    {/* Chat Area */}
-                    <div className="flex-1 grid grid-cols-2 gap-8 min-h-0">
-                        {/* Team A Arguments */}
-                        <ArgumentColumn 
-                            team="TEAM_A" 
-                            isActive={timer?.activeTeam === 'TEAM_A'}
-                            arguments={arena.rounds.flatMap((r: any) => r.arguments).filter((a: any) => a.team === 'TEAM_A')}
-                        />
-                        {/* Team B Arguments */}
-                        <ArgumentColumn 
-                            team="TEAM_B" 
-                            isActive={timer?.activeTeam === 'TEAM_B'}
-                            arguments={arena.rounds.flatMap((r: any) => r.arguments).filter((a: any) => a.team === 'TEAM_B')}
-                        />
-                         <div ref={scrollRef} />
-                    </div>
-
-                    {/* Control Input */}
-                    <div className="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border-color)] shadow-2xl shadow-black/50">
-                        {isMyTurn ? (
-                            <div className="flex gap-4">
-                                <div className="flex-1 relative">
-                                    <textarea 
-                                        value={argument}
-                                        onChange={(e) => setArgument(e.target.value)}
-                                        placeholder="Formulate your argument..."
-                                        className="w-full bg-black/40 border-2 border-red-500/50 rounded-xl px-4 py-3 min-h-[100px] outline-none transition-all resize-none shadow-glow font-medium"
-                                        maxLength={1000}
-                                    />
-                                    <div className={`absolute bottom-3 right-4 text-xs font-bold ${argument.length > 900 ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>
-                                        {argument.length}/1000
+            <main className="flex-1 flex overflow-hidden">
+                
+                {/* Left Panel: Participants & Judge Controls */}
+                <aside className="w-80 border-r border-white/10 bg-black/20 overflow-y-auto p-6 hidden xl:block">
+                    <div className="space-y-10">
+                        {/* Judge Info */}
+                        <section>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Arbiter of Fate</h3>
+                            {arena.judge ? (
+                                <div className="p-4 rounded-3xl bg-red-500/5 border border-red-500/20 flex items-center gap-4">
+                                    <div className="relative">
+                                        <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-white/10 overflow-hidden">
+                                            <img src={arena.judge.avatar} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <Crown size={14} className="absolute -top-1 -right-1 text-yellow-500 fill-yellow-500" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm">{arena.judge.username}</div>
+                                        <div className="text-[10px] font-black text-red-500 uppercase tracking-widest">Grand Judge</div>
                                     </div>
                                 </div>
+                            ) : (
+                                <div className="p-8 rounded-3xl border border-dashed border-white/10 flex flex-col items-center justify-center text-center">
+                                    <Ghost size={32} className="text-zinc-700 mb-3" />
+                                    <p className="text-xs text-zinc-500 italic">Seat is empty</p>
+                                    {isHost && (
+                                        <button onClick={() => setIsSearchOpen(true)} className="mt-4 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400 transition-colors">Assign Now</button>
+                                    )}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Debaters */}
+                        <section>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Combatants</h3>
+                            <div className="space-y-3">
+                                {['TEAM_A', 'TEAM_B'].map(team => (
+                                    <div key={team} className="space-y-2">
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${team === 'TEAM_A' ? 'text-blue-500' : 'text-red-500'}`}>
+                                            {team.replace('_', ' ')}
+                                        </div>
+                                        {arena.participants.filter((p: any) => p.team === team).map((p: any) => (
+                                            <div key={p.id} className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between group">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar src={p.user.avatar} username={p.user.username} size="sm" className="w-8 h-8 rounded-xl" />
+                                                    <span className="text-xs font-bold">{p.user.username}</span>
+                                                </div>
+                                                {isJudge && arena.status === 'ACTIVE' && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedDebaterForViolation(p);
+                                                            setIsViolationModalOpen(true);
+                                                        }}
+                                                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 transition-all hover:text-white"
+                                                    >
+                                                        <AlertTriangle size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {arena.status === 'WAITING' && arena.participants.filter((p: any) => p.team === team).length < arena.maxDebaters / 2 && (
+                                            <button 
+                                                onClick={() => handleJoinTeam(team)}
+                                                className="w-full h-10 rounded-xl border border-dashed border-white/10 text-[10px] font-black text-zinc-500 hover:border-white/30 hover:text-white transition-all uppercase tracking-widest"
+                                            >
+                                                + Join Slot
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Judge Toolbox */}
+                        {isJudge && arena.status === 'ACTIVE' && (
+                            <section className="p-6 rounded-3xl bg-red-500/5 border border-red-500/20 space-y-6">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Judge Toolbox</h3>
+                                <div className="space-y-3">
+                                    <button 
+                                        onClick={() => handleGrantExtraTime('TEAM_A')}
+                                        className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/50 transition-all flex items-center gap-3 px-4"
+                                    >
+                                        <Timer size={16} className="text-blue-500" />
+                                        <span className="text-[10px] font-black uppercase text-zinc-300">+60s Team Alpha</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => handleGrantExtraTime('TEAM_B')}
+                                        className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/50 transition-all flex items-center gap-3 px-4"
+                                    >
+                                        <Timer size={16} className="text-red-500" />
+                                        <span className="text-[10px] font-black uppercase text-zinc-300">+60s Team Omega</span>
+                                    </button>
+                                </div>
+                            </section>
+                        )}
+                    </div>
+                </aside>
+
+                {/* Center Panel: Main Debate Area */}
+                <section className="flex-1 flex flex-col min-w-0 bg-black/40">
+                    
+                    {/* WAITING STATE */}
+                    {arena.status === 'WAITING' && (
+                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.9 }} 
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="max-w-xl space-y-10"
+                            >
+                                <div className="inline-flex p-6 rounded-[2.5rem] bg-white/5 border border-white/10">
+                                    <Swords size={64} className="text-red-500" />
+                                </div>
+                                <div className="space-y-4">
+                                    <h2 className="text-5xl font-syne font-black tracking-tighter uppercase leading-none">Awaiting the Signal</h2>
+                                    <p className="text-zinc-500 font-medium">The arena is initialized. Participants are gathering in the frequency. Once the judge is assigned and combatants are ready, the host can commence the conflict.</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-6 text-left">
+                                    <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
+                                        <div className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Rounds</div>
+                                        <div className="text-2xl font-black font-syne">{arena.roundCount} Sets</div>
+                                    </div>
+                                    <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
+                                        <div className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Time Limit</div>
+                                        <div className="text-2xl font-black font-syne">{arena.timeLimitPerRound}s / Turn</div>
+                                    </div>
+                                </div>
+
+                                {isHost && (
+                                    <button 
+                                        onClick={handleStartDebate}
+                                        disabled={!arena.judgeId || arena.participants.length < 2}
+                                        className="w-full h-20 bg-white text-black rounded-3xl font-black text-xl tracking-tighter hover:bg-zinc-200 transition-all disabled:opacity-30 disabled:grayscale active:scale-95 flex items-center justify-center gap-4"
+                                    >
+                                        COMMENCE CONFLICT
+                                        <Zap size={24} className="fill-black" />
+                                    </button>
+                                )}
+                            </motion.div>
+                        </div>
+                    )}
+
+                    {/* ACTIVE STATE */}
+                    {arena.status === 'ACTIVE' && (
+                        <div className="flex-1 flex flex-col min-h-0">
+                            
+                            {/* Round Info Banner */}
+                            <div className="p-8 border-b border-white/10 flex items-center justify-between bg-black/20">
+                                <div className="flex items-center gap-6">
+                                    <div className="h-16 w-16 rounded-2xl bg-red-500 flex flex-col items-center justify-center text-black">
+                                        <span className="text-[10px] font-black uppercase">Round</span>
+                                        <span className="text-2xl font-black leading-none">{arena.currentRound}</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold italic text-white/90">
+                                            {arena.rounds.find((r: any) => r.roundNumber === arena.currentRound)?.judgeQuestion || "Arbiter is considering the next move..."}
+                                        </h2>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${timer?.activeTeam === 'TEAM_A' ? 'bg-blue-500/20 text-blue-500' : 'bg-red-500/20 text-red-500'}`}>
+                                                {timer?.activeTeam ? `${timer.activeTeam.replace('_', ' ')} Speaking` : 'Preparation Phase'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Arguments Feed */}
+                            <div className="flex-1 overflow-y-auto p-10 space-y-8 scroll-smooth" id="argument-feed">
+                                <AnimatePresence mode="popLayout">
+                                    {arena.rounds.flatMap((r: any) => r.arguments).map((arg: any) => (
+                                        <motion.div 
+                                            key={arg.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className={`flex ${arg.team === 'TEAM_A' ? 'justify-start' : 'justify-end'}`}
+                                        >
+                                            <div className={`max-w-2xl group flex flex-col ${arg.team === 'TEAM_A' ? 'items-start' : 'items-end'}`}>
+                                                <div className="flex items-center gap-3 mb-2 px-2">
+                                                    {arg.team === 'TEAM_B' && <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{arg.user.username}</span>}
+                                                    <Avatar src={arg.user.avatar} username={arg.user.username} size="sm" className="w-6 h-6 rounded-lg" />
+                                                    {arg.team === 'TEAM_A' && <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{arg.user.username}</span>}
+                                                </div>
+                                                <div className={`p-6 rounded-[2rem] text-sm leading-relaxed ${
+                                                    arg.team === 'TEAM_A' ? 'bg-blue-600/10 border border-blue-500/20 rounded-tl-none text-blue-100' : 'bg-red-600/10 border border-red-500/20 rounded-tr-none text-red-100'
+                                                }`}>
+                                                    {arg.content}
+                                                </div>
+                                                <div className="mt-2 text-[8px] font-bold text-zinc-600 uppercase tracking-[0.2em] px-2">
+                                                    {new Date(arg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                                <div ref={scrollRef} />
+                            </div>
+
+                            {/* Input Area */}
+                            <div className="p-8 border-t border-white/10 bg-black/40">
+                                {isMyTurn ? (
+                                    <div className="max-w-4xl mx-auto flex gap-4">
+                                        <div className="flex-1 relative">
+                                            <textarea 
+                                                value={argument}
+                                                onChange={(e) => setArgument(e.target.value)}
+                                                placeholder="Inject your argument into the frequency..."
+                                                className="w-full h-32 bg-white/5 border border-white/20 rounded-3xl p-6 outline-none focus:border-red-500/50 transition-all resize-none text-white font-medium"
+                                                maxLength={1000}
+                                            />
+                                            <div className="absolute bottom-4 right-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+                                                {argument.length} / 1000
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={handleSubmitArgument}
+                                            disabled={!argument.trim()}
+                                            className="w-32 h-32 bg-red-600 hover:bg-red-700 disabled:opacity-30 rounded-3xl flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group shadow-[0_0_30px_rgba(255,59,59,0.1)]"
+                                        >
+                                            <Send size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Submit</span>
+                                        </button>
+                                    </div>
+                                ) : isJudge && !timer?.activeTeam ? (
+                                    <div className="max-w-3xl mx-auto space-y-6">
+                                        {arena.currentRound < arena.roundCount ? (
+                                            <div className="space-y-4">
+                                                <div className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Initiate Next Round</div>
+                                                <div className="flex gap-4">
+                                                    <input 
+                                                        type="text"
+                                                        value={judgeQuestion}
+                                                        onChange={(e) => setJudgeQuestion(e.target.value)}
+                                                        placeholder="Ask a question to direct the debate..."
+                                                        className="flex-1 h-16 bg-white/5 border border-white/10 rounded-2xl px-6 outline-none focus:border-blue-500/50 font-bold"
+                                                    />
+                                                    <button 
+                                                        onClick={handleSubmitQuestion}
+                                                        disabled={!judgeQuestion.trim()}
+                                                        className="px-8 h-16 bg-blue-600 hover:bg-blue-700 disabled:opacity-30 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                                                    >
+                                                        NEXT PHASE
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-[2.5rem] p-10 text-center space-y-8">
+                                                <div className="space-y-2">
+                                                    <Trophy size={48} className="mx-auto text-yellow-500 mb-4" />
+                                                    <h3 className="text-3xl font-syne font-black tracking-tight uppercase">Rendering Final Judgment</h3>
+                                                    <p className="text-zinc-500 text-sm max-w-md mx-auto">The combat has ended. Your verdict will be recorded in the scrolls of eternity. Choose carefully, Arbiter.</p>
+                                                </div>
+                                                <div className="flex flex-col gap-4 max-w-xl mx-auto">
+                                                    <div className="flex gap-4">
+                                                        <select 
+                                                            value={verdict.winnerTeam}
+                                                            onChange={(e) => setVerdict({...verdict, winnerTeam: e.target.value})}
+                                                            className="h-14 px-6 bg-black border border-white/10 rounded-2xl outline-none font-bold text-xs uppercase"
+                                                        >
+                                                            <option value="TEAM_A">ALPHA VICTORY</option>
+                                                            <option value="TEAM_B">OMEGA VICTORY</option>
+                                                            <option value="DRAW">DEADLOCK / DRAW</option>
+                                                        </select>
+                                                        <input 
+                                                            type="text"
+                                                            value={verdict.verdictText}
+                                                            onChange={(e) => setVerdict({...verdict, verdictText: e.target.value})}
+                                                            placeholder="Rationalize your decision..."
+                                                            className="flex-1 h-14 bg-black border border-white/10 rounded-2xl px-6 outline-none focus:border-yellow-500/50"
+                                                        />
+                                                    </div>
+                                                    <button 
+                                                        onClick={handleSubmitVerdict}
+                                                        disabled={!verdict.verdictText.trim()}
+                                                        className="w-full h-16 bg-yellow-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-yellow-400 transition-all active:scale-95"
+                                                    >
+                                                        FINALIZE RECORD
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="h-32 flex flex-col items-center justify-center gap-4 text-zinc-500">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">
+                                                {timer?.activeTeam ? `Receiving ${timer.activeTeam.replace('_', ' ')} Signal...` : 'Synchronizing Next Phase...'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* COMPLETED STATE */}
+                    {arena.status === 'COMPLETED' && (
+                        <div className="flex-1 flex flex-col items-center justify-center p-12 overflow-y-auto">
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="max-w-3xl w-full bg-white/5 border border-white/10 rounded-[3rem] p-16 text-center space-y-12 backdrop-blur-xl"
+                            >
+                                <div className="space-y-4">
+                                    <div className="inline-flex p-6 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 mb-4">
+                                        <Award size={64} />
+                                    </div>
+                                    <h2 className="text-6xl font-syne font-black tracking-tighter uppercase leading-none italic">
+                                        {arena.winnerTeam === 'DRAW' ? "The Deadlock" : 
+                                         arena.winnerTeam === 'TEAM_A' ? "Alpha Ascendant" : "Omega Ascendant"}
+                                    </h2>
+                                    <div className="flex items-center justify-center gap-3 text-zinc-500 text-sm font-bold uppercase tracking-widest">
+                                        Rendered By <span className="text-white">{arena.judge?.username}</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-10 rounded-[2.5rem] bg-black/40 border border-white/5 italic text-2xl leading-relaxed text-zinc-300 font-medium font-syne">
+                                    "{arena.verdictText}"
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10">
+                                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Hall of Fame Status</div>
+                                        <div className={`text-xl font-black ${arena.hallOfFameId ? 'text-green-500' : 'text-red-500'}`}>
+                                            {arena.hallOfFameId ? 'INDELIBLE RECORD' : 'DENIED ENTRY'}
+                                        </div>
+                                    </div>
+                                    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10">
+                                        <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Global Reach</div>
+                                        <div className="text-xl font-black text-white">432 SPECTATORS</div>
+                                    </div>
+                                </div>
+
                                 <button 
-                                    onClick={handleSubmitArgument}
-                                    disabled={!argument.trim()}
-                                    className="bg-red-600 hover:bg-red-700 text-white font-bold px-10 rounded-xl transition-all flex flex-col items-center justify-center gap-2 group"
+                                    onClick={() => navigate('/anijudge')}
+                                    className="w-full h-20 bg-white text-black rounded-3xl font-black text-xl tracking-tighter hover:bg-zinc-200 transition-all active:scale-95 flex items-center justify-center gap-4"
                                 >
-                                    <Send size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                    SUBMIT
+                                    EXIT TERMINAL
+                                    <ArrowLeft size={24} />
+                                </button>
+                            </motion.div>
+                        </div>
+                    )}
+                </section>
+
+                {/* Right Panel: Violations & Feed */}
+                <aside className="w-80 border-l border-white/10 bg-black/20 overflow-y-auto p-6 hidden 2xl:block">
+                    <div className="space-y-10">
+                        <section>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6 flex items-center gap-2">
+                                <ShieldAlert size={14} className="text-red-500" />
+                                Infractions
+                            </h3>
+                            <div className="space-y-3">
+                                {arena.violations?.length === 0 ? (
+                                    <p className="text-xs text-zinc-600 italic px-2">No violations recorded yet.</p>
+                                ) : (
+                                    arena.violations?.map((v: any) => (
+                                        <div key={v.id} className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black text-red-500 uppercase">{v.type.replace('_', ' ')}</span>
+                                                <span className="text-[8px] font-bold text-zinc-600">{v.severity}</span>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-white">Target: {v.participant.user.username}</div>
+                                            <p className="text-[10px] text-zinc-400 italic">"{v.comment}"</p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </section>
+                    </div>
+                </aside>
+            </main>
+
+            {/* Violation Modal */}
+            <AnimatePresence>
+                {isViolationModalOpen && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-md bg-[#0d0d0f] rounded-[2rem] border border-white/10 overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
+                                        <AlertTriangle size={20} />
+                                    </div>
+                                    <h3 className="text-lg font-bold font-syne uppercase">Issue Violation</h3>
+                                </div>
+                                <button onClick={() => setIsViolationModalOpen(false)}><X size={20} /></button>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                <div className="p-4 rounded-2xl bg-white/5 flex items-center gap-3 mb-4">
+                                    <Avatar src={selectedDebaterForViolation?.user.avatar} username={selectedDebaterForViolation?.user.username} size="sm" />
+                                    <span className="font-bold">{selectedDebaterForViolation?.user.username}</span>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Type</label>
+                                    <select 
+                                        value={violationForm.type}
+                                        onChange={(e) => setViolationForm({...violationForm, type: e.target.value})}
+                                        className="w-full h-12 bg-black border border-white/10 rounded-xl px-4 outline-none font-bold text-xs"
+                                    >
+                                        <option value="LOGICAL_FALLACY">LOGICAL FALLACY</option>
+                                        <option value="TOXICITY">TOXICITY</option>
+                                        <option value="OFF_TOPIC">OFF TOPIC</option>
+                                        <option value="LACK_OF_EVIDENCE">LACK OF EVIDENCE</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Severity</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {['MILD', 'MODERATE', 'SEVERE'].map(s => (
+                                            <button 
+                                                key={s}
+                                                onClick={() => setViolationForm({...violationForm, severity: s})}
+                                                className={`h-10 rounded-xl border text-[10px] font-black transition-all ${violationForm.severity === s ? 'bg-red-500 border-red-500 text-white' : 'border-white/10 text-zinc-500'}`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Arbiter Comment</label>
+                                    <textarea 
+                                        value={violationForm.comment}
+                                        onChange={(e) => setViolationForm({...violationForm, comment: e.target.value})}
+                                        placeholder="Reason for violation..."
+                                        className="w-full h-24 bg-black border border-white/10 rounded-xl p-4 outline-none text-sm resize-none"
+                                    />
+                                </div>
+
+                                <button 
+                                    onClick={handleIssueViolation}
+                                    className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-2xl transition-all"
+                                >
+                                    STRIKE COMBATANT
                                 </button>
                             </div>
-                        ) : isJudge && !timer?.activeTeam ? (
-                            arena.currentRound < arena.roundCount ? (
-                                <div className="flex gap-4">
-                                    <input 
-                                        type="text"
-                                        value={judgeQuestion}
-                                        onChange={(e) => setJudgeQuestion(e.target.value)}
-                                        placeholder="Pose a question for the next round..."
-                                        className="flex-1 bg-black/40 border-2 border-blue-500/50 rounded-xl px-6 py-4 outline-none font-bold"
-                                    />
-                                    <button 
-                                        onClick={handleSubmitQuestion}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 rounded-xl"
-                                    > NEXT ROUND </button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="text-center">
-                                      <h3 className="text-xl font-bold text-yellow-500 uppercase tracking-widest">Final Verdict Phase</h3>
-                                      <p className="text-[var(--text-secondary)]">The debate has concluded. It is time to render your judgment.</p>
-                                    </div>
-                                    <div className="flex gap-4 w-full max-w-2xl">
-                                        <select 
-                                            value={verdict.winnerTeam}
-                                            onChange={(e) => setVerdict({...verdict, winnerTeam: e.target.value})}
-                                            className="bg-[var(--bg-tertiary)] text-white font-bold px-4 py-3 rounded-xl border border-[var(--border-color)] outline-none"
-                                        >
-                                            <option value="TEAM_A">TEAM ALPHA WON</option>
-                                            <option value="TEAM_B">TEAM OMEGA WON</option>
-                                            <option value="DRAW">IT IS A DRAW</option>
-                                        </select>
-                                        <input 
-                                            type="text"
-                                            value={verdict.verdictText}
-                                            onChange={(e) => setVerdict({...verdict, verdictText: e.target.value})}
-                                            placeholder="Explain your reasoning..."
-                                            className="flex-1 bg-black/40 border-2 border-yellow-500/30 rounded-xl px-4 outline-none"
-                                        />
-                                        <button 
-                                            onClick={handleSubmitVerdict}
-                                            className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-8 rounded-xl"
-                                        > FINALIZE </button>
-                                    </div>
-                                </div>
-                            )
-                        ) : (
-                            <div className="text-center py-4 flex flex-col items-center gap-2">
-                                <div className="flex items-center gap-3 text-[var(--text-secondary)]">
-                                    <Clock size={16} className="animate-spin" />
-                                    <span className="font-bold tracking-widest italic opacity-50 uppercase">
-                                        {timer?.activeTeam === 'TEAM_A' ? "Alpha is speaking..." : 
-                                         timer?.activeTeam === 'TEAM_B' ? "Omega is speaking..." : 
-                                         "Awaiting judge's interaction..."}
-                                    </span>
-                                </div>
-                            </div>
-                        )}
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
 
-            {/* COMPLETED STATE */}
-            {arena.status === 'COMPLETED' && (
-                <div className="flex flex-col h-full gap-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                    <div className="glass-card p-12 rounded-3xl border border-yellow-500/30 text-center space-y-6 relative overflow-hidden bg-gradient-to-b from-yellow-950/10 to-transparent">
-                        <Trophy size={80} className="mx-auto text-yellow-500 animate-bounce" />
-                        <div>
-                            <h1 className="text-5xl font-black font-[var(--font-syne)] uppercase tracking-tighter mb-2">
-                                {arena.winnerTeam === 'DRAW' ? "The Dust Settles: A Draw" : 
-                                 arena.winnerTeam === 'TEAM_A' ? "Victory for Alpha" : "Victory for Omega"}
-                            </h1>
-                            <div className="flex items-center justify-center gap-2 text-[var(--text-secondary)] font-bold">
-                                <span>VERDICT RENDERED BY</span>
-                                <span className="text-blue-400">{arena.judge?.username}</span>
-                            </div>
-                        </div>
-
-                        <div className="max-w-2xl mx-auto p-6 bg-black/40 rounded-2xl border border-yellow-500/20 italic text-xl leading-relaxed">
-                            "{arena.verdictText}"
-                        </div>
-
-                        <div className="pt-8 flex justify-center gap-4">
-                            <button 
-                                onClick={() => navigate('/anijudge')}
-                                className="bg-[var(--bg-tertiary)] hover:bg-white hover:text-black font-bold px-10 py-4 rounded-xl transition-all"
-                            > RETURN TO HUB </button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6 opacity-60">
-                         <h3 className="text-center font-bold uppercase tracking-widest text-[var(--text-secondary)]">DEBATE ARCHIVE</h3>
-                         {arena.rounds.map((round: any) => (
-                             <div key={round.id} className="space-y-4">
-                                 <div className="text-center py-2 bg-[var(--bg-secondary)] rounded-lg text-sm font-bold border border-[var(--border-color)]">
-                                     ROUND {round.roundNumber} - "{round.judgeQuestion}"
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-6">
-                                     {round.arguments.map((arg: any) => (
-                                         <div key={arg.id} className={`p-4 rounded-xl border ${arg.team === 'TEAM_A' ? 'bg-blue-900/10 border-blue-900/20 col-start-1' : 'bg-red-900/10 border-red-900/20 col-start-2'}`}>
-                                            <p className="text-sm">{arg.content}</p>
-                                         </div>
-                                     ))}
-                                 </div>
-                             </div>
-                         ))}
-                    </div>
-                </div>
-            )}
-
-        </div>
-      </div>
-
-      <UserSearchModal 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)}
-        onSelect={(u: any) => {
-            socket?.emit('set-judge', { arenaId: arena.id, judgeUserId: u.id, hostId: user?.id });
-            setIsSearchOpen(false);
-        }}
-      />
-    </div>
-  );
-};
-
-const TeamColumn = ({ title, team, participants, onJoin, isMember }: any) => {
-    const slots = [0, 1, 2];
-    return (
-        <div className="flex flex-col gap-6">
-            <h3 className={`text-xl font-bold uppercase ${team === 'TEAM_A' ? 'text-blue-500 text-left' : 'text-red-500 text-right'}`}>{title}</h3>
-            <div className="space-y-4">
-                {slots.map(i => {
-                    const p = participants[i];
-                    return (
-                        <div key={i} className={`h-20 rounded-2xl border-2 border-dashed flex items-center px-4 gap-4 transition-all ${p ? 'bg-black/40 border-transparent shadow-inner' : 'border-[var(--border-color)]'}`}>
-                            {p ? (
-                                <>
-                                    <Avatar 
-                                        src={p.user.avatar} 
-                                        username={p.user.username}
-                                        size="sm"
-                                        className="w-12 h-12 rounded-xl"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-bold text-sm truncate">{p.user.username}</p>
-                                        <p className="text-[10px] text-[var(--text-secondary)] uppercase">CONTRIBUTOR</p>
-                                    </div>
-                                </>
-                            ) : (
-                                !isMember && (
-                                    <button 
-                                        onClick={onJoin}
-                                        className="w-full h-full flex items-center justify-center gap-2 text-xs font-bold opacity-30 hover:opacity-100 hover:text-red-500 transition-all uppercase tracking-widest"
-                                    >
-                                        <UserPlus size={16} /> CLOUD SLOT {i+1}
-                                    </button>
-                                )
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+            <UserSearchModal 
+                isOpen={isSearchOpen} 
+                onClose={() => setIsSearchOpen(false)}
+                onSelect={(u: any) => {
+                    socket?.emit('set-judge', { arenaId: arena.id, judgeUserId: u.id, hostId: user?.id });
+                    setIsSearchOpen(false);
+                }}
+            />
         </div>
     );
 };
-
-const ArgumentColumn = ({ team, isActive, arguments: args }: any) => (
-    <div className={`flex flex-col gap-4 rounded-2xl p-4 transition-all border-2 ${
-        isActive ? 'bg-red-950/20 border-red-500/50' : 'bg-black/10 border-transparent'
-    }`}>
-        <div className="flex items-center justify-between mb-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest ${team === 'TEAM_A' ? 'text-blue-500' : 'text-red-500'}`}>
-                {team === 'TEAM_A' ? 'ALPHA CHANNEL' : 'OMEGA CHANNEL'}
-            </span>
-            {isActive && <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-red-500 rounded-full animate-ping" /><span className="text-[10px] font-black uppercase text-red-500">LIVE</span></div>}
-        </div>
-        <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-            {args.map((a: any) => (
-                <div key={a.id} className={`p-4 rounded-2xl ${team === 'TEAM_A' ? 'bg-blue-600/10 border border-blue-600/20 text-blue-100' : 'bg-red-600/10 border border-red-600/20 text-red-100'} animate-in fade-in slide-in-from-bottom-2`}>
-                   <div className="flex items-center gap-2 mb-2">
-                        <Avatar 
-                            src={a.user.avatar} 
-                            username={a.user.username}
-                            size="sm"
-                            className="w-5 h-5 rounded-full"
-                        />
-                        <span className="text-[10px] font-bold opacity-60 uppercase">{a.user.username}</span>
-                   </div>
-                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{a.content}</p>
-                </div>
-            ))}
-        </div>
-    </div>
-);

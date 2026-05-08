@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+:root {
+    --anijudge-bg: #0a0a0c;
+    --anijudge-red: #ff3b3b;
+    --anijudge-border: rgba(255, 255, 255, 0.08);
+}
+
+.anijudge-root {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--anijudge-bg);
+}
+
+.font-syne {
+    font-family: 'Syne', sans-serif;
+}
+
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Animations */
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+.glitch-hover:hover {
+    animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+}
+
+/* Custom Scrollbar for the Arena */
+.anijudge-root ::-webkit-scrollbar {
+    width: 4px;
+}
+
+.anijudge-root ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.anijudge-root ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.anijudge-root ::-webkit-scrollbar-thumb:hover {
+    background: var(--anijudge-red);
+}
+
+/* High performance cards - No Box Shadows as requested */
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--anijudge-border);
+}
+
+/* Perspective for 3D elements if needed without shadows */
+.perspective-container {
+    perspective: 1000px;
+}
+
+.tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+.tilt-card:hover {
+    transform: rotateX(5deg) rotateY(5deg);
+}
+
+/* Text Shimmer */
+.shimmer-text {
+    background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.4) 50%, #fff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+}
+
+@keyframes shimmer {
+    to { background-position: 200% center; }
+}

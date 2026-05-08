@@ -6,10 +6,31 @@ import { createArenaSchema } from '../schemas/arenaSchema.js';
 
 const router = Router();
 
+// Lobby & Discovery
 router.post('/', authenticateToken, validate(createArenaSchema), anijudgeController.createArena);
+router.get('/live', optionalAuthenticateToken, anijudgeController.getLiveArenas);
 router.get('/hall-of-fame', optionalAuthenticateToken, anijudgeController.getHallOfFame);
-router.get('/my-history', authenticateToken, anijudgeController.getMyHistory);
-router.get('/:code', optionalAuthenticateToken, anijudgeController.getArenaByCode);
-router.post('/:code/vote-fame', authenticateToken, anijudgeController.voteHallOfFame);
+router.get('/my-records', authenticateToken, anijudgeController.getMyRecords);
+
+// Arena Operations
+router.get('/:code', optionalAuthenticateToken, anijudgeController.joinArena);
+router.post('/:code/join', authenticateToken, anijudgeController.joinArenaPost);
+
+// Judge & Admin Controls
+router.post('/:arenaId/judge-request', authenticateToken, anijudgeController.requestJudge);
+router.post('/:arenaId/handle-judge-request', authenticateToken, anijudgeController.handleJudgeRequest);
+router.post('/:arenaId/start', authenticateToken, anijudgeController.startDebate);
+router.post('/:arenaId/next-turn', authenticateToken, anijudgeController.nextTurn);
+router.post('/:arenaId/add-time', authenticateToken, anijudgeController.addTime);
+router.post('/:arenaId/end-round', authenticateToken, anijudgeController.endRound);
+router.post('/:arenaId/verdict', authenticateToken, anijudgeController.submitVerdict);
+router.post('/:arenaId/violation', authenticateToken, anijudgeController.issueViolation);
+
+// Content
+router.post('/:arenaId/argument', authenticateToken, anijudgeController.submitArgument);
+router.post('/:arenaId/penalize-argument', authenticateToken, anijudgeController.penalizeArgument);
+
+// Social
+router.post('/hall-of-fame/:entryId/vote', authenticateToken, anijudgeController.voteHallOfFame);
 
 export default router;

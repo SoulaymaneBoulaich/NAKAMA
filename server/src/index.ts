@@ -47,7 +47,8 @@ const server = createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Initialize Sockets
-initSocket(server);
+const io = initSocket(server);
+app.set('io', io);
 
 // Start Daily Quiz Rotation System
 startDailyQuizCron();

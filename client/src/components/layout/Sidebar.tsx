@@ -4,7 +4,7 @@ import {
   Home, Compass, Users, MessageSquare,
   PlaySquare, Settings, LogOut,
   ChevronRight, TrendingUp, LayoutGrid,
-  Newspaper, Plus, Rss, ListMusic
+  Newspaper, Plus, Rss, ListMusic, Swords
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -147,7 +147,7 @@ const OrbitMenu: React.FC = () => {
 const navItems = [
   { icon: Home,         label: 'Home',        path: '/home' },
   { icon: Newspaper,    label: 'News',         path: '/news' },
-  { icon: TrendingUp,   label: 'AniJudge',     path: '/anijudge' },
+  { icon: Swords,       label: 'AniJudge',     path: '/anijudge' },
   { icon: PlaySquare,   label: 'Watch Party',  path: '/watchparty' },
   { icon: MessageSquare, label: 'Messages',    path: '/messages' },
   { icon: Settings,     label: 'Settings',     path: '/settings' },
