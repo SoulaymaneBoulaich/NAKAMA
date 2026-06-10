@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { X, Swords, Target, Clock, Trophy, Users, Shield, Zap, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Swords, Target, Clock, Trophy, Users, Shield, Zap, Sparkles, ChevronLeft, ChevronRight, ArrowRight, Lock, Eye, CreditCard, Vote, ListFilter } from 'lucide-react';
 import { getTopAnime } from '../../api/jikan';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -19,6 +19,13 @@ export const CreateArenaModal = ({ onClose }: CreateArenaModalProps) => {
     const [totalTimeLimit, setTotalTimeLimit] = useState(600);
     const [maxDebaters, setMaxDebaters] = useState(6);
     const [format, setFormat] = useState<'TEAMS' | 'INDIVIDUALS'>('TEAMS');
+    const [isPublic, setIsPublic] = useState(true);
+    const [cardsAllowed, setCardsAllowed] = useState(false);
+    const [canPurchaseCards, setCanPurchaseCards] = useState(false);
+    const [audienceVoting, setAudienceVoting] = useState(false);
+    const [turnOrderMode, setTurnOrderMode] = useState<'SIMULTANEOUS' | 'TURN_BASED'>('TURN_BASED');
+    const [bannedWords, setBannedWords] = useState('');
+    const [maxMembersPerTeam, setMaxMembersPerTeam] = useState(3);
     const [loading, setLoading] = useState(false);
     const [animeGallery, setAnimeGallery] = useState<any[]>([]);
     const carouselRef = useRef<HTMLDivElement>(null);
@@ -47,7 +54,13 @@ export const CreateArenaModal = ({ onClose }: CreateArenaModalProps) => {
                 timeLimitPerRound,
                 totalTimeLimit,
                 maxDebaters,
-                format
+                format,
+                isPublic,
+                cardsAllowed,
+                canPurchaseCards,
+                audienceVoting,
+                turnOrderMode,
+                bannedWords: bannedWords.split(',').map(w => w.trim()).filter(w => w)
             }, { withCredentials: true });
             
             navigate(`/anijudge/arena/${res.data.code}`);
@@ -156,7 +169,7 @@ export const CreateArenaModal = ({ onClose }: CreateArenaModalProps) => {
                                     Rounds
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {[3, 5, 7].map(num => (
+                                    {[3, 4, 5].map(num => (
                                         <button 
                                             key={num}
                                             onClick={() => setRoundCount(num)}
@@ -226,21 +239,83 @@ export const CreateArenaModal = ({ onClose }: CreateArenaModalProps) => {
                         </div>
 
                         {/* Rules Preview */}
-                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
-                             <div className="flex items-center gap-2">
-                                 <Shield size={14} className="text-red-500" />
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-white">Strict Rules Enabled</span>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button 
+                                onClick={() => setIsPublic(true)}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${isPublic ? 'bg-white border-white text-black' : 'border-white/10 text-zinc-500 hover:border-white/30'}`}
+                            >
+                                <Eye size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Public</span>
+                            </button>
+                            <button 
+                                onClick={() => setIsPublic(false)}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${!isPublic ? 'bg-white border-white text-black' : 'border-white/10 text-zinc-500 hover:border-white/30'}`}
+                            >
+                                <Lock size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Private</span>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button 
+                                onClick={() => setTurnOrderMode('SIMULTANEOUS')}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${turnOrderMode === 'SIMULTANEOUS' ? 'bg-white border-white text-black' : 'border-white/10 text-zinc-500 hover:border-white/30'}`}
+                            >
+                                <Zap size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-left">Simultaneous<br/><span className="opacity-50 lowercase">Speed mode</span></span>
+                            </button>
+                            <button 
+                                onClick={() => setTurnOrderMode('TURN_BASED')}
+                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${turnOrderMode === 'TURN_BASED' ? 'bg-white border-white text-black' : 'border-white/10 text-zinc-500 hover:border-white/30'}`}
+                            >
+                                <ListFilter size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-left">Turn-Based<br/><span className="opacity-50 lowercase">Tactical mode</span></span>
+                            </button>
+                        </div>
+
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                             <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-2">
+                                     <CreditCard size={14} className="text-red-500" />
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-white">Rule Modifiers</span>
+                                 </div>
                              </div>
-                             <ul className="space-y-2">
-                                 <li className="text-[10px] text-zinc-400 flex items-center gap-2">
-                                     <div className="w-1 h-1 rounded-full bg-red-500" />
-                                     Auto-penalize circular reasoning
-                                 </li>
-                                 <li className="text-[10px] text-zinc-400 flex items-center gap-2">
-                                     <div className="w-1 h-1 rounded-full bg-red-500" />
-                                     Judge veto for non-evidentiary claims
-                                 </li>
-                             </ul>
+                             <div className="space-y-4">
+                                 <div className="flex items-center justify-between">
+                                     <span className="text-[10px] font-bold text-zinc-400">Cards Enabled</span>
+                                     <button onClick={() => setCardsAllowed(!cardsAllowed)} className={`w-12 h-6 rounded-full transition-all relative ${cardsAllowed ? 'bg-red-500' : 'bg-zinc-800'}`}>
+                                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${cardsAllowed ? 'left-7' : 'left-1'}`} />
+                                     </button>
+                                 </div>
+                                 {cardsAllowed && (
+                                     <div className="flex items-center justify-between pl-4">
+                                         <span className="text-[10px] font-bold text-zinc-400 italic">Allow purchasing cards?</span>
+                                         <button onClick={() => setCanPurchaseCards(!canPurchaseCards)} className={`w-12 h-6 rounded-full transition-all relative ${canPurchaseCards ? 'bg-red-500' : 'bg-zinc-800'}`}>
+                                             <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${canPurchaseCards ? 'left-7' : 'left-1'}`} />
+                                         </button>
+                                     </div>
+                                 )}
+                                 <div className="flex items-center justify-between">
+                                     <span className="text-[10px] font-bold text-zinc-400">Audience Voting</span>
+                                     <button onClick={() => setAudienceVoting(!audienceVoting)} className={`w-12 h-6 rounded-full transition-all relative ${audienceVoting ? 'bg-red-500' : 'bg-zinc-800'}`}>
+                                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${audienceVoting ? 'left-7' : 'left-1'}`} />
+                                     </button>
+                                 </div>
+                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                                <Shield size={12} className="text-red-500" />
+                                Banned Words (Comma separated)
+                            </label>
+                            <input 
+                                type="text"
+                                value={bannedWords}
+                                onChange={(e) => setBannedWords(e.target.value)}
+                                placeholder="e.g., mid, garbage, mid-diff"
+                                className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold outline-none focus:border-red-500/50 transition-all text-white placeholder:text-zinc-600"
+                            />
                         </div>
 
                         <button 

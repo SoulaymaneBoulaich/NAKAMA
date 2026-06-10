@@ -54,10 +54,8 @@ export const CreatePostModal: React.FC<Props> = ({ isOpen, onClose, communityId 
 
       // Upload if local file
       if (mediaFile) {
-        const formData = new FormData();
-        formData.append('file', mediaFile);
         const endpoint = mediaType === 'image' ? '/upload/image' : '/upload/video';
-        const uploadRes = await api.post(endpoint, formData);
+        const uploadRes = await api.postForm(endpoint, { file: mediaFile }, { timeout: 60000 });
         if (mediaType === 'image') imageUrl = uploadRes.data.url;
         else videoUrl = uploadRes.data.url;
       }

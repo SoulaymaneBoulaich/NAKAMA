@@ -25,7 +25,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
   const queryClient = useQueryClient();
 
   const createPostMutation = useMutation({
-    mutationFn: (formData: FormData) => api.post('/posts', formData),
+    mutationFn: (formData: FormData) => api.postForm('/posts', formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       resetAndClose();

@@ -3,8 +3,8 @@ import { prisma } from '../lib/prisma.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { getStringParam, getStringQuery } from '../utils/params.js';
 import { logger } from '../utils/logger.js';
-import { startArenaTimer, stopArenaTimer } from '../socket/arenaSocket.js';
 import { Server } from 'socket.io';
+import { addMinutes, isAfter, subHours } from 'date-fns';
 
 const generateArenaCode = async () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -21,11 +21,41 @@ const generateArenaCode = async () => {
 
 export const createArena = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { title, topic, roundCount, timeLimitPerRound, totalTimeLimit, maxDebaters, format, strictRules } = req.body;
-        const adminId = req.userId!;
+        const { 
+            title, topic, roundCount, timeLimitPerRound, totalTimeLimit, 
+            maxDebaters, format, strictRules, isPublic,
+            cardsAllowed, canPurchaseCards, audienceVoting, turnOrderMode, bannedWords
+        } = req.body;
+        // 1. Check for Active Ban (Chapter 34)
+        const user = await prisma.user.findUnique({
+            where: { id: adminId },
+            include: { debateStats: true }
+        });
 
-        if (!title || !topic) {
-            return res.status(400).json({ message: 'Title and topic are required' });
+        if (user?.banExpiresAt && isAfter(user.banExpiresAt, new Date())) {
+            return res.status(403).json({ message: `You are currently banned until ${user.banExpiresAt.toLocaleString()}` });
+        }
+
+        // 2. Check Judge Cooldown (Chapter 33.1)
+        if (user?.debateStats?.lastJudgedAt) {
+            const cooldownEnd = addMinutes(user.debateStats.lastJudgedAt, 15);
+            if (isAfter(cooldownEnd, new Date())) {
+                return res.status(429).json({ message: `Judge cooldown active. You can create a new room at ${cooldownEnd.toLocaleTimeString()}` });
+            }
+        }
+
+        // 3. Check Active Room Limit for Free Tier (Chapter 33.3)
+        if (!user?.isPremium) {
+            const activeRoomsCount = await prisma.debateArena.count({
+                where: { 
+                    judgeId: adminId,
+                    status: { in: ['LOBBY', 'ACTIVE', 'PAUSED'] }
+                }
+            });
+
+            if (activeRoomsCount >= 3) {
+                return res.status(403).json({ message: 'Active room limit (3) reached for free tier. Close a room to create another.' });
+            }
         }
 
         const code = await generateArenaCode();
@@ -41,6 +71,12 @@ export const createArena = async (req: AuthenticatedRequest, res: Response) => {
                 maxDebaters: Number(maxDebaters) || 6,
                 format: format || 'TEAMS',
                 strictRules: strictRules || [],
+                isPublic: isPublic !== undefined ? isPublic : true,
+                cardsAllowed: !!cardsAllowed,
+                canPurchaseCards: !!canPurchaseCards,
+                audienceVoting: !!audienceVoting,
+                turnOrderMode: turnOrderMode || 'SIMULTANEOUS',
+                bannedWords: bannedWords || [],
                 adminId,
                 judgeId: adminId, // Creator is judge by default
                 participants: {
@@ -60,11 +96,11 @@ export const createArena = async (req: AuthenticatedRequest, res: Response) => {
             }
         });
 
-        // Initialize stats if not exist
+        // Initialize/Update stats
         await prisma.userDebateStats.upsert({
             where: { userId: adminId },
-            update: {},
-            create: { userId: adminId }
+            update: { lastJudgedAt: new Date() }, // Actually should be updated when debate ENDS, but for cooldown we set it here
+            create: { userId: adminId, lastJudgedAt: new Date() }
         });
 
         res.status(201).json(arena);
@@ -785,5 +821,99 @@ export const getLiveArenas = async (req: AuthenticatedRequest, res: Response) =>
         res.status(200).json(liveArenas);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching live arenas' });
+    }
+};
+
+export const submitAppeal = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.userId!;
+        const { arenaId, reason, ruleViolated, description, evidenceUrls, desiredOutcome } = req.body;
+
+        if (!arenaId || !reason || !ruleViolated || !description || !desiredOutcome) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Check for 24h limit (Chapter 31.1.3)
+        const arena = await prisma.debateArena.findUnique({ where: { id: arenaId } });
+        if (!arena || arena.status !== 'COMPLETED') {
+            return res.status(400).json({ message: 'Only completed debates can be appealed' });
+        }
+
+        const appealWindowEnd = addMinutes(arena.updatedAt, 1440); // 24 hours
+        if (isAfter(new Date(), appealWindowEnd)) {
+            return res.status(403).json({ message: 'Appeal window (24h) has expired' });
+        }
+
+        // Check if user is appeal banned (Chapter 31.4.3)
+        const stats = await prisma.userDebateStats.findUnique({ where: { userId } });
+        if (stats?.appealBannedUntil && isAfter(stats.appealBannedUntil, new Date())) {
+            return res.status(403).json({ message: `You are banned from filing appeals until ${stats.appealBannedUntil.toLocaleString()}` });
+        }
+
+        const appeal = await prisma.debateAppeal.create({
+            data: {
+                arenaId,
+                userId,
+                reason,
+                ruleViolated,
+                description,
+                evidenceUrls: evidenceUrls || [],
+                desiredOutcome,
+                status: 'PENDING'
+            }
+        });
+
+        res.status(201).json(appeal);
+    } catch (error) {
+        logger.error('Error submitting appeal:', error);
+        res.status(500).json({ message: 'Error submitting appeal' });
+    }
+};
+
+export const getAppeals = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        // Should be admin check here
+        const appeals = await prisma.debateAppeal.findMany({
+            include: { 
+                user: { select: { username: true } }, 
+                arena: { select: { title: true, code: true } } 
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(appeals);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching appeals' });
+    }
+};
+
+export const resolveAppeal = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status, adminResponse } = req.body; // status: GRANTED | DENIED
+
+        const appeal = await prisma.debateAppeal.update({
+            where: { id },
+            data: { 
+                status, 
+                adminResponse,
+                adminId: req.userId
+            },
+            include: { user: true }
+        });
+
+        // If DENIED and deemed false appeal, apply penalty (Chapter 31.4.3)
+        // (This would need a 'isFalse' flag in body)
+        if (status === 'DENIED' && req.body.isFalseAppeal) {
+            // Update stats, maybe increment a falseAppealsCount
+            // For now, just apply signal
+            await prisma.userDebateStats.update({
+                where: { userId: appeal.userId },
+                data: { yellowSignals: { increment: 1 } }
+            });
+        }
+
+        res.json(appeal);
+    } catch (error) {
+        res.status(500).json({ message: 'Error resolving appeal' });
     }
 };

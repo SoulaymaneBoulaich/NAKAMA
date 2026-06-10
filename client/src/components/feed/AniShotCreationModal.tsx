@@ -39,10 +39,7 @@ export const AniShotCreationModal: React.FC<Props> = ({ isOpen, onClose, onCreat
 
     try {
       // Step 1: Upload Media
-      const formData = new FormData();
-      formData.append('file', mediaFile);
-      
-      const uploadRes = await api.post('/upload/anishot', formData);
+      const uploadRes = await api.postForm('/upload/anishot', { file: mediaFile }, { timeout: 60000 });
       const { url: mediaUrl } = uploadRes.data;
 
       // Step 2: Create AniShot Metadata

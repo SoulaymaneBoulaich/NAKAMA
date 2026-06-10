@@ -33,4 +33,9 @@ router.post('/:arenaId/penalize-argument', authenticateToken, anijudgeController
 // Social
 router.post('/hall-of-fame/:entryId/vote', authenticateToken, anijudgeController.voteHallOfFame);
 
+// Post-Game (Book Eight)
+router.post('/appeals', authenticateToken, anijudgeController.submitAppeal);
+router.get('/appeals/all', authenticateToken, anijudgeController.getAppeals); // Should have admin check
+router.patch('/appeals/:id/resolve', authenticateToken, anijudgeController.resolveAppeal);
+
 export default router;

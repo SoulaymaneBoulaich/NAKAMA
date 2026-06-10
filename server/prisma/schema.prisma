@@ -41,6 +41,8 @@ model User {
   gauntletFrameUrl         String?
   isSuspended              Boolean                   @default(false)
   suspensionReason         String?
+  banExpiresAt             DateTime?                 // Book Five: Temporary bans
+  quitStrikes              Int                       @default(0) // Book Five: 3 strikes = 3-day ban
   activities               Activity[]
   aniShots                 AniShot[]
   aniShotViews             AniShotView[]
@@ -58,6 +60,9 @@ model User {
   judgeRequests            JudgeRequest[]
   debateRecords            DebateRecord[]
   debateStats              UserDebateStats?
+  arenasMvp                DebateArena[]             @relation("ArenaMVP")
+  coJudgingArenas          DebateArena[]             @relation("CoJudge")
+  debateRoundScores        DebateRoundScore[]
   hallOfFameEntries        HallOfFameEntry[]
   hallOfFameVotes          HallOfFameVote[]
   gauntletFameEntries      GauntletHallOfFame[]
@@ -101,6 +106,8 @@ model User {
   watchPartiesHosted       WatchParty[]              @relation("WatchPartyHost")
   watchPartyMessages       WatchPartyMessage[]
   watchPartyMemberships    WatchPartyParticipant[]
+  debateAppeals            DebateAppeal[]
+  administeredAppeals      DebateAppeal[]            @relation("AdminAppeals")
 
   @@index([username])
   @@index([email])
@@ -529,6 +536,7 @@ model DebateArena {
   timeLimitPerRound Int                 @default(120)
   totalTimeLimit    Int                 @default(600)
   maxDebaters       Int                 @default(6)
+  tieBreakerEnabled Boolean             @default(false)
   format            DebateFormat
   strictRules       String[]
   currentRound      Int                 @default(0)
@@ -539,7 +547,23 @@ model DebateArena {
   winnerId          String?
   winnerTeam        DebateWinnerTeam?
   verdictText       String?
+  mvpUserId         String?
+  mvpUser           User?               @relation("ArenaMVP", fields: [mvpUserId], references: [id])
+  coJudgeId         String?
+  coJudge           User?               @relation("CoJudge", fields: [coJudgeId], references: [id])
+  bestEvidenceUserId String?
+  mostImprovedUserId String?
+  lowestPerformerUserId String?
+  isCleanGame       Boolean             @default(true)
   isPublic          Boolean             @default(true)
+  cardsAllowed      DebateCardsMode     @default(NONE)
+  isCardsActivated  Boolean             @default(false)
+  canPurchaseCards  Boolean             @default(false)
+  audienceVoting    Boolean             @default(false)
+  turnOrderMode     String              @default("SIMULTANEOUS")
+  bannedWords       String[]            @default([])
+  totalPauseTimeUsed Int                @default(0)
+  extensionsUsed    Int                 @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   participants      DebateParticipant[]
@@ -548,31 +572,97 @@ model DebateArena {
   judgeRequests     JudgeRequest[]
   records           DebateRecord[]
   hallOfFame        HallOfFameEntry?
+  activeCards       DebateCard[]
+  appeals           DebateAppeal[]
+}
+
+enum DebateCardsMode {
+  NONE
+  USER_ONLY
+  JUDGE_ONLY
+  BOTH
+}
+
+model DebateCard {
+  id              String      @id @default(cuid())
+  arenaId         String
+  roundNumber     Int
+  userId          String?     // Null if Judge Card
+  type            DebateCardType
+  targetTeam      DebateWinnerTeam?
+  targetUserId    String?
+  activationTime  Int?        // Seconds into round for Freeze
+  isUsed          Boolean     @default(false)
+  arena           DebateArena @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+}
+
+enum DebateCardType {
+  FREEZE_DEBATERS
+  DOUBLE_POINTS
+  SKIP_SUBJECT
+  SHIELD
+  STEAL
+  DOUBLE_ROUND      // Judge only
+  SILENCE_ROUND     // Judge only
 }
 
 model DebateParticipant {
   id       String                @id @default(cuid())
   arenaId  String
   userId   String
-  role     DebateParticipantRole
-  isAdmin  Boolean               @default(false)
-  joinedAt DateTime              @default(now())
+  role               DebateParticipantRole
+  isAdmin            Boolean               @default(false)
+  isCaptain          Boolean               @default(false)
+  pauseRequestsUsed  Int                   @default(0)
+  pointsInArena      Int                   @default(0)
+  joinedAt           DateTime              @default(now())
   arena    DebateArena           @relation(fields: [arenaId], references: [id], onDelete: Cascade)
   user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([arenaId, userId])
 }
 
+enum DebateRoundStatus {
+  ANNOUNCING_SUBTOPIC
+  ACTIVE
+  EVALUATING
+  COMPLETED
+  SUDDEN_DEATH
+}
+
 model DebateRound {
   id              String           @id @default(cuid())
   arenaId         String
   roundNumber     Int
+  subtopic        String?
+  status          DebateRoundStatus @default(ANNOUNCING_SUBTOPIC)
   judgeQuestion   String?
   startedAt       DateTime?
   endedAt         DateTime?
   extraTimeAdded  Int              @default(0)
+  winnerTeam      DebateWinnerTeam?
+  isDoubleRound   Boolean          @default(false)
+  isSilenceRound  Boolean          @default(false)
   arena           DebateArena      @relation(fields: [arenaId], references: [id], onDelete: Cascade)
   arguments       DebateArgument[]
+  scores          DebateRoundScore[]
+}
+
+model DebateRoundScore {
+  id            String      @id @default(cuid())
+  roundId       String
+  userId        String
+  points        Int         @default(0) // Final calculated score (-5 to +5)
+  logicScore    Int         @default(0) // +2 to -2
+  evidenceScore Int         @default(0) // +1 to -1
+  counterScore  Int         @default(0) // +1 to -1
+  clarityScore  Int         @default(0) // +1 to -1
+  mediaBonusType String      @default("NONE") // PHOTO, VIDEO, REFERENCE
+  mediaBonusPoints Int       @default(0)
+  round         DebateRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, userId])
 }
 
 model DebateArgument {
@@ -633,6 +723,22 @@ model UserDebateStats {
   losses         Int      @default(0)
   draws          Int      @default(0)
   totalPoints    Int      @default(0)
+  judgePoints    Int      @default(0)
+  blueSigns      Int      @default(0)
+  mvpSigns       Int      @default(0)
+  yellowSignals  Int      @default(0)
+  redSignals     Int      @default(0)
+  greenSignals   Int      @default(0)
+  seasonPoints   Int      @default(0)
+  mvpCount       Int      @default(0)
+  cleanGamesCount Int     @default(0)
+  judgeYellowSignals Int  @default(0)
+  judgeRedSignals    Int  @default(0)
+  judgeRating    Float?
+  lastJudgedAt   DateTime?
+  appealBannedUntil DateTime?
+  badges         Json     @default("[]")
+  redSignalsHistory Json  @default("[]") // [{ issuedAt: string, expiresAt: string }]
   winStreak      Int      @default(0)
   bestWinStreak  Int      @default(0)
   rank           Int?
@@ -1279,4 +1385,38 @@ enum SubmissionVoteType {
 enum VoteType {
   UP
   DOWN
+}
+
+enum AppealStatus {
+  PENDING
+  GRANTED
+  DENIED
+}
+
+model DebateAppeal {
+  id               String       @id @default(cuid())
+  arenaId          String
+  userId           String
+  reason           String       // INCORRECT_POINTS, BIAS, IGNORED_EVIDENCE, PROCEDURAL_ERROR, FALSE_SIGNAL
+  ruleViolated     String
+  description      String
+  evidenceUrls     String[]
+  desiredOutcome   String
+  status           AppealStatus @default(PENDING)
+  adminResponse    String?
+  adminId          String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  arena            DebateArena  @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin            User?        @relation("AdminAppeals", fields: [adminId], references: [id])
+}
+
+model DebateSeason {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isProcessed Boolean @default(false)
+  createdAt DateTime @default(now())
 }

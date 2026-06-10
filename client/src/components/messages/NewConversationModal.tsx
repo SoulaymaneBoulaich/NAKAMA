@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, X, MessageSquare, Plus } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
+import api from '../../api/axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -30,9 +31,8 @@ export const NewConversationModal = ({ onClose, onStart }: NewConversationModalP
   const searchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/users/search`, {
-        params: { q: query },
-        withCredentials: true
+      const res = await api.get(`/users/search`, {
+        params: { q: query }
       });
       setResults(res.data);
     } catch (err) {
@@ -44,10 +44,11 @@ export const NewConversationModal = ({ onClose, onStart }: NewConversationModalP
 
   const handleStart = async (username: string) => {
       try {
-          const res = await axios.post(`${API_URL}/messages`, { username }, { withCredentials: true });
+          const res = await api.post(`/messages`, { username });
           onStart(res.data.id);
-      } catch (err) {
+      } catch (err: any) {
           console.error(err);
+          alert(err.response?.data?.message || 'Failed to start conversation');
       }
   };
 

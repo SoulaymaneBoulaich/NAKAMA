@@ -117,6 +117,22 @@ export const getMessages = async (req: AuthenticatedRequest, res: Response) => {
         const conversationId = getStringParam(req.params.id);
         const cursor = getStringQuery(req.query.cursor, '');
 
+        // Mock conversation handling
+        if (conversationId === 'mock-123') {
+            const mockMessages = [
+                {
+                    id: 'msg-1',
+                    conversationId: 'mock-123',
+                    senderId: 'user-999',
+                    content: 'I am gonna be the pirate king!',
+                    createdAt: new Date(),
+                    sender: { id: 'user-999', username: 'Luffy_PirateKing', avatar: '' }
+                }
+            ];
+            res.status(200).json(mockMessages);
+            return;
+        }
+
         // Validate participation
         const participant = await prisma.conversationParticipant.findUnique({
             where: {
