@@ -15,10 +15,12 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Disable ALL FK constraints + ALL triggers fully
-  await prisma.$executeRawUnsafe(`SET session_replication_role = 'replica';`);
-
   try {
+    // Disable ALL FK constraints + ALL triggers
+    await prisma.$executeRawUnsafe(`SET session_replication_role = 'replica';`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "DailyQuestion" DISABLE TRIGGER ALL;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Question" DISABLE TRIGGER ALL;`);
+
     // DELETE IN CORRECT ORDER → from leaf → root
     await prisma.dailyAnswer.deleteMany();
     await prisma.quizAnswer.deleteMany();
@@ -38,6 +40,10 @@ beforeEach(async () => {
 
     await prisma.user.deleteMany();
   } finally {
+    // Re-enable triggers
+    await prisma.$executeRawUnsafe(`ALTER TABLE "DailyQuestion" ENABLE TRIGGER ALL;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Question" ENABLE TRIGGER ALL;`);
+    
     // Re-enable constraints
     await prisma.$executeRawUnsafe(`SET session_replication_role = 'origin';`);
   }
