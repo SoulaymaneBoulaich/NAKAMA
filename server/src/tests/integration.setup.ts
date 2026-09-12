@@ -25,13 +25,15 @@ beforeEach(async () => {
     await prisma.quizAttempt.deleteMany();
     await prisma.questionStats.deleteMany();
 
-    await prisma.dailyQuestion.deleteMany(); // depends on Question
-
     await prisma.questionSubmission.deleteMany();
     await prisma.submissionVote.deleteMany();
     await prisma.gauntletHallOfFame.deleteMany();
 
-    await prisma.question.deleteMany(); // parent of dailyQuestion
+    // Delete DailyQuestion BEFORE Question (it references Question)
+    await prisma.dailyQuestion.deleteMany();
+
+    // Now safe to delete parent tables
+    await prisma.question.deleteMany();
     await prisma.quiz.deleteMany();
 
     await prisma.user.deleteMany();
