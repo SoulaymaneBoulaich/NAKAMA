@@ -1,6 +1,6 @@
 # NAKAMA
 
-An anime community web platform built with modern TypeScript, React, and Express. NAKAMA is a full-stack monorepo application designed to bring anime enthusiasts together with features for community engagement, discussion, and shared content discovery.
+An anime community web platform built with modern TypeScript, React, and Express. NAKAMA is a full-stack monorepo application designed to bring anime enthusiasts together with features for community building, quizzes, discussions, and content sharing.
 
 ## Table of Contents
 
@@ -20,17 +20,19 @@ An anime community web platform built with modern TypeScript, React, and Express
 - [API Documentation](#api-documentation)
 - [Security](#security)
 - [Contributing](#contributing)
+- [Troubleshooting](#troubleshooting)
 - [License](#license)
 
 ## Overview
 
-NAKAMA is a monorepo application comprising a modern React frontend and Express backend, creating a seamless anime community experience. The platform leverages Socket.IO for real-time communication, Prisma for database management, and modern web technologies for an optimized user experience.
+NAKAMA is a monorepo application comprising a modern React frontend and Express backend, creating a seamless anime community experience. The platform leverages Socket.IO for real-time communication, Prisma ORM for database management, and JWT for secure authentication.
 
 ## Features
 
 - Real-time messaging and notifications via Socket.IO
 - User authentication with JWT tokens
 - Community forums and discussion threads
+- Quiz system with dynamic difficulty and leaderboards
 - Anime content sharing and curation
 - User profiles and community interactions
 - File uploads with Cloudinary integration
@@ -76,6 +78,7 @@ NAKAMA is a monorepo application comprising a modern React frontend and Express 
 
 ```
 NAKAMA/
+|
 ├── client/                    # React frontend application
 │   ├── src/
 │   │   ├── components/        # Reusable React components
@@ -96,20 +99,24 @@ NAKAMA/
 ├── server/                    # Express backend application
 │   ├── src/
 │   │   ├── routes/            # API route definitions
-│   │   ├── controllers/       # Request handlers
-│   │   ├── services/          # Business logic
+│   │   ├── controllers/       # Request handlers and business logic
+│   │   ├── services/          # Business logic layer
 │   │   ├── middleware/        # Express middleware
+│   │   ├── schemas/           # Zod validation schemas
 │   │   ├── types/             # TypeScript type definitions
 │   │   ├── utils/             # Utility functions
-│   │   ├── sockets/           # Socket.IO event handlers
+│   │   ├── socket/            # Socket.IO event handlers
+│   │   ├── db/                # Database utilities
+│   │   ├── lib/               # Library functions
 │   │   └── index.ts           # Server entry point
 │   ├── prisma/
-│   │   ├── schema.prisma      # Database schema
+│   │   ├── schema.prisma      # Database schema definition
 │   │   └── seed.ts            # Database seeding script
-│   ├── tests/                 # Test files
+│   ├── tests/                 # Integration and unit tests
 │   ├── package.json           # Server dependencies
 │   ├── tsconfig.json          # TypeScript configuration
-│   └── vitest.config.ts       # Vitest configuration
+│   ├── vitest.config.ts       # Vitest configuration
+│   └── vitest.config.integration.ts  # Integration test configuration
 │
 ├── infra/                     # Infrastructure configuration
 │   ├── db/                    # Database initialization scripts
@@ -197,7 +204,7 @@ npm run db:up
 
 This command will:
 - Pull the PostgreSQL 15 Alpine image
-- Create and start the `nakama_db` container
+- Create and start the nakama_db container
 - Wait for the database to be healthy
 
 ### Database Management Commands
@@ -224,8 +231,8 @@ npm run prisma:seed
 
 ### Prisma Operations
 
-- Generate Prisma client: `npm run prisma:generate`
-- Open Prisma Studio GUI: `npx prisma studio`
+- Generate Prisma client: npm run prisma:generate
+- Open Prisma Studio GUI: npx prisma studio
 
 ## Running the Application
 
@@ -237,7 +244,7 @@ Run both client and server simultaneously:
 npm run dev
 ```
 
-This command uses `concurrently` to start:
+This command uses concurrently to start:
 - Frontend on http://localhost:5173
 - Backend API on http://localhost:5000
 
@@ -269,7 +276,7 @@ This builds both client and server for production.
 npm run build --workspace=@nakama/client
 ```
 
-Output is generated in `client/dist/`
+Output is generated in client/dist/
 
 ### Server Build
 
@@ -277,7 +284,7 @@ Output is generated in `client/dist/`
 npm run build --workspace=@nakama/server
 ```
 
-Output is generated in `server/dist/`
+Output is generated in server/dist/
 
 ### Preview Production Build
 
@@ -323,12 +330,12 @@ npm run test:integration:push --workspace=@nakama/server
 
 The frontend follows a modular component-based architecture:
 
-- **Pages**: Top-level route components
-- **Components**: Reusable UI components with clear responsibilities
-- **Hooks**: Custom React hooks for logic reuse
-- **Services**: Axios-based API client for backend communication
-- **Store**: State management using React Query for server state
-- **Lib**: Utility functions and helpers
+- Pages: Top-level route components for each feature
+- Components: Reusable UI components with clear responsibilities
+- Hooks: Custom React hooks for logic reuse and state management
+- Services: Axios-based API client for backend communication
+- Store: State management using React Query for server state
+- Lib: Utility functions and helpers
 
 Real-time features are handled through Socket.IO client integration for live updates and notifications.
 
@@ -336,70 +343,76 @@ Real-time features are handled through Socket.IO client integration for live upd
 
 The backend implements a clean layered architecture:
 
-- **Routes**: Define API endpoints and HTTP methods
-- **Controllers**: Handle request/response logic
-- **Services**: Encapsulate business logic
-- **Middleware**: Process requests and responses
-- **Types**: Centralized TypeScript interfaces
-- **Sockets**: Handle WebSocket events for real-time communication
-- **Utils**: Helper functions and constants
+- Routes: Define API endpoints and HTTP methods
+- Controllers: Handle request/response logic and coordinate services
+- Services: Encapsulate business logic and database operations
+- Middleware: Process requests and responses (authentication, validation, error handling)
+- Schemas: Zod validation schemas for request/response validation
+- Types: Centralized TypeScript interfaces and type definitions
+- Socket: Handle WebSocket events for real-time communication
+- Utils: Helper functions and constants
 
 Database operations are managed through Prisma ORM with type-safe queries.
 
 ### Real-Time Communication
 
 Socket.IO enables:
-- Live notifications
+- Live notifications and alerts
 - Real-time chat messaging
-- Presence tracking
-- Activity updates
+- Presence tracking and status updates
+- Activity updates and feeds
 - Collaborative features
 
 ## API Documentation
 
-API endpoints follow RESTful conventions with the base URL: `http://localhost:5000/api`
+API endpoints follow RESTful conventions with the base URL: http://localhost:5000/api
 
 Common endpoints include:
 
-- Authentication: `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/refresh`
-- Users: `/users`, `/users/:id`, `/users/:id/profile`
-- Posts/Content: `/posts`, `/posts/:id`, `/posts/:id/comments`
-- Community: `/community`, `/community/:id`, `/community/:id/members`
+- Authentication: /auth/login, /auth/register, /auth/logout, /auth/refresh
+- Users: /users, /users/:id, /users/:id/profile
+- Posts and Content: /posts, /posts/:id, /posts/:id/comments
+- Community: /community, /community/:id, /community/:id/members
+- Quiz: /quiz, /quiz/start, /quiz/attempt/:attemptId/question, /quiz/attempt/:attemptId/submit
+- Daily Challenge: /quiz/daily, /quiz/daily/submit
+- Leaderboards: /quiz/hall-of-fame, /quiz/hall-of-shame
 - Real-time Events: Managed via Socket.IO namespaces
 
-For detailed API documentation, refer to the API specification document or explore the code in `server/src/routes/`.
+For detailed API documentation, refer to the API specification document or explore the code in server/src/routes/.
 
 ## Security
 
 The application implements multiple security layers:
 
-1. **Authentication & Authorization**
-   - JWT-based token authentication
-   - Access and refresh tokens
-   - Secure password hashing with bcryptjs
+### Authentication and Authorization
+- JWT-based token authentication with access and refresh tokens
+- Secure password hashing with bcryptjs
+- Automatic token validation on protected routes
 
-2. **Request Validation**
-   - Zod schema validation
-   - Input sanitization with sanitize-html
+### Request Validation
+- Zod schema validation for all incoming requests
+- Input sanitization with sanitize-html
+- Type-safe request/response handling
 
-3. **HTTP Security**
-   - Helmet.js for security headers
-   - CORS configuration for cross-origin requests
-   - Rate limiting to prevent abuse
+### HTTP Security
+- Helmet.js for security headers
+- CORS configuration for cross-origin requests
+- Rate limiting to prevent abuse and brute force attacks
 
-4. **Data Protection**
-   - Password hashing and salting
-   - Secure token generation
-   - HPP (HTTP Parameter Pollution) protection
+### Data Protection
+- Password hashing and salting with bcryptjs
+- Secure token generation and expiration
+- HTTP Parameter Pollution (HPP) protection
 
-5. **File Upload Security**
-   - Cloudinary integration for secure image storage
-   - File type validation
-   - Size restrictions (5MB default)
+### File Upload Security
+- Cloudinary integration for secure image storage
+- File type validation and checks
+- Size restrictions (5MB default limit)
 
-6. **Logging & Monitoring**
-   - Winston logger for application events
-   - Error tracking and debugging
+### Logging and Monitoring
+- Winston logger for application events and errors
+- Error tracking and debugging information
+- Request/response logging for auditing
 
 ## Contributing
 
@@ -422,53 +435,66 @@ git push origin feature/your-feature-name
 
 5. Submit a pull request for review
 
-## Development Workflow
+### Development Workflow
 
-1. Start the database: `npm run db:up`
-2. Run migrations if needed: `npm run prisma:migrate`
-3. Seed data: `npm run prisma:seed`
-4. Start development servers: `npm run dev`
+1. Start the database: npm run db:up
+2. Run migrations if needed: npm run prisma:migrate
+3. Seed data: npm run prisma:seed
+4. Start development servers: npm run dev
 5. Make code changes
-6. Run tests: `npm run test --workspace=@nakama/server`
-7. Build and verify: `npm run build`
+6. Run tests: npm run test --workspace=@nakama/server
+7. Build and verify: npm run build
 
 ## Performance Optimization
 
-- Vite provides fast HMR (Hot Module Replacement)
-- React Query caches server state efficiently
-- Socket.IO reduces polling overhead
-- Tailwind CSS with PostCSS for optimized styling
+- Vite provides fast HMR (Hot Module Replacement) for development
+- React Query caches server state efficiently with automatic invalidation
+- Socket.IO reduces polling overhead with real-time events
+- Tailwind CSS with PostCSS for optimized styling and tree-shaking
 - Lazy loading and code splitting for frontend performance
+- Database indexing and query optimization with Prisma
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
 If you encounter database connection errors:
-1. Verify Docker is running: `docker ps`
-2. Check database logs: `npm run db:logs`
-3. Ensure `.env` DATABASE_URL is correct
-4. Reset database if needed: `npm run db:reset`
+
+1. Verify Docker is running: docker ps
+2. Check database logs: npm run db:logs
+3. Ensure .env DATABASE_URL is correct
+4. Reset database if needed: npm run db:reset
 
 ### Port Already in Use
 
 If ports 5000 or 5173 are already in use:
-1. Change the port in `.env` (SERVER) or vite config (CLIENT)
+
+1. Change the port in .env (SERVER) or vite config (CLIENT)
 2. Kill the process using the port
-3. Or use a different machine/VM
+3. Or use a different machine or VM
+
+### Database Role Does Not Exist Error
+
+If you see "role root does not exist" errors:
+
+1. The test environment uses a different database role
+2. Ensure integration test environment variables are set correctly
+3. Run npm run test:integration:push to prepare the test database
+4. Check that the database is running and accessible
 
 ### Node Modules Issues
 
 If you experience dependency issues:
-1. Delete node_modules and lock file: `rm -rf node_modules package-lock.json`
-2. Clear npm cache: `npm cache clean --force`
-3. Reinstall: `npm install:all`
+
+1. Delete node_modules and lock file: rm -rf node_modules package-lock.json
+2. Clear npm cache: npm cache clean --force
+3. Reinstall: npm install:all
 
 ### TypeScript Compilation Errors
 
-1. Ensure TypeScript version matches: `npm install --save-dev typescript@6.0.2`
-2. Clear TypeScript cache
-3. Regenerate Prisma client: `npm run prisma:generate --workspace=@nakama/server`
+1. Ensure TypeScript version matches: npm install --save-dev typescript@6.0.2
+2. Clear TypeScript cache and rebuild
+3. Regenerate Prisma client: npm run prisma:generate --workspace=@nakama/server
 
 ## License
 
@@ -480,8 +506,8 @@ ISC License - See LICENSE file for details
 - Default Branch: main
 - Status: Active
 - Privacy: Private
-- Language: TypeScript 100%
+- Language: TypeScript (100%)
 
 ---
 
-For more information or questions, please refer to the individual README files in the `client/` and `server/` directories, or open an issue on GitHub.
+For more information or questions, please refer to the individual README files in the client/ and server/ directories, or open an issue on GitHub.
