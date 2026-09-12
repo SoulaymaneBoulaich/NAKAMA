@@ -26,12 +26,12 @@ describe('Quiz Integration Tests', () => {
       data: {
         title: 'Integration Test Quiz',
         description: 'Testing the quiz flow',
-        category: 'QA',
+        category: 'ANIME',
         difficulty: 'CHUNIN',
         questions: {
           create: [
             {
-              type: 'QA',
+              type: 'ANIME',
               difficulty: 'CHUNIN',
               questionText: 'What is 1+1?',
               options: ['1', '2', '3', '4'],
@@ -58,6 +58,7 @@ describe('Quiz Integration Tests', () => {
 
     expect(response.status).toBe(201);
     expect(response.body.status).toBe('IN_PROGRESS');
+    expect(response.body.id).toBeDefined();
   });
 
   it('should get context-wrapped questions', async () => {
@@ -68,7 +69,9 @@ describe('Quiz Integration Tests', () => {
       .set('Authorization', `Bearer ${authToken}`)
       .send({ quizId });
     
+    expect(startRes.status).toBe(201);
     const attemptId = startRes.body.id;
+    expect(attemptId).toBeDefined();
 
     const response = await request(app)
       .get(`/api/quiz/attempt/${attemptId}/question`)
@@ -87,13 +90,16 @@ describe('Quiz Integration Tests', () => {
       .set('Authorization', `Bearer ${authToken}`)
       .send({ quizId });
     
+    expect(startRes.status).toBe(201);
     const attemptId = startRes.body.id;
 
     const questionRes = await request(app)
       .get(`/api/quiz/attempt/${attemptId}/question`)
       .set('Authorization', `Bearer ${authToken}`);
     
+    expect(questionRes.status).toBe(200);
     const questionId = questionRes.body.id;
+    expect(questionId).toBeDefined();
 
     const response = await request(app)
       .post(`/api/quiz/attempt/${attemptId}/submit`)
