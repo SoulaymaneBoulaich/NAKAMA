@@ -67,7 +67,8 @@ async function main() {
     data: [
       { userId: user1.id, animeId: '1', animeTitle: 'Cowboy Bebop', rank: 1, animeCover: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg' },
       { userId: user1.id, animeId: '2904', animeTitle: 'Code Geass', rank: 2, animeCover: 'https://cdn.myanimelist.net/images/anime/5/50331.jpg' },
-    ]
+    ],
+    skipDuplicates: true
   })
 
   console.log('Seeding finished.')

@@ -149,7 +149,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/anime', authenticateToken, animeRoutes);
+app.use('/api/anime', animeRoutes);
 app.use('/api/entries', authenticateToken, entryRoutes);
 app.use('/api/ratings', authenticateToken, ratingRoutes);
 app.use('/api/users', userRoutes);

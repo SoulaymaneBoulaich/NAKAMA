@@ -25,12 +25,18 @@ describe('Auth Integration Tests', () => {
   });
 
   it('should fail to sign up with duplicate email', async () => {
-    // Setup: Ensure user exists first because database is cleared BEFORE each test
-    await request(app).post('/api/auth/signup').send(testUser);
+    const dupUser = {
+      username: 'dup_user_test',
+      email: 'dup_test@example.com',
+      password: 'Password123',
+      confirmPassword: 'Password123'
+    };
+    // Setup: Ensure user exists first
+    await request(app).post('/api/auth/signup').send(dupUser);
 
     const response = await request(app)
       .post('/api/auth/signup')
-      .send(testUser);
+      .send(dupUser);
 
     expect(response.status).toBe(400);
     expect(response.body.message).toMatch(/exists/i || /already/i);

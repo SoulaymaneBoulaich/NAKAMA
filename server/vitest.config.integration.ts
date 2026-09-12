@@ -12,6 +12,11 @@ export default defineConfig({
     setupFiles: ['./src/tests/integration.setup.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
+    fileParallelism: false,
+    maxWorkers: 1,
+    sequence: {
+      concurrent: false,
+    },
   },
   resolve: {
     alias: {

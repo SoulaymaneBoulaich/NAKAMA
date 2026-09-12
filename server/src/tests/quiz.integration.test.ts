@@ -26,12 +26,12 @@ describe('Quiz Integration Tests', () => {
       data: {
         title: 'Integration Test Quiz',
         description: 'Testing the quiz flow',
-        category: 'ANIME',
+        category: 'QA',
         difficulty: 'CHUNIN',
         questions: {
           create: [
             {
-              type: 'ANIME',
+              type: 'QA',
               difficulty: 'CHUNIN',
               questionText: 'What is 1+1?',
               options: ['1', '2', '3', '4'],

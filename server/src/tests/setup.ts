@@ -4,6 +4,9 @@
  */
 import { vi, afterEach } from 'vitest';
 
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'test_jwt_access_secret_32_characters_long';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test_jwt_refresh_secret_32_characters_long';
+
 // ── Prisma Mock ──────────────────────────────────────────────
 vi.mock('../lib/prisma.js', () => {
   const mockPrisma = {
