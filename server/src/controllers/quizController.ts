@@ -58,6 +58,10 @@ export const startAttempt = async (req: AuthenticatedRequest, res: Response) => 
                     weekNumber: week,
                     yearNumber: year,
                     status: 'IN_PROGRESS',
+                    currentQuestion: 0,
+                    score: 0,
+                    mistakes: 0,
+                    totalAnswered: 0,
                     gauntletSession: {
                         create: {
                             questionIds: shuffled.map(q => q.id)
@@ -76,7 +80,11 @@ export const startAttempt = async (req: AuthenticatedRequest, res: Response) => 
                     isGauntlet: false,
                     weekNumber: week,
                     yearNumber: year,
-                    status: 'IN_PROGRESS'
+                    status: 'IN_PROGRESS',
+                    currentQuestion: 0,
+                    score: 0,
+                    mistakes: 0,
+                    totalAnswered: 0
                 }
             });
             return res.status(201).json(attempt);
